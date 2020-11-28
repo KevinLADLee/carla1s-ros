@@ -22,13 +22,17 @@ RUN sed -i "s@http://.*archive.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc
     ros-$ROS_VERSION-cv-bridge \
     ros-$ROS_VERSION-pcl-conversions \
     ros-$ROS_VERSION-pcl-ros \
+    ros-$ROS_VERSION-pointcloud-to-laserscan \
+    ros-$ROS_VERSION-map-server \
+    ros-$ROS_VERSION-move-base \
+    ros-$ROS_VERSION-teb-local-planner \
     python$PYTHON_SUFFIX-osrf-pycommon \
     python$PYTHON_SUFFIX-catkin-tools \
     python3-pip  \
     vim \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 --no-cache-dir install --upgrade --trusted-host https://mirrors.huaweicloud.com -i https://mirrors.huaweicloud.com/repository/pypi/simple \
-        pygame numpy==1.18.4 networkx distro
+        networkx distro pygame simple-pid numpy==1.18.4
 ARG CARLA_VERSION
 
 COPY --from=carla --chown=root /home/carla/PythonAPI /opt/carla/PythonAPI
@@ -48,8 +52,14 @@ COPY carla_walker_agent /opt/carla-ros-bridge/src/carla_walker_agent
 COPY carla_waypoint_publisher /opt/carla-ros-bridge/src/carla_waypoint_publisher
 COPY carla_waypoint_types /opt/carla-ros-bridge/src/carla_waypoint_types
 COPY pcl_recorder /opt/carla-ros-bridge/src/pcl_recorder
+COPY carla_ad_demo /opt/carla-ros-bridge/src/carla_ad_demo
+COPY carla_ad_agent /opt/carla-ros-bridge/src/carla_ad_agent
+COPY rviz_carla_plugin /opt/carla-ros-bridge/src/rviz_carla_plugin
+COPY rqt_carla_control /opt/carla-ros-bridge/src/rqt_carla_control
+COPY carla_2d_nav /opt/carla-ros-bridge/src/carla_2d_nav
 
-RUN /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin config --install; catkin build --cmake-args -DCMAKE_BUILD_TYPE=Release' && \
+RUN /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin_make -DCMAKE_BUILD_TYPE=Release' && \ 
+#/bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin config --install; catkin build --cmake-args -DCMAKE_BUILD_TYPE=Release' && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     echo "source /opt/ros/noetic/setup.bash" >> /root/.bashrc && \
     echo "source /opt/carla-ros-bridge/devel/setup.bash" >> /root/.bashrc && \

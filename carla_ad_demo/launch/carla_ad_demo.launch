@@ -67,4 +67,6 @@
     <arg name='role_name' value='$(arg role_name)'/>
   </include>
 
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find carla_ad_demo)/config/carla_ad_demo.rviz" />
+
 </launch>
