@@ -48,7 +48,7 @@ RUN /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bri
 # replace entrypoint
 COPY ./docker/content/ros_entrypoint.sh /
 
-COPY ./docker/scripts /scripts
+COPY ./docker/scripts /
 
 ENV NVIDIA_VISIBLE_DEVICES \
     ${NVIDIA_VISIBLE_DEVICES:-all}
