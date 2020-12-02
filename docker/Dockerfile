@@ -4,7 +4,7 @@ ARG CARLA_BUILD=''
 ARG EDD_FILE='carla-0.9.10-py3.7-linux-x86_64.egg'
 
 FROM harbor.isus.tech/carlasim/carla:$CARLA_VERSION$CARLA_BUILD as carla
-FROM harbor.isus.tech/osrf/ros:noetic-desktop-full-focal
+FROM harbor.isus.tech/osrf/ros:noetic-desktop-focal
 
 ARG ROS_VERSION
 
@@ -15,6 +15,7 @@ RUN sed -i "s@http://.*archive.ubuntu.com@http://mirrors.huaweicloud.com@g" /etc
     if [ "$ROS_VERSION" = "noetic" ] ; then export PYTHON_SUFFIX=3 ; else export PYTHON_SUFFIX="" ; fi && \
     apt-get install -y --no-install-recommends \
     libpng16-16 \
+    libceres-dev \
     ros-$ROS_VERSION-ackermann-msgs \
     ros-$ROS_VERSION-tf \
     ros-$ROS_VERSION-derived-object-msgs \
@@ -38,7 +39,7 @@ COPY --from=carla --chown=root /home/carla/PythonAPI /opt/carla/PythonAPI
 
 COPY carla_ros /opt/carla-ros-bridge/src/carla_ros
 
-RUN /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin_make -DCMAKE_BUILD_TYPE=Release' && \ 
+RUN /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin build --cmake-args -DCMAKE_BUILD_TYPE=Release' && \ 
     ln -s /usr/bin/python3 /usr/bin/python && \
     echo "source /opt/ros/noetic/setup.bash" >> /root/.bashrc && \
     echo "source /opt/carla-ros-bridge/devel/setup.bash" >> /root/.bashrc && \
