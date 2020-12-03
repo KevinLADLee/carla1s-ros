@@ -1,11 +1,13 @@
 #!/bin/bash
 
+xhost +
+
 if [ "$(docker ps -a | grep carla-server)" ]; then
     echo "restart carla-server..."
     docker restart carla-server
 else
     echo "start carla-server..."
-    docker run -d --name=carla-server --ipc=host --network=host --runtime=nvidia --gpus all -e SDL_VIDEODRIVER=offscreen --restart=always registry.gitlab.isus.tech/kevinlad/carla:0.9.10.1 bash CarlaUE4.sh
+    docker run -d --name=carla-server --ipc=host --network=host --runtime=nvidia --gpus all -e SDL_VIDEODRIVER=offscreen --restart=always harbor.isus.tech/carlasim/carla:0.9.10.1 bash CarlaUE4.sh
 fi    
 
 if [ "$(docker ps -a | grep carla-ros)" ]; then

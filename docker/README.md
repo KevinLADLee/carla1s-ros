@@ -1,15 +1,22 @@
 # Docker版 Carla-ROS Bridge使用指南
 
-## 本机启动Carla服务器
+依赖： 
+
+* [docker](https://docs.docker.com/engine/install/ubuntu/)
+* [nvidia-docker2](https://github.com/NVIDIA/nvidia-docker) 
 
 ```bash
-docker run -d --name=carla-server --ipc=host --network=host --runtime=nvidia --gpus all -e SDL_VIDEODRIVER=offscreen --restart=always registry.gitlab.isus.tech/kevinlad/carla:0.9.10.1 bash CarlaUE4.sh
-```
+# 拉取最新源码
+git clone https://gitlab.isus.tech/kevinlad/carla-ros-bridge
 
-## 本机启动ROS-Bridge
+cd carla-ros-bridge/docker
 
-```bash
-docker run -it --rm --network=host harbor.isus.tech/carla-ros/carla-ros:0.9.10.1-noetic bash
+# 如果之前使用过此demo，建议重新清除本地的旧版本docker image
+./clean_docker_image.sh
 
-roslaunch carla_ego_vehicle carla_example_ego_vehicle.launch
+# 启动A-LOAM算法演示
+./run_carla_aloam.sh
+
+# 启动Costmap演示
+./run_carla_move_base.sh
 ```
