@@ -57,4 +57,4 @@ ENV NVIDIA_DRIVER_CAPABILITIES \
 
 SHELL [ "/bin/bash" ]
 
-CMD ["roslaunch", "carla_2d_nav", "carla_ego_vehicle.launch"]
+CMD ["/bin/bash", "/carla_ego.sh"]
