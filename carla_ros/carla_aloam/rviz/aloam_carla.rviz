@@ -4,17 +4,11 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /Status1
         - /odometry1/odomPath1
         - /odometry1/PointCloud21
-        - /mapping1
-        - /mapping1/allMapCloud1
-        - /Image1
-        - /Camera1
-        - /Camera2/Visibility1
+        - /Camera1/Visibility1
       Splitter Ratio: 0.5
-    Tree Height: 499
+    Tree Height: 823
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -218,9 +212,9 @@ Visualization Manager:
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 24.097394943237305
+          Max Intensity: 24.09899139404297
           Min Color: 0; 0; 0
-          Min Intensity: 2.0250790119171143
+          Min Intensity: 2.023714542388916
           Name: allMapCloud
           Position Transformer: XYZ
           Queue Size: 10
@@ -245,7 +239,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: FlatColor
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 15
@@ -262,7 +256,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -278,9 +272,9 @@ Visualization Manager:
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 24.09980010986328
+          Max Intensity: 24.094919204711914
           Min Color: 0; 0; 0
-          Min Intensity: 2.025050163269043
+          Min Intensity: 2.023780584335327
           Name: currPoints
           Position Transformer: XYZ
           Queue Size: 10
@@ -669,7 +663,7 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        290:
+        214:
           Value: true
         All Enabled: true
         aft_mapped:
@@ -690,6 +684,8 @@ Visualization Manager:
           Value: true
         ego_vehicle/lidar/lidar1:
           Value: true
+        ego_vehicle/semantic_lidar/lidar1:
+          Value: true
         map:
           Value: true
       Marker Alpha: 1
@@ -700,7 +696,7 @@ Visualization Manager:
       Show Names: true
       Tree:
         map:
-          290:
+          214:
             ego_vehicle:
               {}
           camera_init:
@@ -717,6 +713,8 @@ Visualization Manager:
           ego_vehicle/imu/imu1:
             {}
           ego_vehicle/lidar/lidar1:
+            {}
+          ego_vehicle/semantic_lidar/lidar1:
             {}
       Update Interval: 0
       Value: true
@@ -743,7 +741,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
       Visibility:
-        Axes: true
+        Axes: false
         Camera: true
         GT:
           Value: true
@@ -751,13 +749,15 @@ Visualization Manager:
           gtPathlc: true
         Grid: true
         Image: true
-        TF: true
+        Imu: true
+        PointCloud2: true
+        TF: false
         Value: true
         mapping:
           Value: true
           allMapCloud: true
           corner: true
-          currPoints: true
+          currPoints: false
           leftcameraPath: true
           map_corner: true
           map_surf: true
@@ -789,7 +789,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
       Visibility:
-        Axes: true
+        Axes: false
         Camera: true
         GT:
           Value: true
@@ -797,10 +797,12 @@ Visualization Manager:
           gtPathlc: true
         Grid: true
         Image: true
+        Imu: true
+        PointCloud2: true
         TF: false
         Value: true
         mapping:
-          Value: true
+          Value: false
           allMapCloud: true
           corner: true
           currPoints: true
@@ -823,7 +825,59 @@ Visualization Manager:
           removPoints: true
           scan: true
           sharp: true
-      Zoom Factor: 1
+      Zoom Factor: 1.5
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: ObjTag
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 20
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.05000000074505806
+      Style: Flat Squares
+      Topic: /carla/ego_vehicle/semantic_lidar/lidar1/point_cloud
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /carla/ego_vehicle/camera/depth/front/image_depth
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz_plugin_tutorials/Imu
+      Color: 204; 51; 204
+      Enabled: true
+      History Length: 1
+      Name: Imu
+      Queue Size: 10
+      Topic: /carla/ego_vehicle/imu/imu1
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -852,7 +906,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 5.532288551330566
+      Distance: 28.14797019958496
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -868,9 +922,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.48539844155311584
+      Pitch: 0.4053983986377716
       Target Frame: aft_mapped
-      Yaw: 3.9854025840759277
+      Yaw: 3.4303975105285645
     Saved: ~
 Window Geometry:
   Camera:
@@ -882,7 +936,7 @@ Window Geometry:
   Hide Right Dock: false
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd000000040000000000000403000006eefc020000000dfb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b000fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000006e000002eb0000018200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002f6000000c20000002600fffffffb0000000c00430061006d0065007200610100000365000001f00000002600fffffffb0000000a0049006d006100670065000000046b000001c40000002600fffffffb0000000c00430061006d0065007200610100000561000001fb0000002600fffffffb0000000c00430061006d0065007200610100000520000001560000000000000000000000010000015f000006eefc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000006e000006ee0000013200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e700000005afc0100000002fb0000000800540069006d0065010000000000000e700000057100fffffffb0000000800540069006d00650100000000000004500000000000000000000008f6000006ee00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000027c000006eefc020000000cfb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b000fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000006e0000042f0000018200fffffffb0000000a0056006900650077007301000004a9000002b30000013200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002f6000000c20000002600fffffffb0000000a0049006d006100670065000000046b000001c40000002600fffffffb0000000c00430061006d00650072006101000005200000015600000000000000000000000100000311000006eefc0200000005fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000c00430061006d006500720061010000006e000002370000002600fffffffb0000000c00430061006d00650072006101000002b10000023c0000002600fffffffb0000000a0049006d00610067006501000004f9000002630000002600fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e700000005afc0100000002fb0000000800540069006d0065010000000000000e700000057100fffffffb0000000800540069006d00650100000000000004500000000000000000000008cb000006ee00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
