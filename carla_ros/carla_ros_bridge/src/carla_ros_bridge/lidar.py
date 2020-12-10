@@ -71,22 +71,13 @@ class Lidar(Sensor):
         lidar_data = numpy.reshape(
             lidar_data, (int(lidar_data.shape[0] / 4), 4))
 
-        channels = float(self.carla_actor.attributes.get('channels'))
-        lower_fov = float(self.carla_actor.attributes.get('lower_fov'))
-        upper_fov = float(self.carla_actor.attributes.get('upper_fov'))
-
-        norm = numpy.linalg.norm(lidar_data[:, :3], 2, axis=1)
-        pitch = numpy.arcsin(lidar_data[:, 2] / norm)
-
-        fov_down = lower_fov / 180.0 * numpy.pi
-        fov = (abs(lower_fov) + abs(upper_fov)) / 180.0 * numpy.pi
-
-        ring = (pitch + abs(fov_down)) / fov
-        ring *= channels
-        ring = numpy.floor(ring)
-        ring = numpy.minimum(channels - 1, ring)
-        ring = numpy.maximum(0, ring).astype(numpy.uint16)
-        ring = ring.reshape(-1, 1)
+        channels = int(self.carla_actor.attributes.get('channels'))
+        ring = None
+        for i in range(channels):
+            current_ring_points_count = carla_lidar_measurement.get_point_count(i)
+            ring = numpy.vstack((ring,numpy.full((current_ring_points_count,1), i)))
+        ring = numpy.delete(ring, 0, axis=0)
+        lidar_data = numpy.hstack((lidar_data,ring))
 
         # we take the oposite of y axis
         # (as lidar point are express in left handed coordinate system, and ros need right handed)

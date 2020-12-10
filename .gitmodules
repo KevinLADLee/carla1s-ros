@@ -2,6 +2,3 @@
 	path = carla_msgs
 	url = https://github.com/carla-simulator/ros-carla-msgs
 	branch = master
-[submodule "carla_ros/ackermann_msgs"]
-	path = carla_ros/ackermann_msgs
-	url = https://github.com/ros-drivers/ackermann_msgs
