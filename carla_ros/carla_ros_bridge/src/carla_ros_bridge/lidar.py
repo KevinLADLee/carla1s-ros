@@ -82,10 +82,7 @@ class Lidar(Sensor):
         # we take the oposite of y axis
         # (as lidar point are express in left handed coordinate system, and ros need right handed)
         lidar_data[:, 1] *= -1
-
-        lidar_data = lidar_data.tolist()
-        [lidar_data[i].insert(4, *ring[i]) for i in range(len(lidar_data))]
-
+        
         point_cloud_msg = create_cloud(header, fields, lidar_data)
         self.lidar_publisher.publish(point_cloud_msg)
 
