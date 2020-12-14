@@ -7,5 +7,5 @@ before_script:
 build_image:
   script:
      - cd docker
-     - docker build -t registry.gitlab.isus.tech/kevinlad/carla-ros-bridge/carla-ros:0.9.10.1-noetic -f Dockerfile ./..
-     - docker push registry.gitlab.isus.tech/kevinlad/carla-ros-bridge/carla-ros:0.9.10.1-noetic
+     - docker build -t $CI_REGISTRY/carla-ros/carla-ros:0.9.10.1-noetic-dev -f Dockerfile ./..
+     - docker push $CI_REGISTRY/carla-ros/carla-ros:0.9.10.1-noetic-dev
