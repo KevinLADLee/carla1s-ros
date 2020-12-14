@@ -46,7 +46,11 @@ COPY --from=carla --chown=root /home/carla/PythonAPI /opt/carla/PythonAPI
 
 COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
 # RUN git clone https://github.com/carla-simulator/ros-bridge.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge
-RUN git clone https://github.com/ros-drivers/ackermann_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/ackermann_msgs
+RUN git clone https://github.com/ros-drivers/ackermann_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/ackermann_msgs && \
+    git clone https://github.com/astuff/astuff_sensor_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/astuff_sensor_msgs && \
+    cd /opt/carla-ros-bridge/src/ros-bridge/ && \
+    mv astuff_sensor_msgs/derived_object_msgs derived_object_msgs && \
+    rm -rf astuff_sensor_msgs
 COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
 
 ARG EDD_FILE
