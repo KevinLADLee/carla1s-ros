@@ -36,7 +36,7 @@ RUN apt-get update && \
     ros-$ROS_VERSION-teb-local-planner \
     python$PYTHON_SUFFIX-osrf-pycommon \
     python$PYTHON_SUFFIX-catkin-tools \
-    vim git \
+    vim git wget curl \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 --no-cache-dir install --upgrade \
         networkx distro pygame simple-pid numpy==1.18.4
@@ -46,12 +46,24 @@ COPY --from=carla --chown=root /home/carla/PythonAPI /opt/carla/PythonAPI
 
 COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
 # RUN git clone https://github.com/carla-simulator/ros-bridge.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge
-RUN git clone https://github.com/ros-drivers/ackermann_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/ackermann_msgs && \
-    git clone https://github.com/astuff/astuff_sensor_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/astuff_sensor_msgs && \
+RUN git clone https://gitlab.isus.tech/kevinlad/ackermann_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/ackermann_msgs && \
+    git clone https://gitlab.isus.tech/kevinlad/astuff_sensor_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/astuff_sensor_msgs && \
     cd /opt/carla-ros-bridge/src/ros-bridge/ && \
     mv astuff_sensor_msgs/derived_object_msgs derived_object_msgs && \
     rm -rf astuff_sensor_msgs
 COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
+
+RUN if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; else export USE_PROC=$(($(nproc)/2)) ; fi && \
+    cd /opt/ && \
+    wget -qc http://cdn.isus.tech/cdn/library/gtsam-4.0.3.tar.gz && \
+    tar -zxvf gtsam-4.0.3.tar.gz && \
+    cd gtsam-4.0.3 && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j${USE_PROC} && \
+    make install
+
 
 ARG EDD_FILE
 RUN /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin build --cmake-args -DCMAKE_BUILD_TYPE=Release' && \ 
