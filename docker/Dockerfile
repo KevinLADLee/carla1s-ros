@@ -7,17 +7,18 @@ FROM harbor.isus.tech/carlasim/carla:$CARLA_VERSION$CARLA_BUILD as carla
 FROM harbor.isus.tech/osrf/ros:$ROS_VERSION-desktop
 
 ARG ROS_VERSION
-ARG MIRROR='http://mirrors.cra.moe'
-ARG ROS_MIRROR='http://mirrors.cra.moe'
+ARG MIRROR='http://mirrors.sustech.edu.cn'
+ARG PYPI_MIRROR='https://mirrors.aliyun.com'
+ARG ROS_MIRROR='http://mirrors.sustech.edu.cn'
 RUN sed -i "s@http://.*archive.ubuntu.com@$MIRROR@g" /etc/apt/sources.list && \
     sed -i "s@http://.*security.ubuntu.com@$MIRROR@g" /etc/apt/sources.list && \
     sed -i "s@http://packages.ros.org@$ROS_MIRROR@g" /etc/apt/sources.list.d/ros1-latest.list && \   
     apt-get update && \
     apt-get install -y --no-install-recommends \
         python3-pip  && \
-#    pip3 install --no-cache-dir pip -U -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host https://mirrors.aliyun.com && \
-    pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
-    pip3 config set install.trusted-host mirrors.aliyun.com
+    rm -rf /var/lib/apt/lists/* && \
+    pip3 install --no-cache-dir pip -U -i $PYPI_MIRROR/pypi/simple/  && \
+    pip3 config set global.index-url $PYPI_MIRROR/pypi/simple/ 
 
 
 RUN apt-get update && \
