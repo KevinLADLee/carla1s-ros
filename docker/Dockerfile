@@ -15,7 +15,7 @@ RUN sed -i "s@http://.*archive.ubuntu.com@$MIRROR@g" /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         python3-pip  && \
-    pip3 install --no-cache-dir pip -U -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host https://mirrors.aliyun.com && \
+#    pip3 install --no-cache-dir pip -U -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host https://mirrors.aliyun.com && \
     pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
     pip3 config set install.trusted-host mirrors.aliyun.com
 
