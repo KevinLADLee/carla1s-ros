@@ -9,3 +9,4 @@ build_image:
      - cd docker
      - docker build -t $CI_REGISTRY/carla-ros/carla-ros:$CI_COMMIT_BRANCH -f Dockerfile ./..
      - docker push $CI_REGISTRY/carla-ros/carla-ros:$CI_COMMIT_BRANCH
+  retry: 2     
