@@ -54,7 +54,7 @@ typedef pcl::PointXYZI  PointType;
 
 // extern const string pointCloudTopic = "/velodyne_points";
 // extern const string pointCloudTopic = "/kitti_scan";
-extern const string pointCloudTopic = "/carla/ego_vehicle/lidar/lidar1/point_cloud";
+extern const string pointCloudTopic = "/carla/ego_vehicle/lidar";
 extern const string imuTopic = "/imu/data";
 
 // Save pcd
@@ -69,7 +69,7 @@ extern const int Horizon_SCAN = 1800;
 extern const float ang_res_x = 360.0/float(Horizon_SCAN);
 extern const float ang_res_y = 30/float(N_SCAN);
 extern const float ang_bottom = 20.0;
-extern const int groundScanInd = 26;
+extern const int groundScanInd = 7;
 
 // VLS-128
 // extern const int N_SCAN = 128;

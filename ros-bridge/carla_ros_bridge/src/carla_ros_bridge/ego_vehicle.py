@@ -10,22 +10,25 @@
 Classes to handle Carla vehicles
 """
 import math
-import numpy
+import os
 
-import rospy
-
-from std_msgs.msg import ColorRGBA
-from std_msgs.msg import Bool
-from geometry_msgs.msg import Twist, Transform
-
+from std_msgs.msg import Bool  # pylint: disable=import-error
+from std_msgs.msg import ColorRGBA  # pylint: disable=import-error
 from carla import VehicleControl
-from carla import Vector3D
-
 from carla_ros_bridge.vehicle import Vehicle
-import carla_common.transforms as transforms
 
-from carla_msgs.msg import CarlaEgoVehicleInfo, CarlaEgoVehicleInfoWheel,\
-    CarlaEgoVehicleControl, CarlaEgoVehicleStatus
+from carla_msgs.msg import (
+    CarlaEgoVehicleInfo,
+    CarlaEgoVehicleInfoWheel,
+    CarlaEgoVehicleControl,
+    CarlaEgoVehicleStatus
+)
+
+from ros_compatibility import (
+    QoSProfile,
+    latch_on,
+    ROS_VERSION
+)
 
 
 class EgoVehicle(Vehicle):
@@ -34,57 +37,58 @@ class EgoVehicle(Vehicle):
     Vehicle implementation details for the ego vehicle
     """
 
-    def __init__(self, carla_actor, parent, node, vehicle_control_applied_callback):
+    def __init__(self, uid, name, parent, node, carla_actor, vehicle_control_applied_callback):
         """
         Constructor
 
-        :param carla_actor: carla actor object
-        :type carla_actor: carla.Actor
+        :param uid: unique identifier for this object
+        :type uid: int
+        :param name: name identiying this object
+        :type name: string
         :param parent: the parent of this
         :type parent: carla_ros_bridge.Parent
         :param node: node-handle
-        :type node: carla_ros_bridge.CarlaRosBridge
+        :type node: CompatibleNode
+        :param carla_actor: carla actor object
+        :type carla_actor: carla.Actor
         """
-        super(EgoVehicle, self).__init__(carla_actor=carla_actor,
+        super(EgoVehicle, self).__init__(uid=uid,
+                                         name=name,
                                          parent=parent,
                                          node=node,
-                                         prefix=carla_actor.attributes.get('role_name'))
+                                         carla_actor=carla_actor)
 
         self.vehicle_info_published = False
         self.vehicle_control_override = False
         self._vehicle_control_applied_callback = vehicle_control_applied_callback
 
-        self.vehicle_status_publisher = rospy.Publisher(
-            self.get_topic_prefix() + "/vehicle_status",
+        self.vehicle_status_publisher = node.new_publisher(
             CarlaEgoVehicleStatus,
-            queue_size=10)
-        self.vehicle_info_publisher = rospy.Publisher(self.get_topic_prefix() +
-                                                      "/vehicle_info",
-                                                      CarlaEgoVehicleInfo,
-                                                      queue_size=10,
-                                                      latch=True)
+            self.get_topic_prefix() + "/vehicle_status")
+        self.vehicle_info_publisher = node.new_publisher(CarlaEgoVehicleInfo,
+                                                         self.get_topic_prefix() +
+                                                         "/vehicle_info",
+                                                         qos_profile=QoSProfile(depth=10, durability=latch_on))
 
-        self.control_subscriber = rospy.Subscriber(
-            self.get_topic_prefix() + "/vehicle_control_cmd",
+        self.control_subscriber = node.create_subscriber(
             CarlaEgoVehicleControl,
+            self.get_topic_prefix() + "/vehicle_control_cmd",
             lambda data: self.control_command_updated(data, manual_override=False))
 
-        self.manual_control_subscriber = rospy.Subscriber(
-            self.get_topic_prefix() + "/vehicle_control_cmd_manual",
+        self.manual_control_subscriber = node.create_subscriber(
             CarlaEgoVehicleControl,
+            self.get_topic_prefix() + "/vehicle_control_cmd_manual",
             lambda data: self.control_command_updated(data, manual_override=True))
 
-        self.control_override_subscriber = rospy.Subscriber(
+        self.control_override_subscriber = node.create_subscriber(
+            Bool,
             self.get_topic_prefix() + "/vehicle_control_manual_override",
-            Bool, self.control_command_override)
+            self.control_command_override, QoSProfile(depth=1, durability=True))
 
-        self.enable_autopilot_subscriber = rospy.Subscriber(
+        self.enable_autopilot_subscriber = node.create_subscriber(
+            Bool,
             self.get_topic_prefix() + "/enable_autopilot",
-            Bool, self.enable_autopilot_updated)
-
-        self.twist_control_subscriber = rospy.Subscriber(
-            self.get_topic_prefix() + "/twist_cmd",
-            Twist, self.twist_command_updated)
+            self.enable_autopilot_updated)
 
     def get_marker_color(self):
         """
@@ -96,9 +100,9 @@ class EgoVehicle(Vehicle):
         :rtpye : std_msgs.msg.ColorRGBA
         """
         color = ColorRGBA()
-        color.r = 0
-        color.g = 255
-        color.b = 0
+        color.r = 0.0
+        color.g = 255.0
+        color.b = 0.0
         return color
 
     def send_vehicle_msgs(self):
@@ -175,10 +179,6 @@ class EgoVehicle(Vehicle):
         """
         self.send_vehicle_msgs()
         super(EgoVehicle, self).update(frame, timestamp)
-        no_rotation = Transform()
-        no_rotation.rotation.w = 1.0
-        self.publish_transform(self.get_ros_transform(
-            no_rotation, frame_id=str(self.get_id()), child_frame_id=self.get_prefix()))
 
     def destroy(self):
         """
@@ -189,40 +189,14 @@ class EgoVehicle(Vehicle):
 
         :return:
         """
-        rospy.logdebug("Destroy Vehicle(id={})".format(self.get_id()))
-        self.control_subscriber.unregister()
-        self.control_subscriber = None
-        self.enable_autopilot_subscriber.unregister()
-        self.enable_autopilot_subscriber = None
-        self.twist_control_subscriber.unregister()
-        self.twist_control_subscriber = None
-        self.control_override_subscriber.unregister()
-        self.control_override_subscriber = None
-        self.manual_control_subscriber.unregister()
-        self.manual_control_subscriber = None
-        super(EgoVehicle, self).destroy()
-
-    def twist_command_updated(self, twist):
-        """
-        Set angular/linear velocity (this does not respect vehicle dynamics)
-        """
-        if not self.vehicle_control_override:
-            angular_velocity = Vector3D()
-            angular_velocity.z = math.degrees(twist.angular.z)
-
-            rotation_matrix = transforms.carla_rotation_to_numpy_rotation_matrix(
-                self.carla_actor.get_transform().rotation)
-            linear_vector = numpy.array([twist.linear.x, twist.linear.y, twist.linear.z])
-            rotated_linear_vector = rotation_matrix.dot(linear_vector)
-            linear_velocity = Vector3D()
-            linear_velocity.x = rotated_linear_vector[0]
-            linear_velocity.y = -rotated_linear_vector[1]
-            linear_velocity.z = rotated_linear_vector[2]
-
-            rospy.logdebug("Set velocity linear: {}, angular: {}".format(
-                linear_velocity, angular_velocity))
-            self.carla_actor.set_target_velocity(linear_velocity)
-            self.carla_actor.set_target_angular_velocity(angular_velocity)
+        self.node.logdebug("Destroy Vehicle(id={})".format(self.get_id()))
+        self.node.destroy_subscription(self.control_subscriber)
+        self.node.destroy_subscription(self.enable_autopilot_subscriber)
+        self.node.destroy_subscription(self.control_override_subscriber)
+        self.node.destroy_subscription(self.manual_control_subscriber)
+        self.node.destroy_publisher(self.vehicle_status_publisher)
+        self.node.destroy_publisher(self.vehicle_info_publisher)
+        Vehicle.destroy(self)
 
     def control_command_override(self, enable):
         """
@@ -263,7 +237,7 @@ class EgoVehicle(Vehicle):
         :type enable_auto_pilot: std_msgs.Bool
         :return:
         """
-        rospy.logdebug("Ego vehicle: Set autopilot to {}".format(enable_auto_pilot.data))
+        self.node.logdebug("Ego vehicle: Set autopilot to {}".format(enable_auto_pilot.data))
         self.carla_actor.set_autopilot(enable_auto_pilot.data)
 
     @staticmethod

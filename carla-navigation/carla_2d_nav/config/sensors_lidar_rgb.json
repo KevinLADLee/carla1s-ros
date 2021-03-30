@@ -67,7 +67,7 @@
             "exposure_speed_up": 3.0,
             "exposure_speed_down": 1.0,
             "calibration_constant": 16.0,
-            "focal_distance": 1000.0,
+         111.051,-191.985   "focal_distance": 1000.0,
             "blur_amount": 1.0,
             "blur_radius": 0.0,
             "motion_blur_intensity": 0.45,

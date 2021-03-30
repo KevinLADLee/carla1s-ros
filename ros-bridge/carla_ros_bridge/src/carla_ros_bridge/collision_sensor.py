@@ -10,8 +10,6 @@
 Classes to handle collision events
 """
 
-import rospy
-
 from carla_ros_bridge.sensor import Sensor
 from carla_msgs.msg import CarlaCollisionEvent
 
@@ -22,30 +20,41 @@ class CollisionSensor(Sensor):
     Actor implementation details for a collision sensor
     """
 
-    def __init__(self, carla_actor, parent, node, synchronous_mode):
+    def __init__(self, uid, name, parent, relative_spawn_pose, node, carla_actor, synchronous_mode):
         """
         Constructor
 
-        :param carla_actor: carla actor object
-        :type carla_actor: carla.Actor
+        :param uid: unique identifier for this object
+        :type uid: int
+        :param name: name identiying this object
+        :type name: string
         :param parent: the parent of this
         :type parent: carla_ros_bridge.Parent
+        :param relative_spawn_pose: the relative spawn pose of this
+        :type relative_spawn_pose: geometry_msgs.Pose
         :param node: node-handle
-        :type node: carla_ros_bridge.CarlaRosBridge
+        :type node: CompatibleNode
+        :param carla_actor: carla actor object
+        :type carla_actor: carla.Actor
         :param synchronous_mode: use in synchronous mode?
         :type synchronous_mode: bool
         """
-        super(CollisionSensor, self).__init__(carla_actor=carla_actor,
+        super(CollisionSensor, self).__init__(uid=uid,
+                                              name=name,
                                               parent=parent,
+                                              relative_spawn_pose=relative_spawn_pose,
                                               node=node,
+                                              carla_actor=carla_actor,
                                               synchronous_mode=synchronous_mode,
-                                              is_event_sensor=True,
-                                              prefix="collision")
+                                              is_event_sensor=True)
 
-        self.collision_publisher = rospy.Publisher(self.get_topic_prefix(),
-                                                   CarlaCollisionEvent,
-                                                   queue_size=10)
+        self.collision_publisher = node.new_publisher(CarlaCollisionEvent,
+                                                      self.get_topic_prefix())
         self.listen()
+
+    def destroy(self):
+        super(CollisionSensor, self).destroy()
+        self.node.destroy_publisher(self.collision_publisher)
 
     # pylint: disable=arguments-differ
     def sensor_data_updated(self, collision_event):

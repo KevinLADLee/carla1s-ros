@@ -7,11 +7,10 @@
 Classes to handle Carla imu sensor
 """
 
-import rospy
-
 from sensor_msgs.msg import Imu
 
 from carla_ros_bridge.sensor import Sensor
+from transforms3d.euler import euler2quat
 import carla_common.transforms as trans
 
 
@@ -21,27 +20,39 @@ class ImuSensor(Sensor):
     Actor implementation details for imu sensor
     """
 
-    def __init__(self, carla_actor, parent, node, synchronous_mode):
+    def __init__(self, uid, name, parent, relative_spawn_pose, node, carla_actor, synchronous_mode):
         """
         Constructor
 
-        :param carla_actor : carla actor object
-        :type carla_actor: carla.Actor
+        :param uid: unique identifier for this object
+        :type uid: int
+        :param name: name identiying this object
+        :type name: string
         :param parent: the parent of this
         :type parent: carla_ros_bridge.Parent
+        :param relative_spawn_pose: the relative spawn pose of this
+        :type relative_spawn_pose: geometry_msgs.Pose
         :param node: node-handle
-        :type node: carla_ros_bridge.CarlaRosBridge
+        :type node: CompatibleNode
+        :param carla_actor : carla actor object
+        :type carla_actor: carla.Actor
         :param synchronous_mode: use in synchronous mode?
         :type synchronous_mode: bool
         """
-        super(ImuSensor, self).__init__(carla_actor=carla_actor,
+        super(ImuSensor, self).__init__(uid=uid,
+                                        name=name,
                                         parent=parent,
+                                        relative_spawn_pose=relative_spawn_pose,
                                         node=node,
-                                        synchronous_mode=synchronous_mode,
-                                        prefix="imu/" + carla_actor.attributes.get('role_name'))
+                                        carla_actor=carla_actor,
+                                        synchronous_mode=synchronous_mode)
 
-        self.imu_publisher = rospy.Publisher(self.get_topic_prefix(), Imu, queue_size=10)
+        self.imu_publisher = node.new_publisher(Imu, self.get_topic_prefix())
         self.listen()
+
+    def destroy(self):
+        super(ImuSensor, self).destroy()
+        self.node.destroy_publisher(self.imu_publisher)
 
     # pylint: disable=arguments-differ
     def sensor_data_updated(self, carla_imu_measurement):
@@ -65,8 +76,11 @@ class ImuSensor(Sensor):
         imu_msg.linear_acceleration.y = -carla_imu_measurement.accelerometer.y
         imu_msg.linear_acceleration.z = carla_imu_measurement.accelerometer.z
 
-        imu_rotation = carla_imu_measurement.transform.rotation
+        roll, pitch, yaw = trans.carla_rotation_to_RPY(carla_imu_measurement.transform.rotation)
+        quat = euler2quat(roll, pitch, yaw)
+        imu_msg.orientation.w = quat[0]
+        imu_msg.orientation.x = quat[1]
+        imu_msg.orientation.y = quat[2]
+        imu_msg.orientation.z = quat[3]
 
-        quat = trans.carla_rotation_to_numpy_quaternion(imu_rotation)
-        imu_msg.orientation = trans.numpy_quaternion_to_ros_quaternion(quat)
         self.imu_publisher.publish(imu_msg)

@@ -9,7 +9,7 @@
 """
 Classes to handle Carla pedestrians
 """
-import rospy
+
 from derived_object_msgs.msg import Object
 
 from carla_ros_bridge.traffic_participant import TrafficParticipant
@@ -23,32 +23,31 @@ class Walker(TrafficParticipant):
     Actor implementation details for pedestrians
     """
 
-    def __init__(self, carla_actor, parent, node):
+    def __init__(self, uid, name, parent, node, carla_actor):
         """
         Constructor
 
-        :param carla_actor: carla walker actor object
-        :type carla_actor: carla.Walker
+        :param uid: unique identifier for this object
+        :type uid: int
+        :param name: name identiying this object
+        :type name: string
         :param parent: the parent of this
         :type parent: carla_ros_bridge.Parent
         :param node: node-handle
-        :type node: carla_ros_bridge.CarlaRosBridge
-        :param prefix: the topic prefix to be used for this actor
-        :type prefix: string
+        :type node: CompatibleNode
+        :param carla_actor: carla walker actor object
+        :type carla_actor: carla.Walker
         """
-        if carla_actor.attributes.get('role_name'):
-            prefix = carla_actor.attributes.get('role_name')
-        else:
-            prefix = "walker/{:03}".format(carla_actor.id)
-
-        super(Walker, self).__init__(carla_actor=carla_actor,
+        super(Walker, self).__init__(uid=uid,
+                                     name=name,
                                      parent=parent,
                                      node=node,
-                                     prefix=prefix)
+                                     carla_actor=carla_actor)
 
-        self.control_subscriber = rospy.Subscriber(
+        self.control_subscriber = self.node.create_subscriber(
+            CarlaWalkerControl,
             self.get_topic_prefix() + "/walker_control_cmd",
-            CarlaWalkerControl, self.control_command_updated)
+            self.control_command_updated)
 
     def destroy(self):
         """
@@ -59,10 +58,8 @@ class Walker(TrafficParticipant):
 
         :return:
         """
-        rospy.logdebug("Destroy Walker(id={})".format(self.get_id()))
-        self.control_subscriber.unregister()
-        self.control_subscriber = None
         super(Walker, self).destroy()
+        self.node.destroy_subscription(self.control_subscriber)
 
     def control_command_updated(self, ros_walker_control):
         """

@@ -9,12 +9,13 @@
 a sensor that reports the state of all traffic lights
 """
 
-import rospy
-
-from carla_msgs.msg import CarlaTrafficLightStatusList,\
+from carla_msgs.msg import (
+    CarlaTrafficLightStatusList,
     CarlaTrafficLightInfoList
+)
 from carla_ros_bridge.traffic import TrafficLight
 from carla_ros_bridge.pseudo_actor import PseudoActor
+from ros_compatibility import QoSProfile, latch_on
 
 
 class TrafficLightsSensor(PseudoActor):
@@ -22,42 +23,56 @@ class TrafficLightsSensor(PseudoActor):
     a sensor that reports the state of all traffic lights
     """
 
-    def __init__(self, parent, node, actor_list):
+    def __init__(self, uid, name, parent, node, actor_list):
         """
         Constructor
+
+        :param uid: unique identifier for this object
+        :type uid: int
+        :param name: name identiying the sensor
+        :type name: string
         :param parent: the parent of this
         :type parent: carla_ros_bridge.Parent
         :param node: node-handle
-        :type node: carla_ros_bridge.CarlaRosBridge
+        :type node: CompatibleNode
         :param actor_list: current list of actors
         :type actor_list: map(carla-actor-id -> python-actor-object)
         """
 
-        super(TrafficLightsSensor, self).__init__(parent=parent,
-                                                  node=node,
-                                                  prefix="")
+        super(TrafficLightsSensor, self).__init__(uid=uid,
+                                                  name=name,
+                                                  parent=parent,
+                                                  node=node)
+
         self.actor_list = actor_list
         self.traffic_light_status = CarlaTrafficLightStatusList()
         self.traffic_light_actors = []
 
-        self.traffic_lights_info_publisher = rospy.Publisher(
-            self.get_topic_prefix() + "traffic_lights_info",
+        self.traffic_lights_info_publisher = node.new_publisher(
             CarlaTrafficLightInfoList,
-            queue_size=10,
-            latch=True)
-        self.traffic_lights_status_publisher = rospy.Publisher(
-            self.get_topic_prefix() + "traffic_lights",
+            self.get_topic_prefix() + "/info", qos_profile=QoSProfile(depth=10, durability=latch_on))
+        self.traffic_lights_status_publisher = node.new_publisher(
             CarlaTrafficLightStatusList,
-            queue_size=10,
-            latch=True)
+            self.get_topic_prefix() + "/status",
+            qos_profile=QoSProfile(depth=10, durability=latch_on))
 
     def destroy(self):
         """
         Function to destroy this object.
         :return:
         """
-        self.actor_list = None
         super(TrafficLightsSensor, self).destroy()
+        self.actor_list = None
+        self.node.destroy_publisher(self.traffic_lights_info_publisher)
+        self.node.destroy_publisher(self.traffic_lights_status_publisher)
+
+    @staticmethod
+    def get_blueprint_name():
+        """
+        Get the blueprint identifier for the pseudo sensor
+        :return: name
+        """
+        return "sensor.pseudo.traffic_lights"
 
     def update(self, frame, timestamp):
         """

@@ -10,9 +10,7 @@ This plugin is expecting a ego vehicle named `ego_vehicle`.
 
 ### Provide the RVIZ view pose to other nodes
 
-In combination with [carla_spectator_camera](../carla_spectator_camera), this allows visually moving around in the CARLA world.
-
-Currently, it is limited to a camera attached to the ego-vehicle. Please set the target frame of the "Current View" to `ego_vehicle`.
+When a `actor.pseudo.control` is attached to a camera (using the [carla_spawn_objects](../carla_spawn_objects) node), it allows to move the camera around in the CARLA world, by publishing a Pose message.
 
 ### Visualize the current ego vehicle state
 
@@ -29,12 +27,9 @@ By using the drive-widget from the [RVIZ Visualization Tutorials](https://github
 
 By using [carla_ros_scenario_runner](../carla_ros_scenario_runner), it is possible to trigger scenarios from within RVIZ.
 
-
 ### Play/Pause the simulation (if started in synchronous mode)
 
 Similar to the [rqt CARLA plugin](../rqt_carla_plugin), it's possible to control the CARLA world, if synchronous mode is active.
-
-
 
 ## Topics
 
