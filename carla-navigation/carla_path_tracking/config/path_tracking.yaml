@@ -1,0 +1,11 @@
+pure_pursuit:
+  L: 4.52 # length of car
+  Vcmd: 10.0 # reference speed (m/s)
+  Lfw: 3.0 # forward look ahead distance (m)
+  lfw: 2.26 # distance between front and center of car
+  controller_freq: 50 # Hz
+  steering_gain: 5.0
+  goal_radius: 2.0 # goal radius (m)
+  base_angle: 0.0 # neutral point of servo (rad)
+  smooth_accel: true # smooth the acceleration of car
+  speed_incremental: 1.5 # speed incremental value (discrete acceleraton), unit: m/s

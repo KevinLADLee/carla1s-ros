@@ -10,7 +10,7 @@
   <arg name='role_name' default='ego_vehicle'/>
   <arg name="vehicle_filter" default='vehicle.lincoln2020.mkz2020'/>
 
-  <arg name="town" default='' />
+  <arg name="town" default='Town02' />
   <arg name="spawn_point" default="" />
 
   <!-- Enable/disable passive mode -->
@@ -20,6 +20,8 @@
   <arg name='synchronous_mode' default='True'/>
   <arg name='synchronous_mode_wait_for_vehicle_control_command' default='False'/>
   <arg name='fixed_delta_seconds' default='0.05'/>
+
+<node name="map_server" pkg="map_server" type="map_server" args="$(find carla_2d_nav)/maps/$(arg town).yaml" respawn="false" />
 
   <include file="$(find carla_ros_bridge)/launch/carla_ros_bridge.launch">
     <arg name='host' value='$(arg host)'/>
