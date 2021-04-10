@@ -11,6 +11,7 @@ Classes to handle Carla vehicles
 """
 import math
 import os
+import numpy
 
 from std_msgs.msg import Bool  # pylint: disable=import-error
 from std_msgs.msg import ColorRGBA  # pylint: disable=import-error
@@ -90,6 +91,7 @@ class EgoVehicle(Vehicle):
             self.get_topic_prefix() + "/enable_autopilot",
             self.enable_autopilot_updated)
 
+
     def get_marker_color(self):
         """
         Function (override) to return the color for marker messages.
@@ -142,12 +144,16 @@ class EgoVehicle(Vehicle):
                 wheel_info.radius = wheel.radius
                 wheel_info.max_brake_torque = wheel.max_brake_torque
                 wheel_info.max_handbrake_torque = wheel.max_handbrake_torque
-                wheel_info.position.x = (wheel.position.x/100.0) - \
-                    self.carla_actor.get_transform().location.x
-                wheel_info.position.y = -((wheel.position.y/100.0) -
-                                          self.carla_actor.get_transform().location.y)
-                wheel_info.position.z = (wheel.position.z/100.0) - \
-                    self.carla_actor.get_transform().location.z
+
+                inv_T = numpy.array(self.carla_actor.get_transform().get_inverse_matrix(), dtype=float)
+                wheel_pos_in_map = numpy.array([[wheel.position.x/100.0],
+                                        [wheel.position.y/100.0],
+                                        [wheel.position.z/100.0],
+                                        [1.0]])
+                wheel_pos_in_ego_vehicle = numpy.matmul(inv_T, wheel_pos_in_map)
+                wheel_info.position.x = wheel_pos_in_ego_vehicle[0]
+                wheel_info.position.y = -wheel_pos_in_ego_vehicle[1]
+                wheel_info.position.z = wheel_pos_in_ego_vehicle[2]
                 vehicle_info.wheels.append(wheel_info)
 
             vehicle_info.max_rpm = vehicle_physics.max_rpm

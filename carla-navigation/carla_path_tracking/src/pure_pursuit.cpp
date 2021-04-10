@@ -12,6 +12,8 @@
 #include <ackermann_msgs/AckermannDriveStamped.h>
 #include <visualization_msgs/Marker.h>
 
+#include <carla_msgs/CarlaEgoVehicleInfo.h>
+
 /********************/
 /* CLASS DEFINITION */
 /********************/
@@ -30,15 +32,18 @@ public:
 
 private:
     ros::NodeHandle nh_;
-    ros::Subscriber odom_sub_, path_sub_;
+    ros::Subscriber odom_sub_, path_sub_, vehicle_info_sub_;
     ros::Publisher cmd_pub_, marker_pub_;
     ros::Timer timer1_, timer2_;
 
     visualization_msgs::Marker points_, line_strip_, goal_circle_;
     geometry_msgs::Point odom_goal_pos_, goal_pos_;
     geometry_msgs::Twist cmd_vel_;
+    ackermann_msgs::AckermannDrive ackermann_cmd_;
     nav_msgs::Odometry odom_;
     nav_msgs::Path map_path_, odom_path_;
+
+    bool use_vehicle_info_ = true;
 
     double L_, Lfw_, Vcmd_, lfw_, steering_, velocity_;
     double steering_gain_, base_angle_, goal_radius_, speed_incremental_;
@@ -46,6 +51,7 @@ private:
     bool found_forward_pt_, smooth_accel_;
     bool goal_received_, goal_reached_;
 
+    void vehicleInfoCB(const carla_msgs::CarlaEgoVehicleInfoConstPtr &vehicle_info_msg);
     void odomCB(const nav_msgs::Odometry::ConstPtr &odom_msg);
     void pathCB(const nav_msgs::Path::ConstPtr &path_msg);
     void controlLoopCB(const ros::TimerEvent &);
@@ -61,23 +67,25 @@ PurePursuit::PurePursuit(const std::string &name)
     // TODO: Optimize parameters setting
     //Car parameter
     pn.param("L", L_, 2.77);      // length of car
-    pn.param("Vcmd", Vcmd_, 1.0); // reference speed (m/s)
+    pn.param("Vcmd", Vcmd_, 20.0); // reference speed (m/s)
     pn.param("Lfw", Lfw_, 5.0);   // forward look ahead distance (m)
     pn.param("lfw", lfw_, 1.6614);  // distance between front the center of car
 
     //Controller parameter
-    pn.param("controller_freq", controller_freq_, 20);
-    pn.param("steering_gain", steering_gain_, 5.0);
-    pn.param("goal_radius", goal_radius_, 0.5);             // goal radius (m)
+    pn.param("controller_freq", controller_freq_, 50);
+    pn.param("steering_gain", steering_gain_, 3.0);
+    pn.param("goal_radius", goal_radius_, 2.0);             // goal radius (m)
     pn.param("base_angle", base_angle_, 0.0);               // neutral point of servo (rad)
     pn.param("smooth_accel", smooth_accel_, true);          // smooth the acceleration of car
-    pn.param("speed_incremental", speed_incremental_, 0.5); // speed incremental value (discrete acceleraton), unit: m/s
+    pn.param("speed_incremental", speed_incremental_, 1.5); // speed incremental value (discrete acceleraton), unit: m/s
 
     //Publishers and Subscribers
     odom_sub_ = nh_.subscribe("/carla/ego_vehicle/odometry", 1, &PurePursuit::odomCB, this);
     path_sub_ = nh_.subscribe("/carla/ego_vehicle/waypoints", 1, &PurePursuit::pathCB, this);
+    vehicle_info_sub_ = nh_.subscribe("/carla/ego_vehicle/vehicle_info", 1, &PurePursuit::vehicleInfoCB, this);
+
     marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/path_tracking_node/pure_pursuit/path_marker", 5);
-    cmd_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+    cmd_pub_ = nh_.advertise<ackermann_msgs::AckermannDrive>("/carla/ego_vehicle/ackermann_cmd", 10);
 
     //Timer
     timer1_ = nh_.createTimer(ros::Duration((1.0) / controller_freq_), &PurePursuit::controlLoopCB, this); // Duration(1/control_Hz)
@@ -324,10 +332,21 @@ void PurePursuit::controlLoopCB(const ros::TimerEvent &)
         steering_ = base_angle_;
     }
 
-    cmd_vel_.linear.x = velocity_;
-    cmd_vel_.angular.z = steering_;
-    cmd_pub_.publish(cmd_vel_);
+    ackermann_cmd_.speed = velocity_;
+    ackermann_cmd_.steering_angle = steering_;
+    cmd_pub_.publish(ackermann_cmd_);
 }
+
+void PurePursuit::vehicleInfoCB(const carla_msgs::CarlaEgoVehicleInfoConstPtr &vehicle_info_msg) {
+  if(use_vehicle_info_){
+    auto wheels = vehicle_info_msg->wheels;
+    L_ = std::abs(wheels.at(0).position.x - wheels.at(2).position.x);
+    lfw_ = std::abs(wheels.at(0).position.x);
+    std::cout << "VehicleInfo: wheel_base = " << L_ << " wheel front to center = " << lfw_  << std::endl;
+  }
+  use_vehicle_info_ = false;
+}
+
 
 /*****************/
 /* MAIN FUNCTION */

@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   ackermann_msgs
   visualization_msgs
+  carla_msgs
 )
 
 catkin_package(
@@ -40,3 +41,4 @@ include_directories(
 
 add_executable(pure_pursuit_node src/pure_pursuit.cpp)
 target_link_libraries(pure_pursuit_node ${catkin_LIBRARIES})
+add_dependencies(pure_pursuit_node carla_msgs_generate_messages)

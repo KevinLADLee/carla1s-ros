@@ -10,8 +10,14 @@
   <arg name='role_name' default='ego_vehicle'/>
   <arg name="vehicle_filter" default='vehicle.lincoln2020.mkz2020'/>
 
-  <arg name="town" default='Town02' />
-  <arg name="spawn_point" default="" />
+<!--   <arg name="town" default='Town02' /> -->
+<!--   <arg name="spawn_point" default="189.681, -254.954,0.5,0,0,-90"/> -->
+
+<!--   <arg name="town" default='Town01'/> -->
+<!--   <arg name="spawn_point" default="295.082, -199.060, 0.2, 0, 0, 0"/> -->
+
+    <arg name="town" default='Town03'/>
+    <arg name="spawn_point" default="-87.967, -91.033, 0.6, 0, 0, -90"/>
 
   <!-- Enable/disable passive mode -->
   <arg name='passive' default=''/>
