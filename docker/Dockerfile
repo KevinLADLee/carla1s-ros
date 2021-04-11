@@ -66,7 +66,9 @@ RUN if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; else export USE_PROC=$(
 
 
 ARG EDD_FILE
-RUN /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin build --cmake-args -DCMAKE_BUILD_TYPE=Release' && \ 
+
+RUN if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; else export USE_PROC=$(($(nproc)/2)) ; fi && \
+    /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin_make -DCMAKE_BUILD_TYPE=Release -j${USE_PROC}' && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     echo "source /opt/ros/noetic/setup.bash" >> /root/.bashrc && \
     echo "source /opt/carla-ros-bridge/devel/setup.bash" >> /root/.bashrc && \
