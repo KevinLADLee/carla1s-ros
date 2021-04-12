@@ -4,21 +4,7 @@ ARG CARLA_VERSION='0.9.11'
 ARG EDD_FILE='carla-0.9.11-py3.7-linux-x86_64.egg'
 
 FROM harbor.isus.tech/carlasim/carla:$CARLA_VERSION$CARLA_BUILD as carla
-
-FROM harbor.isus.tech/osrf/ros:$ROS_VERSION-desktop as gtsam_builder
-ARG GTSAM_VERSION=4.0.3
-RUN if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; else export USE_PROC=$(($(nproc)/2)) ; fi && \
-    cd /opt/ && \
-    curl -qo gtsam.tar.gz http://cdn.isus.tech/cdn/library/gtsam-${GTSAM_VERSION}.tar.gz && \
-    tar -zxf gtsam.tar.gz && \
-    mv gtsam-${GTSAM_VERSION} gtsam && \
-    cd gtsam && \
-    mkdir build && \
-    cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=/opt/gtsam-install .. && \
-    make install -j${USE_PROC} && \
-    rm /opt/gtsam.tar.gz
-
+FROM harbor.isus.tech/carla-ros/gtsam-builder:latest as gtsam_builder
 FROM harbor.isus.tech/osrf/ros:$ROS_VERSION-desktop
 
 ARG ROS_VERSION
@@ -45,8 +31,8 @@ RUN apt-get update && \
     ros-$ROS_VERSION-pcl-ros \
     ros-$ROS_VERSION-pointcloud-to-laserscan \
     ros-$ROS_VERSION-map-server \
-    ros-$ROS_VERSION-move-base \
-    ros-$ROS_VERSION-teb-local-planner \
+    ros-$ROS_VERSION-ackermann-msgs \
+    ros-$ROS_VERSION-derived-object-msgs \
     vim git wget curl \
     ninja-build \
     && rm -rf /var/lib/apt/lists/* \
@@ -59,11 +45,11 @@ COPY --from=gtsam_builder --chown=root /opt/gtsam-install /usr/local
 
 COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
 # RUN git clone https://github.com/carla-simulator/ros-bridge.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge
-RUN git clone https://gitlab.isus.tech/kevinlad/ackermann_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/ackermann_msgs && \
-    git clone https://gitlab.isus.tech/kevinlad/astuff_sensor_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/astuff_sensor_msgs && \
-    cd /opt/carla-ros-bridge/src/ros-bridge/ && \
-    mv astuff_sensor_msgs/derived_object_msgs derived_object_msgs && \
-    rm -rf astuff_sensor_msgs
+# RUN git clone https://gitlab.isus.tech/kevinlad/ackermann_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/ackermann_msgs && \
+#     git clone https://gitlab.isus.tech/kevinlad/astuff_sensor_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/astuff_sensor_msgs && \
+#     cd /opt/carla-ros-bridge/src/ros-bridge/ && \
+#     mv astuff_sensor_msgs/derived_object_msgs derived_object_msgs && \
+#     rm -rf astuff_sensor_msgs
 COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
 
 ARG EDD_FILE
