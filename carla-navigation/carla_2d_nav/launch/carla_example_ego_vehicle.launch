@@ -52,4 +52,10 @@
     <arg name='role_name' value='$(arg role_name)'/>
   </include>
 
+  <arg name="rviz" default="true" />
+  <group if="$(arg rviz)">
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carla_2d_nav)/rviz/view_0.9.10.1.rviz"/>
+  </group>
+
+
 </launch>

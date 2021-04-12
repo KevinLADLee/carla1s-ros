@@ -1,9 +1,24 @@
 
 ARG ROS_VERSION='noetic'
-ARG CARLA_VERSION='0.9.10.1'
-ARG EDD_FILE='carla-0.9.10-py3.7-linux-x86_64.egg'
+ARG CARLA_VERSION='0.9.11'
+ARG EDD_FILE='carla-0.9.11-py3.7-linux-x86_64.egg'
 
 FROM harbor.isus.tech/carlasim/carla:$CARLA_VERSION$CARLA_BUILD as carla
+
+FROM harbor.isus.tech/osrf/ros:$ROS_VERSION-desktop as gtsam_builder
+ARG GTSAM_VERSION=4.0.3
+RUN if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; else export USE_PROC=$(($(nproc)/2)) ; fi && \
+    cd /opt/ && \
+    curl -qo gtsam.tar.gz http://cdn.isus.tech/cdn/library/gtsam-${GTSAM_VERSION}.tar.gz && \
+    tar -zxf gtsam.tar.gz && \
+    mv gtsam-${GTSAM_VERSION} gtsam && \
+    cd gtsam && \
+    mkdir build && \
+    cd build && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=/opt/gtsam-install .. && \
+    make install -j${USE_PROC} && \
+    rm /opt/gtsam.tar.gz
+
 FROM harbor.isus.tech/osrf/ros:$ROS_VERSION-desktop
 
 ARG ROS_VERSION
@@ -19,12 +34,10 @@ RUN sed -i "s@http://.*archive.ubuntu.com@$MIRROR@g" /etc/apt/sources.list && \
     pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
     pip3 config set install.trusted-host mirrors.aliyun.com
 
-
 RUN apt-get update && \
     if [ "$ROS_VERSION" = "noetic" ] ; then export PYTHON_SUFFIX=3 ; else export PYTHON_SUFFIX="" ; fi && \
     apt-get install -y --no-install-recommends \
     libpng16-16 \
-    libceres-dev \
     ros-$ROS_VERSION-tf \
     ros-$ROS_VERSION-derived-object-msgs \
     ros-$ROS_VERSION-cv-bridge \
@@ -34,15 +47,15 @@ RUN apt-get update && \
     ros-$ROS_VERSION-map-server \
     ros-$ROS_VERSION-move-base \
     ros-$ROS_VERSION-teb-local-planner \
-    python$PYTHON_SUFFIX-osrf-pycommon \
-    python$PYTHON_SUFFIX-catkin-tools \
     vim git wget curl \
+    ninja-build \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 --no-cache-dir install --upgrade \
-        networkx distro pygame simple-pid numpy==1.18.4
+        networkx distro pygame simple-pid numpy==1.18.4 transforms3d
 ARG CARLA_VERSION
 
 COPY --from=carla --chown=root /home/carla/PythonAPI /opt/carla/PythonAPI
+COPY --from=gtsam_builder --chown=root /opt/gtsam-install /usr/local
 
 COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
 # RUN git clone https://github.com/carla-simulator/ros-bridge.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge
@@ -53,22 +66,10 @@ RUN git clone https://gitlab.isus.tech/kevinlad/ackermann_msgs.git --depth=1 /op
     rm -rf astuff_sensor_msgs
 COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
 
-RUN if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; else export USE_PROC=$(($(nproc)/2)) ; fi && \
-    cd /opt/ && \
-    wget -qc http://cdn.isus.tech/cdn/library/gtsam-4.0.3.tar.gz && \
-    tar -zxvf gtsam-4.0.3.tar.gz && \
-    cd gtsam-4.0.3 && \
-    mkdir build && \
-    cd build && \
-    cmake .. && \
-    make -j${USE_PROC} && \
-    make install
-
-
 ARG EDD_FILE
 
 RUN if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; else export USE_PROC=$(($(nproc)/2)) ; fi && \
-    /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin_make -DCMAKE_BUILD_TYPE=Release -j${USE_PROC}' && \
+    /bin/bash -c 'source /opt/ros/$ROS_VERSION/setup.bash; cd /opt/carla-ros-bridge; catkin_make -DCMAKE_BUILD_TYPE=Release --use-ninja -j${USE_PROC}' && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     echo "source /opt/ros/noetic/setup.bash" >> /root/.bashrc && \
     echo "source /opt/carla-ros-bridge/devel/setup.bash" >> /root/.bashrc && \
@@ -77,13 +78,12 @@ RUN if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; else export USE_PROC=$(
 # replace entrypoint
 COPY ./docker/content/ros_entrypoint.sh /
 
-COPY ./docker/scripts /
+COPY ./docker/scripts /opt/carla-ros-bridge
 
 ENV NVIDIA_VISIBLE_DEVICES \
     ${NVIDIA_VISIBLE_DEVICES:-all}
 ENV NVIDIA_DRIVER_CAPABILITIES \
     ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
 
+WORKDIR /opt/carla-ros-bridge
 SHELL [ "/bin/bash" ]
-
-CMD ["/bin/bash", "/carla_ego.sh"]
