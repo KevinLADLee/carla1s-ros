@@ -1,0 +1,37 @@
+
+# Common Parameters
+#pointcloud_topic: "/passthrough/output"
+pointcloud_topic: "/carla/ego_vehicle/lidar"
+lidar_channels: 32
+lidar_horizon_scans: 1800
+
+# imageProjection
+lidar_angle_resolution_x: 0.2
+lidar_angle_resolution_y: 0.3
+lidar_angle_bottom: 20.0
+lidar_ground_scan_index: 7
+lidar_min_range: 1.0
+lidar_mount_angle: 0.0
+#segment_alpha_x: lidar_angle_resolution_x  / 180.0 * M_PI
+#segment_alpha_y: lidar_angle_resolution_y / 180.0 * M_PI
+segment_valid_point_num: 5
+segment_valid_line_num: 3
+
+# featureAssociation
+scan_period: 0.1
+edge_threshold: 0.1
+surf_threshold: 0.1
+nearest_feature_search_sq_dist: 15.0
+
+# mapOptimization
+file_directory: "/tmp/"
+loop_closure_enable_flag: true
+mapping_process_interval: 0.3
+history_keyframe_search_num: 25
+history_key_frame_search_radius: 20.0
+history_keyframe_fitness_score: 1.5
+global_map_visualization_search_radius: 1500.0
+surrounding_keyframe_search_num: 50
+surrounding_keyframe_search_radius: 50.0 
+downsize_map_poses_factor: 0.6
+downsize_map_frames_factor: 0.1

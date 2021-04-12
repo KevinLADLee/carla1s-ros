@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(carla_lego_loam)
+project(lego_loam)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3")
 set(CMAKE_CXX_STANDARD 14)
@@ -48,15 +48,16 @@ link_directories(
 )
 
 add_executable(imageProjection src/imageProjection.cpp)
-add_dependencies(imageProjection ${catkin_EXPORTED_TARGETS} cloud_msgs_gencpp)
+add_dependencies(imageProjection cloud_msgs_generate_messages)
 target_link_libraries(imageProjection ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(featureAssociation src/featureAssociation.cpp)
-add_dependencies(featureAssociation ${catkin_EXPORTED_TARGETS} cloud_msgs_gencpp)
+add_dependencies(featureAssociation cloud_msgs_generate_messages)
 target_link_libraries(featureAssociation ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
-add_executable(mapOptmization 
-    src/mapOptmization.cpp
+
+add_executable(mapOptmization
+        src/mapOptimization.cpp
     src/Scancontext.cpp
 )
 target_link_libraries(mapOptmization 
