@@ -7,8 +7,6 @@ Panels:
         - /Path1
         - /View Camera1/Visibility1
         - /TF1/Frames1
-        - /PointCloud21/Status1
-        - /OpenDrive_Map1
         - /OpenDrive_Map1/Status1
       Splitter Ratio: 0.5
     Tree Height: 417
@@ -87,6 +85,7 @@ Visualization Manager:
         Lidar: true
         Map: true
         Marker: true
+        MarkerArray: true
         OpenDrive_Map: true
         Path: true
         PointCloud2: true
@@ -109,9 +108,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0.976333498954773
+      Max Intensity: 0.9763379693031311
       Min Color: 0; 0; 0
-      Min Intensity: 0.6188949942588806
+      Min Intensity: 0.6189348101615906
       Name: Lidar
       Position Transformer: XYZ
       Queue Size: 10
@@ -285,6 +284,14 @@ Visualization Manager:
         "": true
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /carla/traffic_lights/markers
+      Name: Traffic_Light
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -313,7 +320,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 128.07110595703125
+      Distance: 61.95390319824219
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -321,17 +328,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -3.157376766204834
-        Y: -5.19829797744751
-        Z: -1.2164297004346736e-05
+        X: 18.4243221282959
+        Y: -2.7544071674346924
+        Z: 1.0723886589403264e-05
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6497969031333923
+      Pitch: 0.9097968339920044
       Target Frame: ego_vehicle
-      Yaw: 3.275404691696167
+      Yaw: 3.165404796600342
     Saved: ~
 Window Geometry:
   CarlaControl:
