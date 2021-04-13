@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/bin/bashApplication Commencement Date*: 1 September 2020 at 09:00 a.m. (Hong Kong time)
+
+*Except for taught postgraduate programmes offered by the Faculty of Education and the Postgraduate Certificate in Laws programme offered by the Faculty of Law
 
 source /opt/ros/noetic/setup.bash
 source /opt/carla-ros-bridge/devel/setup.bash

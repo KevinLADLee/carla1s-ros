@@ -91,7 +91,6 @@ class EgoVehicle(Vehicle):
             self.get_topic_prefix() + "/enable_autopilot",
             self.enable_autopilot_updated)
 
-
     def get_marker_color(self):
         """
         Function (override) to return the color for marker messages.

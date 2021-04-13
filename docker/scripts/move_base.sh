@@ -8,4 +8,4 @@ roslaunch carla_2d_nav carla_move_base.launch &
 
 sleep 3
 
-python3 /opt/carla/PythonAPI/examples/spawn_npc.py -n 30 
+python3 /opt/carla/PythonAPI/examples/spawn_npc.py -n 30 -w 10

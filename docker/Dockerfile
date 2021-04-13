@@ -45,11 +45,6 @@ COPY --from=gtsam_builder --chown=root /opt/gtsam-install /usr/local
 
 COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
 # RUN git clone https://github.com/carla-simulator/ros-bridge.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge
-# RUN git clone https://gitlab.isus.tech/kevinlad/ackermann_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/ackermann_msgs && \
-#     git clone https://gitlab.isus.tech/kevinlad/astuff_sensor_msgs.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge/astuff_sensor_msgs && \
-#     cd /opt/carla-ros-bridge/src/ros-bridge/ && \
-#     mv astuff_sensor_msgs/derived_object_msgs derived_object_msgs && \
-#     rm -rf astuff_sensor_msgs
 COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
 
 ARG EDD_FILE
