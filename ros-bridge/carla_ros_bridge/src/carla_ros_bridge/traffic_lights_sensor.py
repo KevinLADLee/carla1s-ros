@@ -135,12 +135,12 @@ class TrafficLightsSensor(PseudoActor):
         marker.scale.z = info.trigger_volume.size.z
 
         if status.state == 0:
-            marker.color = std_msgs.msg.ColorRGBA(1,0,0,0.5)
+            marker.color = std_msgs.msg.ColorRGBA(1.5, 0.0, 0.0, 0.3)
         elif status.state == 1:
-            marker.color = std_msgs.msg.ColorRGBA(1,1,0,0.5)
+            marker.color = std_msgs.msg.ColorRGBA(1.5, 1.5, 0.0, 0.3)
         elif status.state == 2:
-            marker.color = std_msgs.msg.ColorRGBA(0,1,0,0.5)
+            marker.color = std_msgs.msg.ColorRGBA(0.0, 1.5, 0.0, 0.3)
         else:
-            marker.color = std_msgs.msg.ColorRGBA(0,0,0,0)
+            marker.color = std_msgs.msg.ColorRGBA(0.0, 0.0, 0.0, 0.0)
         self.mark_array.markers.append(marker)
         return marker

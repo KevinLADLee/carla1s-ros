@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Path1
         - /View Camera1/Visibility1
+        - /Map1
         - /TF1/Frames1
         - /OpenDrive_Map1/Status1
       Splitter Ratio: 0.5
@@ -85,12 +86,12 @@ Visualization Manager:
         Lidar: true
         Map: true
         Marker: true
-        MarkerArray: true
         OpenDrive_Map: true
         Path: true
         PointCloud2: true
         RGB Camera: true
         TF: false
+        Traffic_Light: true
         Value: true
       Zoom Factor: 1
     - Alpha: 1
@@ -108,9 +109,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0.9763379693031311
+      Max Intensity: 0.9763358235359192
       Min Color: 0; 0; 0
-      Min Intensity: 0.6189348101615906
+      Min Intensity: 0.6188623905181885
       Name: Lidar
       Position Transformer: XYZ
       Queue Size: 10
@@ -147,16 +148,16 @@ Visualization Manager:
       Transport Hint: raw
       Unreliable: false
       Value: false
-    - Alpha: 0.699999988079071
+    - Alpha: 0.30000001192092896
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: false
+      Enabled: true
       Name: Map
       Topic: /map
       Unreliable: false
       Use Timestamp: false
-      Value: false
+      Value: true
     - Alpha: 0.699999988079071
       Class: rviz/Map
       Color Scheme: costmap
@@ -206,6 +207,8 @@ Visualization Manager:
           Value: false
         map:
           Value: true
+        semantic_lidar:
+          Value: true
       Marker Alpha: 1
       Marker Scale: 5
       Name: TF
@@ -235,6 +238,8 @@ Visualization Manager:
           ego_vehicle/semantic_lidar:
             {}
           ego_vehicle/semantic_segmentation_front:
+            {}
+          semantic_lidar:
             {}
       Update Interval: 0
       Value: true
@@ -289,7 +294,7 @@ Visualization Manager:
       Marker Topic: /carla/traffic_lights/markers
       Name: Traffic_Light
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -320,7 +325,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 61.95390319824219
+      Distance: 300.43475341796875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -328,17 +333,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 18.4243221282959
-        Y: -2.7544071674346924
-        Z: 1.0723886589403264e-05
+        X: -3.948432683944702
+        Y: -2.7039318084716797
+        Z: 3.0992969186627306e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9097968339920044
+      Pitch: 1.1797966957092285
       Target Frame: ego_vehicle
-      Yaw: 3.165404796600342
+      Yaw: 3.1654040813446045
     Saved: ~
 Window Geometry:
   CarlaControl:
