@@ -6,9 +6,9 @@ Panels:
       Expanded:
         - /Path1
         - /View Camera1/Visibility1
-        - /Map1
         - /TF1/Frames1
-        - /OpenDrive_Map1/Status1
+        - /Traffic_Light1/Status1
+        - /CarlaDebugMarkers1/Status1
       Splitter Ratio: 0.5
     Tree Height: 417
   - Class: rviz/Selection
@@ -63,14 +63,6 @@ Visualization Manager:
       Topic: /carla/ego_vehicle/waypoints
       Unreliable: false
       Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /carla/marker
-      Name: Marker
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
     - Class: rviz/Camera
       Enabled: false
       Image Rendering: background and overlay
@@ -82,6 +74,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         Depth Camera: true
         Lidar: true
         Map: true
@@ -109,9 +102,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0.9763358235359192
+      Max Intensity: 0.9902283549308777
       Min Color: 0; 0; 0
-      Min Intensity: 0.6188623905181885
+      Min Intensity: 0.6210125684738159
       Name: Lidar
       Position Transformer: XYZ
       Queue Size: 10
@@ -193,6 +186,8 @@ Visualization Manager:
           Value: false
         ego_vehicle/imu:
           Value: false
+        ego_vehicle/lane_invasion:
+          Value: true
         ego_vehicle/lidar:
           Value: false
         ego_vehicle/radar_front:
@@ -206,8 +201,6 @@ Visualization Manager:
         ego_vehicle/semantic_segmentation_front:
           Value: false
         map:
-          Value: true
-        semantic_lidar:
           Value: true
       Marker Alpha: 1
       Marker Scale: 5
@@ -227,6 +220,8 @@ Visualization Manager:
             {}
           ego_vehicle/imu:
             {}
+          ego_vehicle/lane_invasion:
+            {}
           ego_vehicle/lidar:
             {}
           ego_vehicle/radar_front:
@@ -238,8 +233,6 @@ Visualization Manager:
           ego_vehicle/semantic_lidar:
             {}
           ego_vehicle/semantic_segmentation_front:
-            {}
-          semantic_lidar:
             {}
       Update Interval: 0
       Value: true
@@ -297,6 +290,14 @@ Visualization Manager:
         "": true
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /carla/markers
+      Name: CarlaDebugMarkers
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -325,7 +326,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 300.43475341796875
+      Distance: 35.42348098754883
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -333,17 +334,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -3.948432683944702
-        Y: -2.7039318084716797
-        Z: 3.0992969186627306e-06
+        X: 1.9726665019989014
+        Y: -5.254494667053223
+        Z: -7.906921382527798e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1797966957092285
+      Pitch: 0.5553985238075256
       Target Frame: ego_vehicle
-      Yaw: 3.1654040813446045
+      Yaw: 3.285397529602051
     Saved: ~
 Window Geometry:
   CarlaControl:
