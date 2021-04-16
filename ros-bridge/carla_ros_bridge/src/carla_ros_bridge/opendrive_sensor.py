@@ -124,6 +124,7 @@ class OpenDriveSensor(PseudoActor):
         marker = Marker()
         marker.id = self.set_marker_id()
         marker.type = Marker.LINE_STRIP
+        # marker.type = Marker.SPHERE_LIST
         marker.header.stamp = rospy.Time.now()
         marker.header.frame_id = "map"
 
@@ -132,7 +133,7 @@ class OpenDriveSensor(PseudoActor):
         else:
             marker.color = color
 
-        marker.scale.x = 0.2
+        marker.scale.x = 0.1
         marker.pose.orientation.w = 1
 
         if points is not None:
@@ -163,7 +164,10 @@ class OpenDriveSensor(PseudoActor):
                         nxt = nxt[0]
                     else:
                         break
-            set_waypoints.append(waypoints)
+            if waypoint.lane_type != carla.LaneType.Stop:
+                print(waypoint.lane_type)
+                set_waypoints.append(waypoints)
+
 
         for waypoints in set_waypoints:
             waypoint = waypoints[0]

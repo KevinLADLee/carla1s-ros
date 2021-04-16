@@ -83,7 +83,7 @@ class CarlaToRosWaypointConverter(CompatibleNode):
 
         self.current_route = None
         self.goal_subscriber = self.create_subscriber(
-            PoseStamped, "/carla/{}/goal".format(self.role_name), self.on_goal)
+            PoseStamped, "/move_base_simple/goal".format(self.role_name), self.on_goal)
 
         # use callback to wait for ego vehicle
         self.loginfo("Waiting for ego vehicle...")
