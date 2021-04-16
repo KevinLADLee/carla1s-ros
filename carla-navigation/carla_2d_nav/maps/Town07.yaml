@@ -1,0 +1,9 @@
+free_thresh: 0.2
+image: Town07.png
+negate: 0
+occupied_thresh: 0.65
+origin:
+- -254.62701416015625
+- -174.01907348632812
+- 0
+resolution: 0.5
