@@ -126,8 +126,8 @@ class TrafficLightsSensor(PseudoActor):
         transformed_tv = tl_t.transform(tl.trigger_volume.location)
 
         marker = Marker()
-        marker.type = Marker.SPHERE #Marker.CUBE
-
+        # marker.type = Marker.SPHERE #Marker.CUBE
+        marker.type = Marker.CUBE
         marker.header.frame_id = "map"
         marker.id = info.id
         marker.pose.position = trans.carla_location_to_ros_vector3(transformed_tv)
@@ -135,6 +135,15 @@ class TrafficLightsSensor(PseudoActor):
         marker.scale.y = info.trigger_volume.size.y
         marker.scale.z = info.trigger_volume.size.z
         marker.pose.orientation = trans.carla_rotation_to_ros_quaternion(tl_t.rotation)
+
+        marker_text = Marker()
+        marker_text.header.frame_id = "map"
+        marker_text.id = info.id + 1000
+        marker_text.pose = marker.pose
+        marker_text.text = "Traffic Light " + str(info.id)
+        marker_text.scale.z = marker.scale.z
+        marker_text.type = Marker.TEXT_VIEW_FACING
+        marker_text.color = std_msgs.msg.ColorRGBA(1, 1, 1, 0.5)
 
         if status.state == 0:
             marker.color = std_msgs.msg.ColorRGBA(1.5, 0.0, 0.0, 0.3)
@@ -145,4 +154,5 @@ class TrafficLightsSensor(PseudoActor):
         else:
             marker.color = std_msgs.msg.ColorRGBA(0.0, 0.0, 0.0, 0.0)
         self.mark_array.markers.append(marker)
+        self.mark_array.markers.append(marker_text)
         return marker

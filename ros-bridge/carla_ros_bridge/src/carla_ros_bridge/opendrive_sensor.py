@@ -83,6 +83,9 @@ class OpenDriveSensor(PseudoActor):
             self.map_publisher.publish(String(data=self.carla_map.to_opendrive()))
             self.draw_map()
             self.map_viz_publisher.publish(self.marker_array)
+            print("***********")
+            print(len(self.marker_array.markers))
+            print("***********")
             self._map_published = True
 
     @staticmethod
@@ -124,7 +127,6 @@ class OpenDriveSensor(PseudoActor):
         marker = Marker()
         marker.id = self.set_marker_id()
         marker.type = Marker.LINE_STRIP
-        # marker.type = Marker.SPHERE_LIST
         marker.header.stamp = rospy.Time.now()
         marker.header.frame_id = "map"
 
@@ -133,7 +135,7 @@ class OpenDriveSensor(PseudoActor):
         else:
             marker.color = color
 
-        marker.scale.x = 0.1
+        marker.scale.x = 0.25
         marker.pose.orientation.w = 1
 
         if points is not None:
@@ -147,7 +149,7 @@ class OpenDriveSensor(PseudoActor):
         return marker
 
     def draw_map(self):
-        precision = 0.05
+        precision = 0.1
         topology = self.carla_map.get_topology()
         topology = [x[0] for x in topology]
         topology = sorted(topology, key=lambda w: w.transform.location.z)
@@ -164,17 +166,18 @@ class OpenDriveSensor(PseudoActor):
                         nxt = nxt[0]
                     else:
                         break
-            if waypoint.lane_type != carla.LaneType.Stop:
-                print(waypoint.lane_type)
-                set_waypoints.append(waypoints)
-
+            set_waypoints.append(waypoints)
 
         for waypoints in set_waypoints:
             waypoint = waypoints[0]
             road_left_side = [self.lateral_shift(w.transform, -w.lane_width * 0.5) for w in waypoints]
             road_right_side = [self.lateral_shift(w.transform, w.lane_width * 0.5) for w in waypoints]
-            road_points = road_left_side + [x for x in reversed(road_right_side)]
-            self.add_line_strip_marker(points=road_points)
+            # road_points = road_left_side + [x for x in reversed(road_right_side)]
+            # self.add_line_strip_marker(points=road_points)
+            if len(road_left_side) > 2:
+                self.add_line_strip_marker(points=road_left_side)
+            if len(road_right_side) > 2:
+                self.add_line_strip_marker(points=road_right_side)
 
             if not waypoint.is_junction:
                 for n, wp in enumerate(waypoints):
