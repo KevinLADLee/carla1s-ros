@@ -33,6 +33,7 @@ RUN apt-get update && \
     ros-$ROS_VERSION-map-server \
     ros-$ROS_VERSION-ackermann-msgs \
     ros-$ROS_VERSION-derived-object-msgs \
+    ros-$ROS_VERSION-behaviortree-cpp-v3 \
     vim git wget curl \
     ninja-build \
     && rm -rf /var/lib/apt/lists/* \
