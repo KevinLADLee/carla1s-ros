@@ -6,6 +6,10 @@
 
 int main(int argc, char** argv){
 
-  BT::BehaviorTreeFactory bt_factory;
+  ros::init(argc, argv, "carla_decision");
+  CarlaDecision carla_tree_;
+
+  carla_tree_.Tick();
+
   return 0;
 }

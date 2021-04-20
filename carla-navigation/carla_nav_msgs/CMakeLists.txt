@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(carla_nav_msgs)
+
+find_package(ros_environment REQUIRED)
+
+set(ROS_VERSION $ENV{ROS_VERSION})
+
+set(ACTION_FILES PathTracking.action PathPlanner.action)
+
+# Find catkin macros and libraries
+find_package(catkin REQUIRED COMPONENTS
+        message_generation
+        std_msgs
+        nav_msgs
+        geometry_msgs
+        diagnostic_msgs
+        )
+
+#add_message_files(DIRECTORY msg FILES ${MSG_FILES})
+
+add_action_files(DIRECTORY action FILES ${ACTION_FILES})
+
+generate_messages(DEPENDENCIES std_msgs geometry_msgs diagnostic_msgs nav_msgs)
+
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs geometry_msgs diagnostic_msgs)

@@ -2,13 +2,19 @@
 <root main_tree_to_execute="BehaviorTree">
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
-        <Sequence>
-            <Action ID="MoveToGoal"/>
+        <Fallback>
+            <ReactiveSequence>
+                <Condition ID="CheckTrafficLight" traffic_light_status="2"/>
+                <Action ID="MoveToGoal"/>
+            </ReactiveSequence>
             <Action ID="StopAndWait"/>
-        </Sequence>
+        </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
+        <Condition ID="CheckTrafficLight">
+            <input_port default="RED" name="traffic_light_status"/>
+        </Condition>
         <Action ID="MoveToGoal"/>
         <Action ID="StopAndWait"/>
     </TreeNodesModel>

@@ -9,21 +9,27 @@
 #include <behaviortree_cpp_v3/bt_factory.h>
 #include <ros/ros.h>
 
-class ApproachObject : public BT::SyncActionNode
-{
- public:
-  ApproachObject(const std::string& name) :
-      BT::SyncActionNode(name, {})
-  {
-  }
+#include "node_types.h"
 
-  // You must override the virtual function tick()
-  BT::NodeStatus tick() override
-  {
-    std::cout << "ApproachObject: " << this->name() << std::endl;
-    return BT::NodeStatus::SUCCESS;
-  }
+class CarlaDecision{
+ public:
+  CarlaDecision();
+
+  void Tick();
+
+  void TrafficCallback(const std_msgs::Int16::ConstPtr &msg);
+
+//  BT::NodeStatus CheckTrafficLight() const;
+
+ private:
+  BT::Tree bt_tree_;
+  BT::BehaviorTreeFactory bt_factory_;
+  int traffic_light_status_;
+  ros::NodeHandle nh_;
+
 };
+
+
 
 
 #endif //SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_DECISION_SRC_TEST_BT_H_
