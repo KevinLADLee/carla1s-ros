@@ -2,7 +2,8 @@
 // Created by kevinlad on 2021/4/14.
 //
 
-#include "test_bt.h"
+
+#include "carla_decision.h"
 
 CarlaDecision::CarlaDecision() {
   goal_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1, &CarlaDecision::GoalCallback, this);
@@ -22,11 +23,23 @@ bool CarlaDecision::LoadBehaviorTree(const std::string &filename) {
   // Create the blackboard that will be shared by all of the nodes in the tree
   bt_blackboard_ = BT::Blackboard::create();
 
+  // Nodes Register
+  const std::vector<std::string> plugin_libs = {
+      "bt_action_stop_and_wait",
+//      "bt_action_compute_path_to_goal",
+      "bt_action_move_to_goal",
+      "bt_condition_goal_updated",
+      "bt_condition_check_traffic_light"
+  };
+  for (const auto & p : plugin_libs) {
+    auto path_to_lib = BT::SharedLibrary::getOSName(p);
+    if(CheckFile(path_to_lib)){
+      path_to_lib.insert(0, "../");
+    }
+    bt_factory_.registerFromPlugin(path_to_lib);
+  }
+
   // Create the Behavior Tree from the XML input
-  bt_factory_.registerNodeType<GoalUpdatedCondition>("GoalUpdated");
-  bt_factory_.registerNodeType<MoveToGoal>("MoveToGoal");
-  bt_factory_.registerSimpleAction("StopAndWait", std::bind(StopAndWait));
-  bt_factory_.registerNodeType<CheckTrafficLight>("CheckTrafficLight");
   try {
     bt_tree_ = bt_factory_.createTreeFromText(xml_string, bt_blackboard_);
   } catch (BT::RuntimeError & exp) {
@@ -35,7 +48,7 @@ bool CarlaDecision::LoadBehaviorTree(const std::string &filename) {
   }
 
   // This logger publish status changes using ZeroMQ. Used by Groot
-  publisher_zmq_ptr_ = std::make_shared<BT::PublisherZMQ>(bt_tree_);
+  publisher_zmq_ptr_ = std::make_unique<BT::PublisherZMQ>(bt_tree_);
   return true;
 }
 

@@ -17,7 +17,7 @@ class MoveToGoal : public BT::AsyncActionNode
 
   static BT::PortsList providedPorts(){return {};}
 
-  BT::NodeStatus tick() override{};
+  BT::NodeStatus tick() override;
 
   void halt() override
   {

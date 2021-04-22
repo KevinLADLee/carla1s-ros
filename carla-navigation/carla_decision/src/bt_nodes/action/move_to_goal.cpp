@@ -15,3 +15,8 @@ BT::NodeStatus MoveToGoal::tick()
 //    }
   return BT::NodeStatus::SUCCESS;
 }
+
+BT_REGISTER_NODES(factory)
+{
+  factory.registerNodeType<MoveToGoal>("MoveToGoal");
+}

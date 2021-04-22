@@ -24,9 +24,7 @@ BT::NodeStatus GoalUpdated::tick()
   return BT::NodeStatus::FAILURE;
 }
 
-
-//#include "behaviortree_cpp_v3/bt_factory.h"
-//BT_REGISTER_NODES(factory)
-//{
-//  factory.registerNodeType<GoalUpdatedCondition>("GoalUpdated");
-//}
+BT_REGISTER_NODES(factory)
+{
+  factory.registerNodeType<GoalUpdated>("GoalUpdated");
+}
