@@ -5,7 +5,10 @@ find_package(ros_environment REQUIRED)
 
 set(ROS_VERSION $ENV{ROS_VERSION})
 
-set(ACTION_FILES PathTracking.action PathPlanner.action)
+set(ACTION_FILES
+        PathTracking.action
+        PathPlanner.action
+        )
 
 # Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS

@@ -5,7 +5,10 @@
         <Fallback>
             <ReactiveSequence>
                 <Condition ID="CheckTrafficLight" traffic_light_status="2"/>
-                <Action ID="MoveToGoal"/>
+                <ReactiveFallback>
+                    <Condition ID="GoalUpdated"/>
+                    <Action ID="MoveToGoal"/>
+                </ReactiveFallback>
             </ReactiveSequence>
             <Action ID="StopAndWait"/>
         </Fallback>
@@ -15,6 +18,7 @@
         <Condition ID="CheckTrafficLight">
             <input_port default="RED" name="traffic_light_status"/>
         </Condition>
+        <Condition ID="GoalUpdated"/>
         <Action ID="MoveToGoal"/>
         <Action ID="StopAndWait"/>
     </TreeNodesModel>

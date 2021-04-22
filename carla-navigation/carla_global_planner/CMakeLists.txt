@@ -18,7 +18,7 @@ if(${ROS_VERSION} EQUAL 1)
   catkin_package(CATKIN_DEPENDS rospy)
 
   catkin_install_python(
-    PROGRAMS src/carla_waypoint_publisher/carla_waypoint_publisher.py
+    PROGRAMS src/carla_waypoint_publisher/carla_route_planner.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
   install(DIRECTORY launch/

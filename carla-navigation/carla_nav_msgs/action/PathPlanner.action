@@ -1,11 +1,12 @@
 #goal definition
-int32 command
 geometry_msgs/PoseStamped goal
+geometry_msgs/PoseStamped start
+string planner_id
+string role_name # default: ego_vehicle
+bool use_start # If true, use current robot pose as path start, if false, use start above instead
 ---
-#result definition RUNNING = 0, SUCCESS = 1, FAILURE = 2
-int32  error_code
+#result definition
+nav_msgs/Path path
+duration planning_time
 ---
 #feedback
-nav_msgs/Path path
-int32  error_code
-string error_msg

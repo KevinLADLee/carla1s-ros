@@ -35,7 +35,6 @@ from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 import carla_common.transforms as trans
 from carla_msgs.msg import CarlaWorldInfo
-from carla_waypoint_types.srv import GetWaypoint, GetActorWaypoint
 
 import carla
 
@@ -68,15 +67,7 @@ class CarlaToRosWaypointConverter(CompatibleNode):
         self.waypoint_publisher = self.new_publisher(
             Path, '/carla/{}/waypoints'.format(self.role_name), QoSProfile(depth=1, durability=True))
 
-        # initialize ros services
-        self.get_waypoint_service = self.new_service(
-            GetWaypoint,
-            '/carla_waypoint_publisher/{}/get_waypoint'.format(self.role_name),
-            self.get_waypoint)
-        self.get_actor_waypoint_service = self.new_service(
-            GetActorWaypoint,
-            '/carla_waypoint_publisher/{}/get_actor_waypoint'.format(self.role_name),
-            self.get_actor_waypoint)
+
 
         # set initial goal
         self.goal = self.world.get_map().get_spawn_points()[0]
