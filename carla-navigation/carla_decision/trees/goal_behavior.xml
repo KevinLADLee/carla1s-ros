@@ -4,10 +4,13 @@
     <BehaviorTree ID="BehaviorTree">
         <Fallback>
             <ReactiveSequence>
-                <Condition ID="CheckTrafficLight" traffic_light_status="2"/>
+                <Condition ID="CheckTrafficLight"/>
                 <ReactiveFallback>
                     <Condition ID="GoalUpdated"/>
-                    <Action ID="MoveToGoal"/>
+                    <Sequence>
+                        <Action ID="ComputePathToGoal"/>
+                        <Action ID="TrackingPath"/>
+                    </Sequence>
                 </ReactiveFallback>
             </ReactiveSequence>
             <Action ID="StopAndWait"/>
@@ -15,12 +18,11 @@
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
-        <Condition ID="CheckTrafficLight">
-            <input_port default="RED" name="traffic_light_status"/>
-        </Condition>
+        <Condition ID="CheckTrafficLight"/>
+        <Action ID="ComputePathToGoal"/>
         <Condition ID="GoalUpdated"/>
-        <Action ID="MoveToGoal"/>
         <Action ID="StopAndWait"/>
+        <Action ID="TrackingPath"/>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>

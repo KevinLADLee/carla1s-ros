@@ -5,7 +5,14 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 
-find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs behaviortree_cpp_v3)
+find_package(catkin REQUIRED COMPONENTS
+        roscpp
+        actionlib
+        nav_msgs
+        geometry_msgs
+        carla_nav_msgs
+        behaviortree_cpp_v3
+)
 
 find_package(BehaviorTreeV3)
 
@@ -16,6 +23,7 @@ catkin_package(
 #        LIBRARIES ${PROJECT_NAME}
 )
 
+include_directories(src ${catkin_INCLUDE_DIRS})
 
 # Build BT Nodes to shared library
 file(GLOB_RECURSE nodes_src "src/bt_nodes/*/*.cpp")
@@ -25,8 +33,9 @@ foreach(node_src ${nodes_src})
     get_filename_component(dir_name "${dir_path}" NAME)
     set(target_name bt_${dir_name}_${file_name})
     add_library(${target_name} SHARED ${node_src})
-    target_link_libraries(${target_name} BT::behaviortree_cpp_v3)
+    target_link_libraries(${target_name} BT::behaviortree_cpp_v3 ${catkin_LIBRARIES})
     target_compile_definitions(${target_name} PRIVATE BT_PLUGIN_EXPORT)
+    add_dependencies(${target_name} carla_nav_msgs_generate_messages)
 #    if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
 #    set_target_properties(${target_name} PROPERTIES
 #                          LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -36,8 +45,6 @@ foreach(node_src ${nodes_src})
 #    endif()
     list(APPEND node_libs ${target_name})
 endforeach()
-
-include_directories(src)
 
 add_executable(${PROJECT_NAME}_node src/carla_decision.cpp src/carla_decision_node.cpp)
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES}

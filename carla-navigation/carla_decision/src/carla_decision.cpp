@@ -6,36 +6,28 @@
 #include "carla_decision.h"
 
 CarlaDecision::CarlaDecision() {
-  goal_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1, &CarlaDecision::GoalCallback, this);
+  nh_ptr_ = boost::make_shared<ros::NodeHandle>("~");
+  goal_sub_ = nh_ptr_->subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1, &CarlaDecision::GoalCallback, this);
 }
 
 bool CarlaDecision::LoadBehaviorTree(const std::string &filename) {
+
+  // Check and load behavior tree xml file as xml_string
   std::ifstream xml_file(filename);
   if (!xml_file.good()) {
     ROS_ERROR("Couldn't open input XML file: %s", filename.c_str());
     return false;
   }
-
-  auto xml_string = std::string(
-      std::istreambuf_iterator<char>(xml_file),
-      std::istreambuf_iterator<char>());
+  auto xml_string = std::string(std::istreambuf_iterator<char>(xml_file),
+                                std::istreambuf_iterator<char>());
 
   // Create the blackboard that will be shared by all of the nodes in the tree
   bt_blackboard_ = BT::Blackboard::create();
+  bt_blackboard_->set<ros::NodeHandlePtr>("node_handler", nh_ptr_);
 
   // Nodes Register
-  const std::vector<std::string> plugin_libs = {
-      "bt_action_stop_and_wait",
-//      "bt_action_compute_path_to_goal",
-      "bt_action_move_to_goal",
-      "bt_condition_goal_updated",
-      "bt_condition_check_traffic_light"
-  };
-  for (const auto & p : plugin_libs) {
-    auto path_to_lib = BT::SharedLibrary::getOSName(p);
-    if(CheckFile(path_to_lib)){
-      path_to_lib.insert(0, "../");
-    }
+  for (const auto & plugin : plugin_libs_) {
+    auto path_to_lib = DetermineLibPath(plugin);
     bt_factory_.registerFromPlugin(path_to_lib);
   }
 
@@ -64,4 +56,14 @@ void CarlaDecision::Tick() {
 
 void CarlaDecision::GoalCallback(const geometry_msgs::PoseStamped::ConstPtr& goal) {
   bt_blackboard_->set<geometry_msgs::PoseStamped>("goal", *goal);
+}
+
+std::string CarlaDecision::DetermineLibPath(const std::string &plugin_name) {
+  auto path = BT::SharedLibrary::getOSName(plugin_name);
+  if (CheckSharedLibExist(path)) {
+    return std::move(path);
+  } else {
+    path.insert(0, "../");
+    return std::move(path);
+  }
 }

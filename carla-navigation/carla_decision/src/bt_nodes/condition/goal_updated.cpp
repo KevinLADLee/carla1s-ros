@@ -17,10 +17,10 @@ BT::NodeStatus GoalUpdated::tick()
   if (goal_ != current_goal || goals_ != current_goals) {
     goal_ = current_goal;
     goals_ = current_goals;
+    config().blackboard->set<bool>("goal_updated", true);
     DLOG_INFO( "Goal Updated!");
     return BT::NodeStatus::SUCCESS;
   }
-
   return BT::NodeStatus::FAILURE;
 }
 

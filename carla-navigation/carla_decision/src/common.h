@@ -19,7 +19,9 @@
 #include <geometry_msgs/PoseStamped.h>
 
 #include <sys/stat.h>
+#include <dlfcn.h>
 
+#include "node_base/bt_action_node.h"
 #include "util/log.h"
 
 #ifndef NDEBUG
@@ -28,10 +30,13 @@
 #define DLOG_INFO(INFO)
 #endif
 
-
-inline bool CheckFile(const std::string& name) {
-  struct stat buffer;
-  return (stat (name.c_str(), &buffer) == 0);
+inline bool CheckSharedLibExist(const std::string& path) {
+  auto _handle = dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL);
+  if (!_handle){
+    return false;
+  }else{
+    return true;
+  }
 }
 
 

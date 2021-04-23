@@ -14,13 +14,25 @@ class CarlaDecision{
   void GoalCallback(const geometry_msgs::PoseStamped::ConstPtr& goal);
 
  private:
+  std::string DetermineLibPath(const std::string &path);
+
+ private:
   BT::Tree bt_tree_;
   BT::Blackboard::Ptr bt_blackboard_;
   BT::BehaviorTreeFactory bt_factory_;
-  ros::NodeHandle nh_;
+  ros::NodeHandlePtr nh_ptr_;
   std::unique_ptr<BT::PublisherZMQ> publisher_zmq_ptr_;
 
   ros::Subscriber goal_sub_;
+
+  const std::vector<std::string> plugin_libs_ = {
+      "bt_action_stop_and_wait",
+      "bt_action_compute_path_to_goal",
+      "bt_action_tracking_path",
+      "bt_action_move_to_goal",
+      "bt_condition_goal_updated",
+      "bt_condition_check_traffic_light"
+  };
 
 };
 

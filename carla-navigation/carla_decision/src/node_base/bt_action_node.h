@@ -47,12 +47,12 @@ class RosActionNode : public BT::ActionNodeBase
 {
  protected:
 
-  RosActionNode(ros::NodeHandle& nh, const std::string& name, const BT::NodeConfiguration & conf):
-      BT::ActionNodeBase(name, conf), node_(nh)
-  {
-    const std::string server_name = getInput<std::string>("server_name").value();
-    action_client_ = std::make_shared<ActionClientType>( node_, server_name, true );
-  }
+  RosActionNode(const std::string& name, const std::string & action_client_name, const BT::NodeConfiguration & conf):
+      BT::ActionNodeBase(name, conf), action_client_name_(action_client_name)
+{
+    nh_ = config().blackboard->template get<ros::NodeHandlePtr>("node_handler");
+    action_client_ = std::make_shared<ActionClientType>( *nh_, action_client_name_, true );
+}
 
  public:
 
@@ -79,11 +79,29 @@ class RosActionNode : public BT::ActionNodeBase
   /// Method called when the Action makes a transition from IDLE to RUNNING.
   /// If it return false, the entire action is immediately aborted, it returns
   /// FAILURE and no request is sent to the server.
-  virtual bool sendGoal(GoalType& goal) = 0;
+  //  virtual bool sendGoal(GoalType& goal) = 0;
+
+  /**
+ * @brief Function to perform some user-defined operation on tick
+ * Could do dynamic checks, such as getting updates to values on the blackboard
+ */
+  virtual void on_tick(){};
 
   /// Method (to be implemented by the user) to receive the reply.
   /// User can decide which NodeStatus it will return (SUCCESS or FAILURE).
-  virtual NodeStatus onResult( const ResultType& res) = 0;
+  virtual NodeStatus onResult( const ResultType& res) {
+    return NodeStatus::SUCCESS;
+  };
+
+  /**
+ * @brief Function to perform some user-defined operation upon successful
+ * completion of the action. Could put a value on the blackboard.
+ * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
+ */
+  virtual BT::NodeStatus on_success()
+  {
+    return BT::NodeStatus::SUCCESS;
+  }
 
   enum FailureCause{
     MISSING_SERVER = 0,
@@ -101,7 +119,7 @@ class RosActionNode : public BT::ActionNodeBase
   ///
   ///    BaseClass::halt()
   ///
-  virtual void halt() override
+  void halt() override
   {
     if( status() == NodeStatus::RUNNING )
     {
@@ -110,16 +128,10 @@ class RosActionNode : public BT::ActionNodeBase
     setStatus(NodeStatus::IDLE);
   }
 
- protected:
-
-  std::shared_ptr<ActionClientType> action_client_;
-
-  ros::NodeHandle& node_;
-
   BT::NodeStatus tick() override
   {
-    unsigned msec = getInput<unsigned>("timeout").value();
-    ros::Duration timeout(static_cast<double>(msec) * 1e-3);
+    // Timeout 100ms
+    ros::Duration timeout(static_cast<double>(100.0) * 1e-3);
 
     bool connected = action_client_->waitForServer(timeout);
     if( !connected ){
@@ -131,13 +143,9 @@ class RosActionNode : public BT::ActionNodeBase
       // setting the status to RUNNING to notify the BT Loggers (if any)
       setStatus(BT::NodeStatus::RUNNING);
 
-      GoalType goal;
-      bool valid_goal = sendGoal(goal);
-      if( !valid_goal )
-      {
-        return NodeStatus::FAILURE;
-      }
-      action_client_->sendGoal(goal);
+      on_tick();
+
+      action_client_->sendGoal(goal_);
     }
 
     // RUNNING
@@ -168,29 +176,20 @@ class RosActionNode : public BT::ActionNodeBase
       throw std::logic_error("Unexpected state in RosActionNode::tick()");
     }
   }
+
+ protected:
+
+
+ protected:
+  std::shared_ptr<ActionClientType> action_client_;
+  ros::NodeHandlePtr nh_;
+  std::string action_client_name_;
+  GoalType goal_;
+  ResultType goal_result_;
+  bool goal_result_available_ = false;
+  bool goal_updated_ = false;
+
 };
-
-
-/// Method to register the service into a factory.
-/// It gives you the opportunity to set the ros::NodeHandle.
-template <class DerivedT> static
-void RegisterRosAction(BT::BehaviorTreeFactory& factory,
-                       const std::string& registration_ID,
-                       ros::NodeHandle& node_handle)
-{
-  NodeBuilder builder = [&node_handle](const std::string& name, const NodeConfiguration& config) {
-    return std::make_unique<DerivedT>(node_handle, name, config );
-  };
-
-  TreeNodeManifest manifest;
-  manifest.type = getType<DerivedT>();
-  manifest.ports = DerivedT::providedPorts();
-  manifest.registration_ID = registration_ID;
-  const auto& basic_ports = RosActionNode< typename DerivedT::ActionType>::providedPorts();
-  manifest.ports.insert( basic_ports.begin(), basic_ports.end() );
-  factory.registerBuilder( manifest, builder );
-}
-
 
 }  // namespace BT
 
