@@ -7,10 +7,10 @@
                 <Condition ID="CheckTrafficLight"/>
                 <ReactiveFallback>
                     <Condition ID="GoalUpdated"/>
-                    <Sequence>
+                    <Control ID="PipelineSequence">
                         <Action ID="ComputePathToGoal" goal="" path=""/>
                         <Action ID="TrackingPath" path=""/>
-                    </Sequence>
+                    </Control>
                 </ReactiveFallback>
             </ReactiveSequence>
             <Action ID="StopAndWait"/>
@@ -24,6 +24,7 @@
             <output_port name="path">Path created by ComputePathToPose node</output_port>
         </Action>
         <Condition ID="GoalUpdated"/>
+        <Control ID="PipelineSequence"/>
         <Action ID="StopAndWait"/>
         <Action ID="TrackingPath">
             <input_port name="path"/>
