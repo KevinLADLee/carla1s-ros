@@ -8,8 +8,10 @@ TrackingPath::TrackingPath(const std::string &name,
                            const BT::NodeConfiguration &conf) : RosActionNode(name, action_client_name, conf) {}
 
 void TrackingPath::on_tick() {
-
+  getInput<nav_msgs::Path>("path", goal_.path);
 }
+
+
 
 
 #include "behaviortree_cpp_v3/bt_factory.h"

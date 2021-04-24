@@ -1,6 +1,10 @@
 
 #include "goal_updated.h"
 
+GoalUpdated::GoalUpdated(const std::string &name, const BT::NodeConfiguration &config) : ConditionNode(name, config) {
+    config.blackboard->get<geometry_msgs::PoseStamped>("goal", goal_);
+}
+
 BT::NodeStatus GoalUpdated::tick()
 {
   if (status() == BT::NodeStatus::IDLE) {

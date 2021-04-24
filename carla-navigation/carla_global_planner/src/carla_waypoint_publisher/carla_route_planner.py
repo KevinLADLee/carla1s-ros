@@ -21,6 +21,7 @@ import math
 import sys
 import threading
 
+import geometry_msgs.msg
 from ros_compatibility import (CompatibleNode,
                                QoSProfile,
                                ROSException,
@@ -31,15 +32,21 @@ from ros_compatibility import (CompatibleNode,
                                loginfo,
                                ROS_VERSION,
                                ros_shutdown)
+
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 import carla_common.transforms as trans
 from carla_msgs.msg import CarlaWorldInfo
+import carla_nav_msgs.msg
 
 import carla
 
 from agents.navigation.global_route_planner import GlobalRoutePlanner
 from agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
+
+import actionlib
+
+
 
 
 class CarlaToRosWaypointConverter(CompatibleNode):
@@ -67,18 +74,42 @@ class CarlaToRosWaypointConverter(CompatibleNode):
         self.waypoint_publisher = self.new_publisher(
             Path, '/carla/{}/waypoints'.format(self.role_name), QoSProfile(depth=1, durability=True))
 
-
-
         # set initial goal
-        self.goal = self.world.get_map().get_spawn_points()[0]
+        self.goal = None
 
         self.current_route = None
-        self.goal_subscriber = self.create_subscriber(
-            PoseStamped, "/move_base_simple/goal".format(self.role_name), self.on_goal)
+        # self.goal_subscriber = self.create_subscriber(
+        #     PoseStamped, "/move_base_simple/goal".format(self.role_name), self.on_goal)
+
+        self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal", carla_nav_msgs.msg.PathPlannerAction, execute_cb=self.execute_cb, auto_start=False)
+        self.route_polanner_server.start()
+        self._feedback = carla_nav_msgs.msg.PathPlannerActionFeedback()
+        self._result = carla_nav_msgs.msg.PathPlannerResult()
 
         # use callback to wait for ego vehicle
         self.loginfo("Waiting for ego vehicle...")
         self.on_tick = self.world.on_tick(self.find_ego_vehicle_actor)
+
+    def execute_cb(self, goal_msg):
+
+        self.loginfo("Received goal, trigger rerouting...")
+        carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal)
+        self.goal = carla_goal
+
+        if self.ego_vehicle is None or self.goal is None:
+            self.route_polanner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
+        else:
+            self.current_route = self.calculate_route(self.goal)
+            path_msg = Path()
+            path_msg.header.frame_id = "map"
+            path_msg.header.stamp = ros_timestamp(self.get_time(), from_sec=True)
+            if self.current_route is not None:
+                for wp in self.current_route:
+                    pose = PoseStamped()
+                    pose.pose = trans.carla_transform_to_ros_pose(wp[0].transform)
+                    path_msg.poses.append(pose)
+            self._result.path = path_msg
+            self.route_polanner_server.set_succeeded(self._result, "Got path {} waypoints.".format(len(path_msg.poses)))
 
     def destroy(self):
         """

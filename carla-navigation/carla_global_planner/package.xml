@@ -8,6 +8,7 @@
 
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>carla_waypoint_types</exec_depend>
+  <exec_depend>carla_nav_msgs</exec_depend>
   <exec_depend>ros_compatibility</exec_depend>
 
   <!-- ROS 1 DEPENDENCIES-->

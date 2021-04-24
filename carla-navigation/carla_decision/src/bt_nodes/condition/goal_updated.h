@@ -10,7 +10,7 @@
 class GoalUpdated : public BT::ConditionNode
 {
  public:
-  GoalUpdated(const std::string &name, const BT::NodeConfiguration &config) : ConditionNode(name, config) {}
+  GoalUpdated(const std::string &name, const BT::NodeConfiguration &config);
 
   GoalUpdated() = delete;
 

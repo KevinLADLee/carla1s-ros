@@ -87,6 +87,8 @@ class RosActionNode : public BT::ActionNodeBase
  */
   virtual void on_tick(){};
 
+  virtual void on_wait_for_result(){};
+
   /// Method (to be implemented by the user) to receive the reply.
   /// User can decide which NodeStatus it will return (SUCCESS or FAILURE).
   virtual NodeStatus onResult( const ResultType& res) {
@@ -150,6 +152,13 @@ class RosActionNode : public BT::ActionNodeBase
 
     // RUNNING
     auto action_state = action_client_->getState();
+    if(ros::ok() && !goal_result_available_){
+      on_wait_for_result();
+
+    if(goal_updated_)
+
+      goal_updated_ = true;
+    }
 
     // Please refer to these states
 
