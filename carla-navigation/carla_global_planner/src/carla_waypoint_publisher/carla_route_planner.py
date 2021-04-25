@@ -37,7 +37,7 @@ from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 import carla_common.transforms as trans
 from carla_msgs.msg import CarlaWorldInfo
-import carla_nav_msgs.msg
+from carla_nav_msgs.msg import PathPlannerAction, PathPlannerResult, PathPlannerFeedback
 
 import carla
 
@@ -81,10 +81,10 @@ class CarlaToRosWaypointConverter(CompatibleNode):
         # self.goal_subscriber = self.create_subscriber(
         #     PoseStamped, "/move_base_simple/goal".format(self.role_name), self.on_goal)
 
-        self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal", carla_nav_msgs.msg.PathPlannerAction, execute_cb=self.execute_cb, auto_start=False)
+        self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal", PathPlannerAction, execute_cb=self.execute_cb, auto_start=False)
         self.route_polanner_server.start()
-        self._feedback = carla_nav_msgs.msg.PathPlannerActionFeedback()
-        self._result = carla_nav_msgs.msg.PathPlannerResult()
+        self._feedback = PathPlannerFeedback()
+        self._result = PathPlannerResult()
 
         # use callback to wait for ego vehicle
         self.loginfo("Waiting for ego vehicle...")
@@ -93,23 +93,28 @@ class CarlaToRosWaypointConverter(CompatibleNode):
     def execute_cb(self, goal_msg):
 
         self.loginfo("Received goal, trigger rerouting...")
-        carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal)
+        carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
         self.goal = carla_goal
 
         if self.ego_vehicle is None or self.goal is None:
             self.route_polanner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
         else:
             self.current_route = self.calculate_route(self.goal)
-            path_msg = Path()
-            path_msg.header.frame_id = "map"
-            path_msg.header.stamp = ros_timestamp(self.get_time(), from_sec=True)
+
+            self._result.path = Path()
+            self._result.path.header.frame_id = "map"
+            self._result.path.header.stamp = ros_timestamp(self.get_time(), from_sec=True)
+
             if self.current_route is not None:
                 for wp in self.current_route:
                     pose = PoseStamped()
                     pose.pose = trans.carla_transform_to_ros_pose(wp[0].transform)
-                    path_msg.poses.append(pose)
-            self._result.path = path_msg
-            self.route_polanner_server.set_succeeded(self._result, "Got path {} waypoints.".format(len(path_msg.poses)))
+                    self._result.path.poses.append(pose)
+
+            result_info = "Got path {} waypoints.".format(len(self._result.path.poses))
+            self.loginfo(result_info)
+            self.waypoint_publisher.publish(self._result.path)
+            self.route_polanner_server.set_succeeded(self._result, result_info)
 
     def destroy(self):
         """

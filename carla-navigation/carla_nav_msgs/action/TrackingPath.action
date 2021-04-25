@@ -1,9 +1,12 @@
 #goal definition
 nav_msgs/Path path
 ---
-#result definition
-std_msgs/Empty result
+#result definition RUNNING = 0, SUCCESS = 1, FAILURE = 2
+int32  error_code
+string error_info
 ---
 #feedback
+int32 error_code
+string error_info
 float32 distance_to_goal
 float32 speed

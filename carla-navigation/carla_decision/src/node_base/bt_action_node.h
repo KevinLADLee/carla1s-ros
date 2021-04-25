@@ -27,6 +27,7 @@
 #include <behaviortree_cpp_v3/bt_factory.h>
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
+#include "common.h"
 
 namespace BT
 {
@@ -52,6 +53,10 @@ class RosActionNode : public BT::ActionNodeBase
 {
     nh_ = config().blackboard->template get<ros::NodeHandlePtr>("node_handler");
     action_client_ = std::make_shared<ActionClientType>( *nh_, action_client_name_, true );
+
+    std::cout << "[BT ROS Action Node]: " << "Waiting action server (" << action_client_name_ << ")..." << std::endl;
+    action_client_->waitForServer();
+    std::cout << "[BT ROS Action Node]: Action Server (" << action_client_name_ << ") connected success!" << std::endl;
 }
 
  public:
@@ -71,8 +76,6 @@ class RosActionNode : public BT::ActionNodeBase
   static PortsList providedPorts()
   {
     return  {
-        InputPort<std::string>("server_name", "name of the Action Server"),
-        InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")
     };
   }
 
@@ -89,17 +92,11 @@ class RosActionNode : public BT::ActionNodeBase
 
   virtual void on_wait_for_result(){};
 
-  /// Method (to be implemented by the user) to receive the reply.
-  /// User can decide which NodeStatus it will return (SUCCESS or FAILURE).
-  virtual NodeStatus onResult( const ResultType& res) {
-    return NodeStatus::SUCCESS;
+  virtual NodeStatus on_result( const ResultType& res){
+    setStatus(BT::NodeStatus::IDLE);
+    return BT::NodeStatus::SUCCESS;
   };
 
-  /**
- * @brief Function to perform some user-defined operation upon successful
- * completion of the action. Could put a value on the blackboard.
- * @return BT::NodeStatus Returns SUCCESS by default, user may override return another value
- */
   virtual BT::NodeStatus on_success()
   {
     return BT::NodeStatus::SUCCESS;
@@ -108,12 +105,27 @@ class RosActionNode : public BT::ActionNodeBase
   enum FailureCause{
     MISSING_SERVER = 0,
     ABORTED_BY_SERVER = 1,
-    REJECTED_BY_SERVER = 2
+    REJECTED_BY_SERVER = 2,
+    NOT_VALID_PATH = 3
   };
 
   /// Called when a service call failed. Can be overriden by the user.
-  virtual NodeStatus onFailedRequest(FailureCause failure)
+  virtual NodeStatus on_failed_request(FailureCause failure)
   {
+    switch (failure) {
+      case FailureCause::ABORTED_BY_SERVER:
+        std::cout << "Error: " << action_client_name_ << " ABORTED_BY_SERVER!" << std::endl;
+        break;
+      case FailureCause::REJECTED_BY_SERVER:
+        std::cout << "Error: " << action_client_name_ << " REJECTED_BY_SERVER!" << std::endl;
+        break;
+      case FailureCause::NOT_VALID_PATH:
+        std::cout << "Error: " << action_client_name_ << " NOT_VALID_PATH!" << std::endl;
+        break;
+      default:
+        std::cout << "Error: Aborted" << std::endl;
+    }
+    setStatus(NodeStatus::IDLE);
     return NodeStatus::FAILURE;
   }
 
@@ -133,51 +145,47 @@ class RosActionNode : public BT::ActionNodeBase
   BT::NodeStatus tick() override
   {
     // Timeout 100ms
-    ros::Duration timeout(static_cast<double>(100.0) * 1e-3);
+    ros::Duration timeout(static_cast<double>(300.0) * 1e-3);
 
     bool connected = action_client_->waitForServer(timeout);
     if( !connected ){
-      return onFailedRequest(MISSING_SERVER);
+      std::cerr << "[MISSING_SERVER] " << action_client_name_ << " connected failed!" << std::endl;
+      return on_failed_request(MISSING_SERVER);
     }
 
     // first step to be done only at the beginning of the Action
     if (status() == BT::NodeStatus::IDLE) {
       // setting the status to RUNNING to notify the BT Loggers (if any)
       setStatus(BT::NodeStatus::RUNNING);
-
       on_tick();
-
+      std::cout << action_client_name_ << " send goal" << std::endl;
       action_client_->sendGoal(goal_);
     }
 
     // RUNNING
     auto action_state = action_client_->getState();
-    if(ros::ok() && !goal_result_available_){
-      on_wait_for_result();
-
-    if(goal_updated_)
-
-      goal_updated_ = true;
-    }
+//    if(ros::ok() && !goal_result_available_){
+//      on_wait_for_result();
+//    }
 
     // Please refer to these states
-
     if( action_state == actionlib::SimpleClientGoalState::PENDING ||
         action_state == actionlib::SimpleClientGoalState::ACTIVE )
     {
+      std::cout << action_client_name_ << " state: running" << std::endl;
       return NodeStatus::RUNNING;
     }
     else if( action_state == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      return onResult( *action_client_->getResult() );
+      return on_result( *action_client_->getResult() );
     }
     else if( action_state == actionlib::SimpleClientGoalState::ABORTED)
     {
-      return onFailedRequest( ABORTED_BY_SERVER );
+      return on_failed_request( ABORTED_BY_SERVER );
     }
     else if( action_state == actionlib::SimpleClientGoalState::REJECTED)
     {
-      return onFailedRequest( REJECTED_BY_SERVER );
+      return on_failed_request( REJECTED_BY_SERVER );
     }
     else
     {

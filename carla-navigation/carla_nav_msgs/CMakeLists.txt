@@ -25,4 +25,4 @@ add_action_files(DIRECTORY action FILES ${ACTION_FILES})
 
 generate_messages(DEPENDENCIES std_msgs geometry_msgs diagnostic_msgs nav_msgs)
 
-catkin_package(CATKIN_DEPENDS message_runtime std_msgs geometry_msgs diagnostic_msgs)
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs geometry_msgs nav_msgs diagnostic_msgs)

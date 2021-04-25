@@ -23,9 +23,10 @@
 
 #include "node_base/bt_action_node.h"
 #include "util/log.h"
+#include "util/bt_conversions.h"
 
 #ifndef NDEBUG
-#define DLOG_INFO(INFO) std::cout << "[Debug]: " << INFO << std::endl;
+#define DLOG_INFO(INFO) std::cout <<  "[Debug]: " << INFO << std::endl;
 #else
 #define DLOG_INFO(INFO)
 #endif

@@ -21,7 +21,11 @@ class GoalUpdated : public BT::ConditionNode
     return {};
   }
 
+  void GoalCallback(const geometry_msgs::PoseStamped::ConstPtr& goal);
+
  private:
+  ros::NodeHandlePtr nh_ptr_;
+  ros::Subscriber goal_sub_;
   geometry_msgs::PoseStamped goal_;
   std::vector<geometry_msgs::PoseStamped> goals_;
 

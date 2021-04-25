@@ -10,11 +10,6 @@ void CheckTrafficLight::TrafficCallback(const std_msgs::Int16::ConstPtr &msg){
   traffic_light_status_ = msg->data;
 }
 
-BT::PortsList CheckTrafficLight::providedPorts()
-{
-  return { BT::InputPort<std::string>("traffic_light_status") };
-}
-
 BT::NodeStatus CheckTrafficLight::tick()
 {
   switch (traffic_light_status_) {

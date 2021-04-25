@@ -6,12 +6,11 @@
 #include "carla_decision.h"
 
 CarlaDecision::CarlaDecision() {
-  nh_ptr_ = boost::make_shared<ros::NodeHandle>("~");
-  goal_sub_ = nh_ptr_->subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1, &CarlaDecision::GoalCallback, this);
+  nh_ptr_ = boost::make_shared<ros::NodeHandle>();
 }
 
 bool CarlaDecision::LoadBehaviorTree(const std::string &filename) {
-
+  std::cout << "Loading behavior tree..." << std::endl;
   // Check and load behavior tree xml file as xml_string
   std::ifstream xml_file(filename);
   if (!xml_file.good()) {
@@ -41,21 +40,19 @@ bool CarlaDecision::LoadBehaviorTree(const std::string &filename) {
 
   // This logger publish status changes using ZeroMQ. Used by Groot
   publisher_zmq_ptr_ = std::make_unique<BT::PublisherZMQ>(bt_tree_);
+
+  std::cout << "Loading success!" << std::endl;
   return true;
 }
 
 void CarlaDecision::Tick() {
-  ros::Rate rate(10);
-  ros::AsyncSpinner spinner(4);
+  ros::Rate rate(100);
+  ros::AsyncSpinner spinner(6);
   spinner.start();
   while (ros::ok()){
     bt_tree_.tickRoot();
     rate.sleep();
   }
-}
-
-void CarlaDecision::GoalCallback(const geometry_msgs::PoseStamped::ConstPtr& goal) {
-  bt_blackboard_->set<geometry_msgs::PoseStamped>("goal", *goal);
 }
 
 std::string CarlaDecision::DetermineLibPath(const std::string &plugin_name) {

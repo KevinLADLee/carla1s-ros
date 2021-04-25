@@ -17,13 +17,13 @@ class CheckTrafficLight : public BT::ConditionNode{
 
   void TrafficCallback(const std_msgs::Int16::ConstPtr &msg);
 
-  static BT::PortsList providedPorts();
+  static BT::PortsList providedPorts(){return{};};
 
   BT::NodeStatus tick() override;
   
  private:
   ros::NodeHandle nh;
-  int traffic_light_status_ = TrafficLightStats::RED;
+  int traffic_light_status_ = TrafficLightStats::GREEN;
   ros::Subscriber traffic_sub_;
 };
 

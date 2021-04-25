@@ -8,8 +8,8 @@
                 <ReactiveFallback>
                     <Condition ID="GoalUpdated"/>
                     <Control ID="PipelineSequence">
-                        <Action ID="ComputePathToGoal" goal="" path=""/>
-                        <Action ID="TrackingPath" path=""/>
+                        <Action ID="ComputePathToGoal"/>
+                        <Action ID="TrackingPath"/>
                     </Control>
                 </ReactiveFallback>
             </ReactiveSequence>
@@ -19,16 +19,11 @@
     <!-- ////////// -->
     <TreeNodesModel>
         <Condition ID="CheckTrafficLight"/>
-        <Action ID="ComputePathToGoal">
-            <input_port name="goal">Destination to plan to</input_port>
-            <output_port name="path">Path created by ComputePathToPose node</output_port>
-        </Action>
+        <Action ID="ComputePathToGoal"/>
         <Condition ID="GoalUpdated"/>
         <Control ID="PipelineSequence"/>
         <Action ID="StopAndWait"/>
-        <Action ID="TrackingPath">
-            <input_port name="path"/>
-        </Action>
+        <Action ID="TrackingPath"/>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
