@@ -16,7 +16,7 @@ endif()
 catkin_package(CATKIN_DEPENDS rospy)
 
 catkin_install_python(
-        PROGRAMS src/carla_waypoint_publisher/carla_route_planner.py
+        PROGRAMS src/carla_global_planner/carla_global_planner.py
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch/

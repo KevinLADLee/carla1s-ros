@@ -35,26 +35,33 @@ class PurePursuit
  public:
   PurePursuit(const std::string &name);
   void initMarker();
-  bool isForwardWayPt(const geometry_msgs::Point &way_pt, const geometry_msgs::Pose &car_pose);
-  bool isWayPtAwayFromLfwDist(const geometry_msgs::Point &way_pt, const geometry_msgs::Point &car_pos);
-  double getYawFromPose(const geometry_msgs::Pose &car_pose);
-  double getEta(const geometry_msgs::Pose &car_pose);
-  double getCar2GoalDist();
-  double getSteering(double eta);
-  geometry_msgs::Point get_odom_car2WayPtVec(const geometry_msgs::Pose &car_pose);
 
   void trackingLoop();
   NodeState getNodeState();
   void setNodeState(const NodeState & node_state);
   void ExecuteCallback(const carla_nav_msgs::TrackingPathGoal::ConstPtr & goal_msg);
-  bool isGoalReached();
+  bool isGoalReached(const nav_msgs::Odometry &odom);
+  double computeDistToGoal(const nav_msgs::Odometry &odom);
+
+  void startTrackingPath();
+  void stopTrackingPath();
+  void vehicleInfoCB(const carla_msgs::CarlaEgoVehicleInfoConstPtr &vehicle_info_msg);
+  void odomCB(const nav_msgs::Odometry::ConstPtr &odom_msg);
+
+ private:
+  bool isForwardWayPt(const geometry_msgs::Point &way_pt, const geometry_msgs::Pose &car_pose);
+  bool isWayPtAwayFromLfwDist(const geometry_msgs::Point &way_pt, const geometry_msgs::Point &car_pos);
+  double getYawFromPose(const geometry_msgs::Pose &car_pose);
+  double getEta(const geometry_msgs::Pose &car_pose);
+  double getCar2GoalDist();
+  double getSteering(double eta) const;
+  geometry_msgs::Point get_odom_car2WayPtVec(const geometry_msgs::Pose &car_pose);
 
 
  private:
   ros::NodeHandle nh_;
-  ros::Subscriber odom_sub_, path_sub_, vehicle_info_sub_;
+  ros::Subscriber odom_sub_, vehicle_info_sub_;
   ros::Publisher cmd_pub_, marker_pub_;
-  ros::Timer timer1_, timer2_;
 
   actionlib::SimpleActionServer<carla_nav_msgs::TrackingPathAction> as_;
   NodeState node_state_ = NodeState::IDLE;
@@ -71,20 +78,14 @@ class PurePursuit
 
   bool use_vehicle_info_ = true;
 
-  float L_, Lfw_, Vcmd_, lfw_, steering_, velocity_;
-  float Vcmd_min_;
+  float L_, Lfw_, Vcmd_, lfw_, steering_, velocity_, Vmin_;
+  float brake_dist_;
+  float tire_friction_ = 3.0;
   float steering_gain_, base_angle_, goal_radius_, speed_incremental_;
   int controller_freq_;
   bool found_forward_pt_, smooth_accel_;
-  bool goal_received_, goal_reached_;
+  bool goal_reached_;
 
-  void startTrackingPath();
-  void stopTrackingPath();
-
-  void vehicleInfoCB(const carla_msgs::CarlaEgoVehicleInfoConstPtr &vehicle_info_msg);
-  void odomCB(const nav_msgs::Odometry::ConstPtr &odom_msg);
-  void pathCB(const nav_msgs::Path::ConstPtr &path_msg);
-  void controlLoopCB(const ros::TimerEvent &);
 
 }; // end of class
 
@@ -93,35 +94,30 @@ PurePursuit::PurePursuit(const std::string &name)
 {
   ros::NodeHandle pn("~/" + name);
   pn.param<float>("L", L_, 2.77);      // length of car
-  pn.param<float>("Vcmd", Vcmd_, 20.0); // reference speed (m/s)
+  pn.param<float>("Vcmd", Vcmd_, 15.0); // reference speed (m/s)
   pn.param<float>("Lfw", Lfw_, 5.0);   // forward look ahead distance (m)
   pn.param<float>("lfw", lfw_, 1.6614);  // distance between front the center of car
+  pn.param<float>("Vmin", Vmin_, 2.0); // reference speed (m/s)
+  pn.param<float>("BrakeDistance", brake_dist_, 15.0); // reference speed (m/s)
 
-  Vcmd_min_ = Vcmd_;
   //Controller parameter
   pn.param<int>("controller_freq", controller_freq_, 50);
   pn.param<float>("steering_gain", steering_gain_, 3.0);
-  pn.param<float>("goal_radius", goal_radius_, 5.0);             // goal radius (m)
+  pn.param<float>("goal_radius", goal_radius_, 2.0);             // goal radius (m)
   pn.param<float>("base_angle", base_angle_, 0.0);               // neutral point of servo (rad)
   pn.param<bool>("smooth_accel", smooth_accel_, true);          // smooth the acceleration of car
   pn.param<float>("speed_incremental", speed_incremental_, 1.5); // speed incremental value (discrete acceleraton), unit: m/s
 
   //Publishers and Subscribers
   odom_sub_ = nh_.subscribe("/carla/ego_vehicle/odometry", 1, &PurePursuit::odomCB, this);
-  //  path_sub_ = nh_.subscribe("/carla/ego_vehicle/waypoints", 1, &PurePursuit::pathCB, this);
   vehicle_info_sub_ = nh_.subscribe("/carla/ego_vehicle/vehicle_info", 1, &PurePursuit::vehicleInfoCB, this);
 
   marker_pub_ = nh_.advertise<visualization_msgs::Marker>("/path_tracking_node/pure_pursuit/path_marker", 5);
   cmd_pub_ = nh_.advertise<ackermann_msgs::AckermannDrive>("/carla/ego_vehicle/ackermann_cmd", 10);
 
-  //Timer
-//    timer1_ = nh_.createTimer(ros::Duration((1.0) / controller_freq_), &PurePursuit::controlLoopCB, this); // Duration(1/control_Hz)
-
-
   //Action server
   as_.start();
   node_state_ = NodeState::IDLE;
-
 
   //Init variables
   found_forward_pt_ = false;
@@ -181,14 +177,15 @@ void PurePursuit::odomCB(const nav_msgs::Odometry::ConstPtr &odom_msg)
 {
   std::lock_guard<std::mutex> guard(odom_mutex_);
   this->odom_ = *odom_msg;
+  isGoalReached(odom_);
 }
 
 double PurePursuit::getYawFromPose(const geometry_msgs::Pose &car_pose)
 {
-  float x = car_pose.orientation.x;
-  float y = car_pose.orientation.y;
-  float z = car_pose.orientation.z;
-  float w = car_pose.orientation.w;
+  double x = car_pose.orientation.x;
+  double y = car_pose.orientation.y;
+  double z = car_pose.orientation.z;
+  double w = car_pose.orientation.w;
 
   double tmp, yaw;
   tf::Quaternion q(x, y, z, w);
@@ -260,8 +257,6 @@ geometry_msgs::Point PurePursuit::get_odom_car2WayPtVec(const geometry_msgs::Pos
     //ROS_INFO("goal REACHED!");
   }
 
-  /*Visualized Target Point on RVIZ*/
-  /*Clear former target point Marker*/
   points_.points.clear();
   line_strip_.points.clear();
 
@@ -296,54 +291,17 @@ double PurePursuit::getCar2GoalDist()
   return sqrt(car2goal_x * car2goal_x + car2goal_y * car2goal_y);
 }
 
-double PurePursuit::getSteering(double eta)
+double PurePursuit::getSteering(double eta) const
 {
   return atan2((this->L_ * sin(eta)), (this->Lfw_ / 2 + this->lfw_ * cos(eta)));
 }
-
-//void PurePursuit::controlLoopCB(const ros::TimerEvent &)
-//{
-//
-//  geometry_msgs::Pose carPose = odom_.pose.pose;
-//  geometry_msgs::Twist carVel = odom_.twist.twist;
-//
-//  if (goal_received_)
-//  {
-//    /*Estimate Steering Angle*/
-//    double eta = getEta(carPose);
-//    if (found_forward_pt_)
-//    {
-//      steering_ = base_angle_ + getSteering(eta) * steering_gain_;
-//      /*Estimate Gas Input*/
-//      // if (goal_reached_)
-//      // {
-//      if (smooth_accel_)
-//        velocity_ = std::min(velocity_ + speed_incremental_, Vcmd_);
-//      else
-//        velocity_ = Vcmd_;
-//      // }
-//    }
-//  }
-//
-//  double dist2goal = std::hypot(goal_pos_.x - odom_.pose.pose.position.x,
-//                                goal_pos_.y - odom_.pose.pose.position.y);
-//
-//  if (dist2goal < goal_radius_)
-//  {
-//    velocity_ = 0.0;
-//    steering_ = base_angle_;
-//  }
-//
-//  ackermann_cmd_.speed = velocity_;
-//  ackermann_cmd_.steering_angle = steering_;
-//  cmd_pub_.publish(ackermann_cmd_);
-//}
 
 void PurePursuit::vehicleInfoCB(const carla_msgs::CarlaEgoVehicleInfoConstPtr &vehicle_info_msg) {
   if(use_vehicle_info_){
     auto wheels = vehicle_info_msg->wheels;
     L_ = std::abs(wheels.at(0).position.x - wheels.at(2).position.x);
     lfw_ = std::abs(wheels.at(0).position.x);
+    tire_friction_ = vehicle_info_msg->wheels.at(0).tire_friction;
     std::cout << "VehicleInfo: wheel_base = " << L_ << " wheel front to center = " << lfw_  << std::endl;
   }
   use_vehicle_info_ = false;
@@ -361,7 +319,13 @@ void PurePursuit::setNodeState(const NodeState & node_state) {
 
 void PurePursuit::ExecuteCallback(const carla_nav_msgs::TrackingPathGoal::ConstPtr & goal_msg) {
 
-  std::cout << "PurePursuit: got " << goal_msg->path.poses.size() << " waypoints" << std::endl;
+//  std::cout << "PurePursuit: got " << goal_msg->path.poses.size() << " waypoints" << std::endl;
+
+  if(goal_msg->path.poses.size() <=1 ){
+    setNodeState(NodeState::FAILURE);
+  } else{
+    setNodeState(NodeState::IDLE);
+  }
 
   NodeState node_state = getNodeState();
 
@@ -374,14 +338,10 @@ void PurePursuit::ExecuteCallback(const carla_nav_msgs::TrackingPathGoal::ConstP
 
   if(plan_mutex_.try_lock()){
     map_path_ = goal_msg->path;
-    if(map_path_.poses.size() > 1) {
       goal_pos_ = map_path_.poses.back().pose.position;
       goal_circle_.pose = map_path_.poses.back().pose;
       plan_mutex_.unlock();
       plan_condition_.notify_one();
-    } else{
-      setNodeState(NodeState::FAILURE);
-    }
   }
   marker_pub_.publish(goal_circle_);
 
@@ -396,12 +356,11 @@ void PurePursuit::ExecuteCallback(const carla_nav_msgs::TrackingPathGoal::ConstP
     if (as_.isPreemptRequested()) {
       ROS_INFO("Action Preempted");
       stopTrackingPath();
-//      setNodeState(NodeState::IDLE);
+      setNodeState(NodeState::IDLE);
       carla_nav_msgs::TrackingPathResult result;
       result.error_code = NodeState::SUCCESS;
       goal_reached_ = false;
       as_.setPreempted(result);
-//      as_.setSucceeded(result);
       break;
     }
     node_state = getNodeState();
@@ -412,13 +371,10 @@ void PurePursuit::ExecuteCallback(const carla_nav_msgs::TrackingPathGoal::ConstP
       carla_nav_msgs::TrackingPathResult result;
 
       feedback.error_code = node_state;
-//      feedback.error_msg = error_info.error_msg();
-//      SetErrorInfo(roborts_common::ErrorInfo::OK());
       as_.publishFeedback(feedback);
 
       if(node_state == NodeState::SUCCESS) {
         result.error_code = node_state;
-//        result.error_code = error_info.error_code();
         as_.setSucceeded(result,"Tracking succeed!");
         stopTrackingPath();
         break;
@@ -430,6 +386,8 @@ void PurePursuit::ExecuteCallback(const carla_nav_msgs::TrackingPathGoal::ConstP
       }
     }
   }
+
+  std::cout << "end execute loop!" << std::endl;
 }
 
 void PurePursuit::startTrackingPath() {
@@ -437,7 +395,7 @@ void PurePursuit::startTrackingPath() {
     tracking_path_thread_.join();
   }
   setNodeState(NodeState::RUNNING);
-  tracking_path_thread_ = std::thread(std::bind(&PurePursuit::trackingLoop, this));
+  tracking_path_thread_ = std::thread([this] { trackingLoop(); });
 
 }
 
@@ -449,11 +407,8 @@ void PurePursuit::stopTrackingPath() {
   std::cout << "stop tracking path" << std::endl;
 }
 
-bool PurePursuit::isGoalReached() {
-  std::lock_guard<std::mutex> guard(odom_mutex_);
-  double dist2goal = std::hypot(goal_pos_.x - odom_.pose.pose.position.x,
-                                goal_pos_.y - odom_.pose.pose.position.y);
-
+bool PurePursuit::isGoalReached(const nav_msgs::Odometry &odom) {
+  double dist2goal = computeDistToGoal(odom);
   if (dist2goal < goal_radius_)
   {
     goal_reached_ = true;
@@ -464,12 +419,19 @@ bool PurePursuit::isGoalReached() {
   }
 }
 
+double PurePursuit::computeDistToGoal(const nav_msgs::Odometry &odom) {
+  double dist2goal = std::hypot(goal_pos_.x - odom.pose.pose.position.x,
+                                goal_pos_.y - odom.pose.pose.position.y);
+  return dist2goal;
+}
+
 void PurePursuit::trackingLoop() {
 
   std::chrono::microseconds sleep_time = std::chrono::microseconds(0);
-  std::cout << "start tracking loop" << std::endl;
   while (getNodeState() == NodeState::RUNNING){
+//    std::cout << "start tracking loop" << std::endl;
     std::unique_lock<std::mutex> plan_lock(plan_mutex_);
+//    std::cout << "wait condition!" << std::endl;
     plan_condition_.wait_for(plan_lock, sleep_time);
     auto begin_time = std::chrono::steady_clock::now();
 
@@ -479,6 +441,7 @@ void PurePursuit::trackingLoop() {
       std::lock_guard<std::mutex> guard(odom_mutex_);
       carPose = odom_.pose.pose;
       carVel = odom_.twist.twist;
+//      std::cout << "got odom!" << std::endl;
     }
 
     double eta = getEta(carPose);
@@ -486,6 +449,10 @@ void PurePursuit::trackingLoop() {
     {
       steering_ = base_angle_ + getSteering(eta) * steering_gain_;
       velocity_ = std::min(velocity_ + speed_incremental_, Vcmd_);
+    }
+
+    if(computeDistToGoal(odom_) <= brake_dist_){
+      velocity_ = Vmin_;
     }
 
     auto cost_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin_time);
@@ -498,9 +465,11 @@ void PurePursuit::trackingLoop() {
     ackermann_cmd_.speed = velocity_;
     ackermann_cmd_.steering_angle = steering_;
     cmd_pub_.publish(ackermann_cmd_);
-    if(isGoalReached()){
+    if(isGoalReached(odom_)){
+      std::cout << "reached goal!" << std::endl;
       setNodeState(NodeState::SUCCESS);
     }
+
   }
   std::cout << "stop tracking loop" << std::endl;
   ackermann_cmd_.speed = 0.0;

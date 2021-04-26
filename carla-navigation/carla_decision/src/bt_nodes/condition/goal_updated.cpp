@@ -3,11 +3,14 @@
 
 GoalUpdated::GoalUpdated(const std::string &name, const BT::NodeConfiguration &config) : ConditionNode(name, config) {
   config.blackboard->get<ros::NodeHandlePtr>("node_handler", nh_ptr_);
+  config.blackboard->set<bool>("goal_updated", false);
   goal_sub_ = nh_ptr_->subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1, &GoalUpdated::GoalCallback, this);
+  ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/move_base_simple/goal");
 }
 
 BT::NodeStatus GoalUpdated::tick()
 {
+
   if (status() == BT::NodeStatus::IDLE) {
     config().blackboard->get<std::vector<geometry_msgs::PoseStamped>>("goals", goals_);
     config().blackboard->get<geometry_msgs::PoseStamped>("goal", goal_);
@@ -22,8 +25,6 @@ BT::NodeStatus GoalUpdated::tick()
   if (goal_ != current_goal || goals_ != current_goals) {
     goal_ = current_goal;
     goals_ = current_goals;
-    config().blackboard->set<bool>("goal_updated", true);
-    DLOG_INFO( "Goal Updated!");
     return BT::NodeStatus::SUCCESS;
   }
   return BT::NodeStatus::FAILURE;
@@ -31,6 +32,8 @@ BT::NodeStatus GoalUpdated::tick()
 
 void GoalUpdated::GoalCallback(const geometry_msgs::PoseStampedConstPtr &goal) {
   config().blackboard->set<geometry_msgs::PoseStamped>("goal", *goal);
+  config().blackboard->set<bool>("goal_updated", true);
+  DLOG_INFO( "Goal Updated!");
   setStatus(BT::NodeStatus::SUCCESS);
 }
 

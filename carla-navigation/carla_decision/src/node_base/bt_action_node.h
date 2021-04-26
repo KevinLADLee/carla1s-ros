@@ -106,7 +106,8 @@ class RosActionNode : public BT::ActionNodeBase
     MISSING_SERVER = 0,
     ABORTED_BY_SERVER = 1,
     REJECTED_BY_SERVER = 2,
-    NOT_VALID_PATH = 3
+    NOT_VALID_PATH = 3,
+    PREEMPTED = 4
   };
 
   /// Called when a service call failed. Can be overriden by the user.
@@ -121,6 +122,9 @@ class RosActionNode : public BT::ActionNodeBase
         break;
       case FailureCause::NOT_VALID_PATH:
         std::cout << "Error: " << action_client_name_ << " NOT_VALID_PATH!" << std::endl;
+        break;
+      case FailureCause::PREEMPTED:
+        std::cout << "Error: " << action_client_name_ << " PREEMPTED!" << std::endl;
         break;
       default:
         std::cout << "Error: Aborted" << std::endl;
@@ -161,7 +165,6 @@ class RosActionNode : public BT::ActionNodeBase
       std::cout << action_client_name_ << " send goal" << std::endl;
       action_client_->sendGoal(goal_);
     }
-
     // RUNNING
     auto action_state = action_client_->getState();
 //    if(ros::ok() && !goal_result_available_){
@@ -172,7 +175,6 @@ class RosActionNode : public BT::ActionNodeBase
     if( action_state == actionlib::SimpleClientGoalState::PENDING ||
         action_state == actionlib::SimpleClientGoalState::ACTIVE )
     {
-      std::cout << action_client_name_ << " state: running" << std::endl;
       return NodeStatus::RUNNING;
     }
     else if( action_state == actionlib::SimpleClientGoalState::SUCCEEDED)
@@ -186,6 +188,10 @@ class RosActionNode : public BT::ActionNodeBase
     else if( action_state == actionlib::SimpleClientGoalState::REJECTED)
     {
       return on_failed_request( REJECTED_BY_SERVER );
+    }
+    else if( action_state == actionlib::SimpleClientGoalState::PREEMPTED)
+    {
+      return on_failed_request( PREEMPTED );
     }
     else
     {

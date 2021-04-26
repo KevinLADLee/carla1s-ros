@@ -1,6 +1,6 @@
 pure_pursuit:
   L: 2.86047 # length of car
-  Vcmd: 30.0 # reference speed (m/s)
+  Vcmd: 20.0 # reference speed (m/s)
   Lfw: 5.0 # forward look ahead distance (m)
   lfw: 1.47184 # distance between front and center of car
   controller_freq: 50 # Hz

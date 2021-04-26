@@ -1,0 +1,9 @@
+<launch>
+
+    <node name="carla_decision_node" pkg="carla_decision" type="carla_decision_node" output="screen" />
+
+    <include file="$(find carla_global_planner)/launch/carla_global_planner.launch" />
+
+    <include file="$(find carla_path_tracking)/launch/tracking.launch" />
+
+</launch>

@@ -5,6 +5,7 @@ ComputePathToGoal::ComputePathToGoal(const std::string &name, const std::string 
     : RosActionNode(name, action_client_name, conf) {}
 
 void ComputePathToGoal::on_tick() {
+  config().blackboard->get<bool>("goal_updated", goal_updated_);
   config().blackboard->get<geometry_msgs::PoseStamped>("goal", goal_.goal);
   goal_.role_name = "ego_vehicle";
 }
