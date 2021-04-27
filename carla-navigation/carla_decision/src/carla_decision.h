@@ -2,6 +2,7 @@
 #define SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_DECISION_SRC_CARLA_DECISION_H_
 
 #include "common.h"
+#include "blackboard_handler.h"
 
 class CarlaDecision{
  public:

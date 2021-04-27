@@ -2,9 +2,9 @@
 
 CheckTrafficLight::CheckTrafficLight(const std::string &condition_name,
                                      const BT::NodeConfiguration &conf) : BT::ConditionNode(condition_name, conf){
-  traffic_sub_ = nh.subscribe<std_msgs::Int16>("/traffic_light_stats", 10,
-                                               boost::bind(&CheckTrafficLight::TrafficCallback, this, _1));
-};
+
+  config().blackboard->get<ros::NodeHandlePtr>("node_handler", nh_ptr_);
+}
 
 void CheckTrafficLight::TrafficCallback(const std_msgs::Int16::ConstPtr &msg){
   traffic_light_status_ = msg->data;

@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
         actionlib
         nav_msgs
         geometry_msgs
+        carla_msgs
         carla_nav_msgs
         behaviortree_cpp_v3
 )
@@ -35,7 +36,7 @@ foreach(node_src ${nodes_src})
     add_library(${target_name} SHARED ${node_src})
     target_link_libraries(${target_name} BT::behaviortree_cpp_v3 ${catkin_LIBRARIES})
     target_compile_definitions(${target_name} PRIVATE BT_PLUGIN_EXPORT)
-    add_dependencies(${target_name} carla_nav_msgs_generate_messages)
+    add_dependencies(${target_name} carla_msgs_generate_messages carla_nav_msgs_generate_messages )
 #    if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
 #    set_target_properties(${target_name} PROPERTIES
 #                          LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -46,7 +47,7 @@ foreach(node_src ${nodes_src})
     list(APPEND node_libs ${target_name})
 endforeach()
 
-add_executable(${PROJECT_NAME}_node src/carla_decision.cpp src/carla_decision_node.cpp)
+add_executable(${PROJECT_NAME}_node src/carla_decision.cpp src/carla_decision_node.cpp src/blackboard_handler.cpp)
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES}
         BT::behaviortree_cpp_v3
         ${node_libs}

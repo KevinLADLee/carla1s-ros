@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(carla_path_tracking)
 add_compile_options(-std=c++14)
-
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp

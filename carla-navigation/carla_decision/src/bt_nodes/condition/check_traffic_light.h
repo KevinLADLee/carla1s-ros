@@ -4,6 +4,7 @@
 
 #include "common.h"
 
+
 class CheckTrafficLight : public BT::ConditionNode{
   enum TrafficLightStats{
     RED = 0,
@@ -22,9 +23,12 @@ class CheckTrafficLight : public BT::ConditionNode{
   BT::NodeStatus tick() override;
   
  private:
-  ros::NodeHandle nh;
+  ros::NodeHandlePtr nh_ptr_;
   int traffic_light_status_ = TrafficLightStats::GREEN;
-  ros::Subscriber traffic_sub_;
+
+  std::string role_name = "ego_vehicle";
+
+
 };
 
 #endif //SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_DECISION_SRC_CONDITION_CHECK_TRAFFIC_LIGHT_H_

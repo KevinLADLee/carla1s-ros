@@ -17,6 +17,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Int16.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 
 #include <sys/stat.h>
 #include <dlfcn.h>
