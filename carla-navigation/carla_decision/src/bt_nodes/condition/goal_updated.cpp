@@ -5,7 +5,6 @@ GoalUpdated::GoalUpdated(const std::string &name, const BT::NodeConfiguration &c
   config.blackboard->get<ros::NodeHandlePtr>("node_handler", nh_ptr_);
   config.blackboard->set<bool>("goal_updated", false);
   goal_sub_ = nh_ptr_->subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1, &GoalUpdated::GoalCallback, this);
-  ros::topic::waitForMessage<geometry_msgs::PoseStamped>("/move_base_simple/goal");
 }
 
 BT::NodeStatus GoalUpdated::tick()

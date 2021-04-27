@@ -149,9 +149,9 @@ class RosActionNode : public BT::ActionNodeBase
   BT::NodeStatus tick() override
   {
     // Timeout 100ms
-    ros::Duration timeout(static_cast<double>(300.0) * 1e-3);
-
-    bool connected = action_client_->waitForServer(timeout);
+//    ros::Duration timeout(static_cast<double>(300.0) * 1e-3);
+    bool connected = action_client_->isServerConnected();
+        //action_client_->waitForServer(timeout);
     if( !connected ){
       std::cerr << "[MISSING_SERVER] " << action_client_name_ << " connected failed!" << std::endl;
       return on_failed_request(MISSING_SERVER);

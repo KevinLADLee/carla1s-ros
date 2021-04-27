@@ -51,7 +51,6 @@ from rospy import ROSException
 
 
 class CarlaToRosWaypointConverter:
-
     """
     This class generates a plan of waypoints to follow.
 
@@ -72,20 +71,22 @@ class CarlaToRosWaypointConverter:
         self.ego_vehicle_location = None
         self.on_tick = None
         self.role_name = rospy.get_param("role_name", 'ego_vehicle')
-        self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), Path, latch=True, queue_size=1)
+        self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), Path, latch=True,
+                                                  queue_size=1)
 
         # set initial goal
         self.goal = None
 
         self.current_route = None
 
-        self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal", PathPlannerAction, execute_cb=self.execute_cb, auto_start=False)
+        self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal", PathPlannerAction,
+                                                                  execute_cb=self.execute_cb, auto_start=False)
         self.route_polanner_server.start()
         self._feedback = PathPlannerFeedback()
         self._result = PathPlannerResult()
 
         # use callback to wait for ego vehicle
-        
+
         rospy.loginfo("Waiting for ego vehicle...")
         self.on_tick = self.world.on_tick(self.find_ego_vehicle_actor)
 
@@ -126,7 +127,6 @@ class CarlaToRosWaypointConverter:
         else:
             return False
 
-
     def destroy(self):
         """
         Destructor
@@ -134,19 +134,6 @@ class CarlaToRosWaypointConverter:
         self.ego_vehicle = None
         if self.on_tick:
             self.world.remove_on_tick(self.on_tick)
-
-    def on_goal(self, goal):
-        """
-        Callback for /move_base_simple/goal
-
-        Receiving a goal (e.g. from RVIZ '2D Nav Goal') triggers a new route calculation.
-
-        :return:
-        """
-        rospy.loginfo("Received goal, trigger rerouting...")
-        carla_goal = trans.ros_pose_to_carla_transform(goal.pose)
-        self.goal = carla_goal
-        self.reroute()
 
     def reroute(self):
         """

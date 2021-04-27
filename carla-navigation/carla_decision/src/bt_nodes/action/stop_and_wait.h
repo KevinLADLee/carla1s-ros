@@ -6,6 +6,7 @@
 #define SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_DECISION_SRC_ACTION_STOPANDWAIT_H_
 
 #include "common.h"
+#include <ackermann_msgs/AckermannDrive.h>
 
 class StopAndWait : public BT::AsyncActionNode{
  public:
@@ -16,6 +17,13 @@ class StopAndWait : public BT::AsyncActionNode{
   static BT::PortsList providedPorts(){return {};}
 
   BT::NodeStatus tick() override;
+
+  void halt() override;
+
+ private:
+  ros::NodeHandlePtr nh_ptr_;
+  ros::Publisher cmd_vel_pub_;
+  ackermann_msgs::AckermannDrive ackermann_msg_;
 
 };
 

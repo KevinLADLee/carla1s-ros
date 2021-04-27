@@ -7,16 +7,17 @@
                 <Condition ID="CheckTrafficLight"/>
                 <ReactiveFallback>
                     <Condition ID="GoalUpdated"/>
+                    <Action ID="StopAndWait"/>
+                </ReactiveFallback>
+                <ReactiveFallback>
+                    <Condition ID="GoalUpdated"/>
                     <Control ID="PipelineSequence">
                         <Action ID="ComputePathToGoal"/>
                         <Action ID="TrackingPath"/>
                     </Control>
                 </ReactiveFallback>
             </ReactiveSequence>
-            <ReactiveFallback>
-                <Condition ID="GoalUpdated"/>
-                <Action ID="StopAndWait"/>
-            </ReactiveFallback>
+            <Action ID="StopAndWait"/>
         </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
