@@ -8,18 +8,25 @@
 
 #include <carla_msgs/CarlaTrafficLightInfoList.h>
 #include <carla_msgs/CarlaTrafficLightStatusList.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Vector3.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 struct Box{
-  geometry_msgs::Pose pose;
-  geometry_msgs::Vector3 size;
+  //geometry_msgs::Pose pose;
+  tf2::Vector3 center;  // center to traffic light
+  tf2::Vector3 size;  // maybe parallel to coordinates of traffic light
 };
 
 struct TrafficLight{
   TrafficLight() = default;
   TrafficLight(unsigned int id,
+               geometry_msgs::Pose transform,
                const Box &box,
-               bool passable) : id(id), box(box), passable(false){};
+               bool passable) : id(id), transform(transform), box(box), passable(false){};
   unsigned int id = 0;
+  tf2::Transform transform;
   Box box;
   bool passable = false;
 };
