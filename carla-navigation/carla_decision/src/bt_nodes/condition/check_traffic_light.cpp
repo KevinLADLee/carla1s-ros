@@ -3,11 +3,6 @@
 CheckTrafficLight::CheckTrafficLight(const std::string &condition_name,
                                      const BT::NodeConfiguration &conf) : BT::ConditionNode(condition_name, conf){
 
-  config().blackboard->get<ros::NodeHandlePtr>("node_handler", nh_ptr_);
-}
-
-void CheckTrafficLight::TrafficCallback(const std_msgs::Int16::ConstPtr &msg){
-  traffic_light_status_ = msg->data;
 }
 
 BT::NodeStatus CheckTrafficLight::tick()

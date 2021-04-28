@@ -15,14 +15,14 @@
 #include <behaviortree_cpp_v3/utils/shared_library.h>
 
 #include <ros/ros.h>
-#include <std_msgs/Int16.h>
+#include <std_msgs/Bool.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 
 #include <sys/stat.h>
 #include <dlfcn.h>
 
-#include "node_base/bt_action_node.h"
+#include "bt_node_base/bt_action_node.h"
 #include "util/log.h"
 #include "util/bt_conversions.h"
 

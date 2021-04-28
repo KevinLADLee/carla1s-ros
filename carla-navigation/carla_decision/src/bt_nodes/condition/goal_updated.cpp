@@ -3,7 +3,7 @@
 
 GoalUpdated::GoalUpdated(const std::string &name, const BT::NodeConfiguration &config) : ConditionNode(name, config) {
   config.blackboard->get<ros::NodeHandlePtr>("node_handler", nh_ptr_);
-  config.blackboard->set<bool>("goal_updated", false);
+  config.blackboard->set<bool>("first_goal_received", false);
   goal_sub_ = nh_ptr_->subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1, &GoalUpdated::GoalCallback, this);
 }
 
@@ -31,7 +31,7 @@ BT::NodeStatus GoalUpdated::tick()
 
 void GoalUpdated::GoalCallback(const geometry_msgs::PoseStampedConstPtr &goal) {
   config().blackboard->set<geometry_msgs::PoseStamped>("goal", *goal);
-  config().blackboard->set<bool>("goal_updated", true);
+  config().blackboard->set<bool>("first_goal_received", true);
   DLOG_INFO( "Goal Updated!");
   setStatus(BT::NodeStatus::SUCCESS);
 }

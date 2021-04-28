@@ -2,12 +2,17 @@
 #include "compute_path_to_goal.h"
 
 ComputePathToGoal::ComputePathToGoal(const std::string &name, const std::string &action_client_name, const BT::NodeConfiguration &conf)
-    : RosActionNode(name, action_client_name, conf) {}
+    : RosActionNode(name, action_client_name, conf) {
+  first_goal_received_ = false;
+}
 
 void ComputePathToGoal::on_tick() {
-  config().blackboard->get<bool>("goal_updated", goal_updated_);
+  config().blackboard->get<bool>("first_goal_received", first_goal_received_);
   config().blackboard->get<geometry_msgs::PoseStamped>("goal", goal_.goal);
   goal_.role_name = "ego_vehicle";
+  if(!first_goal_received_){
+    setStatus(BT::NodeStatus::FAILURE);
+  }
 }
 
 BT::NodeStatus ComputePathToGoal::on_result(const carla_nav_msgs::PathPlannerResult &res) {

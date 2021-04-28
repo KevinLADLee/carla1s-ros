@@ -107,7 +107,8 @@ class RosActionNode : public BT::ActionNodeBase
     ABORTED_BY_SERVER = 1,
     REJECTED_BY_SERVER = 2,
     NOT_VALID_PATH = 3,
-    PREEMPTED = 4
+    PREEMPTED = 4,
+    WAIT_FIRST_GOAL = 5
   };
 
   /// Called when a service call failed. Can be overriden by the user.
@@ -163,13 +164,14 @@ class RosActionNode : public BT::ActionNodeBase
       setStatus(BT::NodeStatus::RUNNING);
       on_tick();
       std::cout << action_client_name_ << " send goal" << std::endl;
-      action_client_->sendGoal(goal_);
+      if (status() == BT::NodeStatus::FAILURE) {
+        return BT::NodeStatus::FAILURE;
+      } else{
+        action_client_->sendGoal(goal_);
+      }
     }
     // RUNNING
     auto action_state = action_client_->getState();
-//    if(ros::ok() && !goal_result_available_){
-//      on_wait_for_result();
-//    }
 
     // Please refer to these states
     if( action_state == actionlib::SimpleClientGoalState::PENDING ||
@@ -210,7 +212,7 @@ class RosActionNode : public BT::ActionNodeBase
   GoalType goal_;
   ResultType goal_result_;
   bool goal_result_available_ = false;
-  bool goal_updated_ = false;
+  bool first_goal_received_ = false;
 
 };
 

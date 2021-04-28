@@ -16,18 +16,12 @@ class CheckTrafficLight : public BT::ConditionNode{
   CheckTrafficLight(const std::string &condition_name,
                     const BT::NodeConfiguration &conf);
 
-  void TrafficCallback(const std_msgs::Int16::ConstPtr &msg);
-
   static BT::PortsList providedPorts(){return{};};
 
   BT::NodeStatus tick() override;
   
  private:
-  ros::NodeHandlePtr nh_ptr_;
   int traffic_light_status_ = TrafficLightStats::GREEN;
-
-  std::string role_name = "ego_vehicle";
-
 
 };
 
