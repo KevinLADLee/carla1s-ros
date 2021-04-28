@@ -49,8 +49,9 @@ void TrafficLightPerception::TrafficLightInfoCallback(const carla_msgs::CarlaTra
                       tl_info.transform.orientation.y,
                       tl_info.transform.orientation.z,
                       tl_info.transform.orientation.w);
-    tf2::Transform tf(q, t);
-    traffic_lights_.at(tl_info.id-tl_id_min_) = TrafficLight(tl_info.id, tf, TlInfoToBox(tl_info), false);
+    tf2::Transform transform(q, t);
+    traffic_lights_.at(tl_info.id-tl_id_min_).box = TlInfoToBox(tl_info);
+    traffic_lights_.at(tl_info.id-tl_id_min_).transform = transform;
   }
 
 }
@@ -82,7 +83,6 @@ Box TrafficLightPerception::TlInfoToBox(const carla_msgs::CarlaTrafficLightInfo 
   // info.trigger_volume
   box.center = tf2::Vector3(info.trigger_volume.center.x, info.trigger_volume.center.y, info.trigger_volume.center.z);
   box.size = tf2::Vector3(info.trigger_volume.size.x, info.trigger_volume.size.y, info.trigger_volume.size.z);
-
   return box;
 }
 
@@ -106,15 +106,15 @@ bool TrafficLightPerception::CheckPassable() {
       // judge the area the vehicle belongs to split by line connecting traffic light origin and box center
       auto tl_to_box_center = tl.transform * tl.box.center - tl_position;
       auto tl_to_vehicle = vehicle_position - tl_position;
-      if (tl_to_box_center.cross(tl_to_vehicle) > 0 )  // the traffic light is on the other side
+      if (tl_to_box_center.cross(tl_to_vehicle).x() > 0 )  // the traffic light is on the other side
           continue;
 
       // transform odom to traffic light coordinate
       auto vehicle_position_new = tl.transform.inverse() * vehicle_position;
       auto vehicle_to_box_center = tl.box.center - vehicle_position_new;
-      if (abs(vehicle_to_box_center.x) <= safe_distance + tl.box.size.x / 2 &&
-          abs(vehicle_to_box_center.y) <= safe_distance + tl.box.size.y / 2 &&
-          abs(vehicle_to_box_center.z) <= safe_distance + tl.box.size.z / 2)
+      if (abs(vehicle_to_box_center.x()) <= safe_distance + tl.box.size.x() / 2 &&
+          abs(vehicle_to_box_center.y()) <= safe_distance + tl.box.size.y() / 2 &&
+          abs(vehicle_to_box_center.z()) <= safe_distance + tl.box.size.z() / 2)
           should_stop = true;
 
   }

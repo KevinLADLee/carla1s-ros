@@ -24,7 +24,7 @@ struct TrafficLight{
   TrafficLight(unsigned int id,
                geometry_msgs::Pose transform,
                const Box &box,
-               bool passable) : id(id), transform(transform), box(box), passable(false){};
+               bool passable) : id(id), box(box), passable(false){};
   unsigned int id = 0;
   tf2::Transform transform;
   Box box;
