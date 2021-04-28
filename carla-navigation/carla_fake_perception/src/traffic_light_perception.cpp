@@ -14,10 +14,16 @@ TrafficLightPerception::TrafficLightPerception() {
 
   tl_passable_pub_ = nh_.advertise<std_msgs::Bool>("/carla/" + role_name_ + "/fake_perception/traffic_light_passable", 1);
 
+  if(publish_viz_){
+    tl_viz_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("/carla/"+role_name_+"/traffic_light_markers", 10);
+  }
+
 }
 
 void TrafficLightPerception::OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg) {
   odom_ = *odom_msg;
+  tl_passable_msg_.data = CheckPassable();
+  tl_passable_pub_.publish(tl_passable_msg_);
 }
 
 
@@ -35,45 +41,81 @@ void TrafficLightPerception::TrafficLightInfoCallback(const carla_msgs::CarlaTra
   auto max_it = std::max_element(info_msg->traffic_lights.begin(),
                                  info_msg->traffic_lights.end(),
                                  [](const carla_msgs::CarlaTrafficLightInfo& tl1, const carla_msgs::CarlaTrafficLightInfo& tl2){
-                                   return tl1.id > tl2.id;});
+                                   return tl1.id < tl2.id;});
   tl_id_min_ = min_it->id;
   tl_id_max_ = max_it->id;
 
   auto size = (tl_id_max_ - tl_id_min_) + 1;
   traffic_lights_.resize(size);
+  if(publish_viz_){
+    tl_viz_marker_vec_msgs_.markers.resize(size);
+  }
 //  traffic_lights_.resize(info_msg->traffic_lights.size());
 
   for(auto &tl_info : info_msg->traffic_lights){
+    auto current_id = tl_info.id-tl_id_min_;
     tf2::Vector3 t(tl_info.transform.position.x, tl_info.transform.position.y, tl_info.transform.position.z);
     tf2::Quaternion q(tl_info.transform.orientation.x,
                       tl_info.transform.orientation.y,
                       tl_info.transform.orientation.z,
                       tl_info.transform.orientation.w);
     tf2::Transform transform(q, t);
-    traffic_lights_.at(tl_info.id-tl_id_min_).box = TlInfoToBox(tl_info);
-    traffic_lights_.at(tl_info.id-tl_id_min_).transform = transform;
+    traffic_lights_.at(current_id).box = TlInfoToBox(tl_info);
+    traffic_lights_.at(current_id).transform = transform;
+
+    if(publish_viz_){
+      tl_viz_marker_vec_msgs_.markers.at(current_id) = (CreateMarker(traffic_lights_.at(tl_info.id-tl_id_min_)));
+    }
   }
 
 }
 
 void TrafficLightPerception::TrafficLightStatusCallback(const carla_msgs::CarlaTrafficLightStatusListConstPtr &status_msg) {
+  if(!traffic_lights_info_received_){
+    return;
+  }
+
   for(auto &tl_status : status_msg->traffic_lights){
+    auto current_id = tl_status.id - tl_id_min_;
     switch (tl_status.state) {
       case carla_msgs::CarlaTrafficLightStatus::GREEN:
+        if(publish_viz_){
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.r = 0.0;
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.g = 1.0;
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.b = 0.0;
+        }
+        traffic_lights_.at(current_id).passable = true;
+        break;
       case carla_msgs::CarlaTrafficLightStatus::OFF:
-        traffic_lights_.at(tl_status.id - tl_id_min_).passable = true;
+        if(publish_viz_){
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.r = 0.0;
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.g = 0.0;
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.b = 0.0;
+        }
+        traffic_lights_.at(current_id).passable = true;
         break;
       case carla_msgs::CarlaTrafficLightStatus::RED:
+        if(publish_viz_){
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.r = 1.0;
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.g = 0.0;
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.b = 0.0;
+        }
+        traffic_lights_.at(current_id).passable = false;
       case carla_msgs::CarlaTrafficLightStatus::YELLOW:
       default:
-        traffic_lights_.at(tl_status.id - tl_id_min_).passable = false;
+        if(publish_viz_){
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.r = 0.0;
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.g = 1.0;
+          tl_viz_marker_vec_msgs_.markers.at(current_id).color.b = 1.0;
+        }
+        traffic_lights_.at(current_id).passable = false;
         break;
     }
   }
 
-  tl_passable_msg_.data = CheckPassable();
-  tl_passable_pub_.publish(tl_passable_msg_);
-
+  if(publish_viz_) {
+    tl_viz_pub_.publish(tl_viz_marker_vec_msgs_);
+  }
 }
 
 Box TrafficLightPerception::TlInfoToBox(const carla_msgs::CarlaTrafficLightInfo &info) {
@@ -101,7 +143,6 @@ bool TrafficLightPerception::CheckPassable() {
       if (tl.passable) continue;
 
       auto tl_position = tl.transform.getOrigin();
-
 
       // judge the area the vehicle belongs to split by line connecting traffic light origin and box center
       auto tl_to_box_center = tl.transform * tl.box.center - tl_position;

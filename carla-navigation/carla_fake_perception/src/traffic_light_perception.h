@@ -5,16 +5,18 @@
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
 #include <nav_msgs/Odometry.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include <carla_msgs/CarlaTrafficLightInfoList.h>
 #include <carla_msgs/CarlaTrafficLightStatusList.h>
+
+#include <tf2/transform_datatypes.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/LinearMath/Quaternion.h>
 
 struct Box{
-  //geometry_msgs::Pose pose;
   tf2::Vector3 center;  // center to traffic light
   tf2::Vector3 size;  // maybe parallel to coordinates of traffic light
 };
@@ -29,6 +31,22 @@ struct TrafficLight{
   tf2::Transform transform;
   Box box;
   bool passable = false;
+};
+
+static visualization_msgs::Marker CreateMarker(const TrafficLight& tl){
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = "map";
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.type = visualization_msgs::Marker::CUBE;
+  marker.id = tl.id;
+  marker.color.a = 1.0;
+
+  marker.scale.x = tl.box.size.x();
+  marker.scale.y = tl.box.size.y();
+  marker.scale.z = tl.box.size.z();
+
+
+  return marker;
 };
 
 
@@ -62,6 +80,10 @@ class TrafficLightPerception {
 
   ros::Publisher tl_passable_pub_;
   std_msgs::Bool tl_passable_msg_;
+
+  bool publish_viz_ = true;
+  ros::Publisher tl_viz_pub_;
+  visualization_msgs::MarkerArray tl_viz_marker_vec_msgs_;
 
 };
 
