@@ -9,6 +9,7 @@
 
 #include <carla_msgs/CarlaTrafficLightInfoList.h>
 #include <carla_msgs/CarlaTrafficLightStatusList.h>
+#include <carla_msgs/CarlaEgoVehicleInfo.h>
 
 #include <tf/tf.h>
 #include <tf2/transform_datatypes.h>
@@ -32,12 +33,18 @@ int FindElementById(std::vector<T> t_vec, unsigned int id){
 }
 
 struct Box{
-  Box(const tf::Transform &box_trans,
-      const geometry_msgs::Vector3 &size) : box_trans(box_trans),
-                                 size(size) {};
+  Box(const tf::Transform &box_trans_in_map,
+      const geometry_msgs::Vector3 &size) : box_trans(box_trans_in_map),
+                                            size(size) {};
   tf::Transform box_trans;
   geometry_msgs::Vector3 size;
+  tf::Vector3 cornor_min;
+  tf::Vector3 cornor_max;
 };
+
+//static void BoxToCornorVector(const Box &box, tf::Vector3 cornor_vec_min, tf::Vector3 cornor_vec_max){
+//
+//}
 
 struct TrafficLight{
   enum Status{
@@ -57,11 +64,6 @@ struct TrafficLight{
   Box box;
   bool passable = false;
 };
-
-
-
-
-
 
 
 class TrafficLightPerception {
@@ -88,9 +90,12 @@ class TrafficLightPerception {
 
   static tf::Transform PoseMsgToTfTransform(const geometry_msgs::Pose & pose);
 
+
  private:
   ros::NodeHandle nh_;
   std::string role_name_ = "ego_vehicle";
+  double vehicle_scale_x = 2.5;
+  double vehicle_scale_y = 1.2;
 
   ros::Subscriber odom_sub_;
   nav_msgs::Odometry odom_;
