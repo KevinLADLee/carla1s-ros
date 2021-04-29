@@ -15,9 +15,11 @@ TrafficLightPerception::TrafficLightPerception() {
   tl_passable_pub_ = nh_.advertise<std_msgs::Bool>("/carla/" + role_name_ + "/fake_perception/traffic_light_passable", 1);
 
   if(publish_viz_){
+    InitMarkerColors();
     tl_viz_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("/carla/"+role_name_+"/traffic_light_markers", 10);
   }
 
+  ROS_INFO("[TrafficLightPerception] Initialization success!");
 }
 
 void TrafficLightPerception::OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg) {
@@ -34,52 +36,23 @@ void TrafficLightPerception::TrafficLightInfoCallback(const carla_msgs::CarlaTra
   }
   traffic_lights_info_received_ = true;
 
-
-  // TODO:The IDs are known not to start from 0.
-  //  In order to prevent ID discontinuity,
-  //  here we need to get the maximum and minimum value of IDs.
-  auto min_it = std::min_element(info_msg->traffic_lights.begin(),
-                                 info_msg->traffic_lights.end(),
-                                 TrafficIdComp);
-  auto max_it = std::max_element(info_msg->traffic_lights.begin(),
-                                 info_msg->traffic_lights.end(),
-                                 TrafficIdComp);
-  tl_id_min_ = min_it->id;
-  tl_id_max_ = max_it->id;
-
-  auto size = (tl_id_max_ - tl_id_min_) + 1;
-  traffic_lights_.resize(size);
-  if(publish_viz_){
-    InitMarkers(size);
-  }
-//  traffic_lights_.resize(info_msg->traffic_lights.size());
+  auto size = info_msg->traffic_lights.size();
+  traffic_lights_.reserve(size);
 
   for(auto &tl_info : info_msg->traffic_lights){
-    auto current_id = tl_info.id-tl_id_min_;
-    traffic_lights_.at(current_id).id = tl_info.id;
+    auto current_id = tl_info.id;
 
-    tf::Transform tl_trans;
-    tl_trans.setOrigin(tf::Vector3(tl_info.transform.position.x, tl_info.transform.position.y, tl_info.transform.position.z));
-    tf::Quaternion tl_q;
-    tf::quaternionMsgToTF(tl_info.transform.orientation, tl_q);
-    tl_trans.setRotation(tl_q);
-    traffic_lights_.at(current_id).transform = tl_trans;
+    tf::Transform tl_trans = PoseMsgToTfTransform(tl_info.transform);
 
-    tf::Vector3 tl_trigger_volume(tl_info.trigger_volume.center.x,
-                                  tl_info.trigger_volume.center.y,
-                                  tl_info.trigger_volume.center.z);
-
-    auto tl_trigger_volume_pos = tl_trans * tl_trigger_volume;
-    traffic_lights_.at(current_id).box.box_trans.setOrigin(tl_trigger_volume_pos);
-    traffic_lights_.at(current_id).box.box_trans.setRotation(tl_q);
-    traffic_lights_.at(current_id).box.size = tf::Vector3(tl_info.trigger_volume.size.x,
-                                                          tl_info.trigger_volume.size.y,
-                                                          tl_info.trigger_volume.size.z);
+    tf::Transform tl_box_trans = BoxinTrafficToMap(tl_info.trigger_volume.center, tl_trans);
+    traffic_lights_.emplace_back(current_id, tl_trans, tl_box_trans, tl_info.trigger_volume.size);
 
     if(publish_viz_){
-      tl_viz_marker_vec_msgs_.markers.at(current_id) = (CreateMarker(traffic_lights_.at(current_id)));
+       CreateMarker(traffic_lights_.back());
     }
   }
+
+  ROS_INFO("Got %zu traffic lights info!", traffic_lights_.size());
 
 }
 
@@ -89,40 +62,30 @@ void TrafficLightPerception::TrafficLightStatusCallback(const carla_msgs::CarlaT
   }
 
   for(auto &tl_status : status_msg->traffic_lights){
-    auto current_id = tl_status.id - tl_id_min_;
+    auto current_id = tl_status.id;
+    auto tl_idx = FindElementById<TrafficLight>(traffic_lights_, current_id);
+    if(tl_idx < 0){
+      std::cerr << "tl not found!" << std::endl;
+      continue;
+    }
+
+    auto tl_it = traffic_lights_.begin() + tl_idx;
     switch (tl_status.state) {
       case carla_msgs::CarlaTrafficLightStatus::GREEN:
-        if(publish_viz_){
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.r = 0.0;
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.g = 1.0;
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.b = 0.0;
-        }
-        traffic_lights_.at(current_id).passable = true;
+        tl_it->passable = true;
+        UpdateMarker(current_id, tl_status.state);
         break;
       case carla_msgs::CarlaTrafficLightStatus::OFF:
-        if(publish_viz_){
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.r = 0.0;
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.g = 0.0;
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.b = 0.0;
-        }
-        traffic_lights_.at(current_id).passable = true;
+        tl_it->passable = true;
         break;
       case carla_msgs::CarlaTrafficLightStatus::RED:
-        if(publish_viz_){
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.r = 1.0;
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.g = 0.0;
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.b = 0.0;
-        }
-        traffic_lights_.at(current_id).passable = false;
+        tl_it->passable = false;
+        UpdateMarker(current_id, tl_status.state);
         break;
       case carla_msgs::CarlaTrafficLightStatus::YELLOW:
       default:
-        if(publish_viz_){
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.r = 1.0;
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.g = 1.0;
-          tl_viz_marker_vec_msgs_.markers.at(current_id).color.b = 0.0;
-        }
-        traffic_lights_.at(current_id).passable = false;
+        tl_it->passable = false;
+        UpdateMarker(current_id, tl_status.state);
         break;
     }
   }
@@ -132,18 +95,69 @@ void TrafficLightPerception::TrafficLightStatusCallback(const carla_msgs::CarlaT
   }
 }
 
-void TrafficLightPerception::InitMarkers(unsigned int size) {
-  tl_viz_marker_vec_msgs_.markers.resize(size);
-  int i = 0;
-  for(auto &marker : tl_viz_marker_vec_msgs_.markers){
-    marker.header.frame_id = "map";
-    marker.id = i;
-    marker.color.a = 0.1;
-    marker.pose.orientation.w = 1;
-    marker.scale.x = 1;
-    i++;
-  }
+void TrafficLightPerception::InitMarkerColors() {
+  color_map_[TrafficLight::Status::RED] = std_msgs::ColorRGBA();
+  color_map_[TrafficLight::Status::RED].r = 1.0;
+  color_map_[TrafficLight::Status::RED].a = 1.0;
+
+  color_map_[TrafficLight::Status::GREEN] = std_msgs::ColorRGBA();
+  color_map_[TrafficLight::Status::GREEN].g = 1.0;
+  color_map_[TrafficLight::Status::GREEN].a = 1.0;
+
+  color_map_[TrafficLight::Status::YELLOW] = std_msgs::ColorRGBA();
+  color_map_[TrafficLight::Status::YELLOW].r = 1.0;
+  color_map_[TrafficLight::Status::YELLOW].g = 1.0;
+  color_map_[TrafficLight::Status::YELLOW].a = 1.0;
 }
+
+tf::Transform TrafficLightPerception::PoseMsgToTfTransform(const geometry_msgs::Pose &pose) {
+  tf::Transform tl_trans;
+  tl_trans.setOrigin(tf::Vector3(pose.position.x, pose.position.y, pose.position.z));
+  tf::Quaternion tl_q;
+  tf::quaternionMsgToTF(pose.orientation, tl_q);
+  tl_trans.setRotation(tl_q);
+  return tl_trans;
+}
+
+void TrafficLightPerception::CreateMarker(const TrafficLight& tl){
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = "map";
+  marker.type = visualization_msgs::Marker::CUBE;
+  marker.id = tl.id;
+  marker.color = color_map_.find(TrafficLight::RED)->second;
+
+  poseTFToMsg(tl.box.box_trans, marker.pose);
+
+  marker.scale.x = tl.box.size.x;
+  marker.scale.y = tl.box.size.y;
+  marker.scale.z = tl.box.size.z;
+  tl_viz_marker_vec_msgs_.markers.push_back(marker);
+}
+
+tf::Transform TrafficLightPerception::BoxinTrafficToMap(const geometry_msgs::Vector3 &box_pos_in_traffic,
+                                                        const tf::Transform &tl_transform_in_map) {
+  tf::Transform tl_box_trans;
+  tf::Vector3 tl_box;
+  tf::vector3MsgToTF(box_pos_in_traffic, tl_box);
+  auto tl_box_pos_in_map = tl_transform_in_map * tl_box;
+  tl_box_trans.setOrigin(tl_box_pos_in_map);
+  tl_box_trans.setRotation(tl_transform_in_map.getRotation());
+  return tl_box_trans;
+}
+
+void TrafficLightPerception::UpdateMarker(unsigned int id, unsigned char status) {
+
+  if(!publish_viz_){
+    return;
+  }
+
+  auto tl_marker_idx = FindElementById<visualization_msgs::Marker>(tl_viz_marker_vec_msgs_.markers, id);
+  if(tl_marker_idx > 0){
+    tl_viz_marker_vec_msgs_.markers.at(tl_marker_idx).color = color_map_.find(status)->second;
+  }
+
+}
+
 
 //bool TrafficLightPerception::CheckPassable() {
 //  // TODO: Use odom_ and traffic_lights_ to determine traffic passable
@@ -179,6 +193,7 @@ void TrafficLightPerception::InitMarkers(unsigned int size) {
 //
 //  return should_stop;
 //}
+
 
 
 
