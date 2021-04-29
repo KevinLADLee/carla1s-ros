@@ -10,15 +10,21 @@
 #include <carla_msgs/CarlaTrafficLightInfoList.h>
 #include <carla_msgs/CarlaTrafficLightStatusList.h>
 
+#include <tf/tf.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/LinearMath/Quaternion.h>
 
+static bool TrafficIdComp(const carla_msgs::CarlaTrafficLightInfo& tl1, const carla_msgs::CarlaTrafficLightInfo& tl2){
+  return tl1.id < tl2.id;
+}
+
 struct Box{
-  tf2::Vector3 center;  // center to traffic light
-  tf2::Vector3 size;  // maybe parallel to coordinates of traffic light
+  tf::Transform box_trans;
+//  tf::Vector3 pose_in_global;  // center to traffic light
+  tf::Vector3 size;  // maybe parallel to coordinates of traffic light
 };
 
 struct TrafficLight{
@@ -28,7 +34,7 @@ struct TrafficLight{
                const Box &box,
                bool passable) : id(id), box(box), passable(false){};
   unsigned int id = 0;
-  tf2::Transform transform;
+  tf::Transform transform;
   Box box;
   bool passable = false;
 };
@@ -36,18 +42,20 @@ struct TrafficLight{
 static visualization_msgs::Marker CreateMarker(const TrafficLight& tl){
   visualization_msgs::Marker marker;
   marker.header.frame_id = "map";
-  marker.action = visualization_msgs::Marker::ADD;
   marker.type = visualization_msgs::Marker::CUBE;
   marker.id = tl.id;
   marker.color.a = 1.0;
+
+  poseTFToMsg(tl.box.box_trans, marker.pose);
 
   marker.scale.x = tl.box.size.x();
   marker.scale.y = tl.box.size.y();
   marker.scale.z = tl.box.size.z();
 
-
   return marker;
 };
+
+
 
 
 
@@ -62,6 +70,8 @@ class TrafficLightPerception {
   void TrafficLightStatusCallback(const carla_msgs::CarlaTrafficLightStatusListConstPtr &status_msg);
 
  private:
+  void InitMarkers(unsigned int size);
+
   Box TlInfoToBox(const carla_msgs::CarlaTrafficLightInfo &info);
 
   bool CheckPassable();

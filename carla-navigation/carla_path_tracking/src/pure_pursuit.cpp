@@ -41,7 +41,7 @@ class PurePursuit
   void setNodeState(const NodeState & node_state);
   void ExecuteCallback(const carla_nav_msgs::TrackingPathGoal::ConstPtr & goal_msg);
   bool isGoalReached(const nav_msgs::Odometry &odom);
-  double computeDistToGoal(const nav_msgs::Odometry &odom);
+  inline double computeDistToGoal(const nav_msgs::Odometry &odom);
 
   void startTrackingPath();
   void stopTrackingPath();
@@ -53,7 +53,7 @@ class PurePursuit
   bool isWayPtAwayFromLfwDist(const geometry_msgs::Point &way_pt, const geometry_msgs::Point &car_pos);
   double getYawFromPose(const geometry_msgs::Pose &car_pose);
   double getEta(const geometry_msgs::Pose &car_pose);
-  double getCar2GoalDist();
+  double getCar2GoalDist() const;
   double getSteering(double eta) const;
   geometry_msgs::Point get_odom_car2WayPtVec(const geometry_msgs::Pose &car_pose);
 
@@ -62,6 +62,7 @@ class PurePursuit
   ros::NodeHandle nh_;
   ros::Subscriber odom_sub_, vehicle_info_sub_;
   ros::Publisher cmd_pub_, marker_pub_;
+  std::string role_name_ = "ego_vehicle";
 
   actionlib::SimpleActionServer<carla_nav_msgs::TrackingPathAction> as_;
   NodeState node_state_ = NodeState::IDLE;
@@ -70,11 +71,12 @@ class PurePursuit
   std::thread tracking_path_thread_;
 
   visualization_msgs::Marker points_, line_strip_, goal_circle_;
-  geometry_msgs::Point odom_goal_pos_, goal_pos_;
+  geometry_msgs::Point goal_pos_;
   geometry_msgs::Twist cmd_vel_;
   ackermann_msgs::AckermannDrive ackermann_cmd_;
   nav_msgs::Odometry odom_;
-  nav_msgs::Path map_path_, odom_path_;
+  nav_msgs::Path map_path_;
+  std::vector<geometry_msgs::PoseStamped> waypoints_vec_;
 
   bool use_vehicle_info_ = true;
 
@@ -85,6 +87,7 @@ class PurePursuit
   int controller_freq_;
   bool found_forward_pt_, smooth_accel_;
   bool goal_reached_;
+  int last_pt_ = 0;
 
 
 }; // end of class
@@ -195,16 +198,23 @@ double PurePursuit::getYawFromPose(const geometry_msgs::Pose &car_pose)
   return yaw;
 }
 
-bool PurePursuit::isForwardWayPt(const geometry_msgs::Point &way_pt, const geometry_msgs::Pose &car_pose)
+bool PurePursuit::isForwardWayPt(const geometry_msgs::Point &waypoint_in_map, const geometry_msgs::Pose &car_pose_in_map)
 {
-  float car2way_pt_x = way_pt.x - car_pose.position.x;
-  float car2way_pt_y = way_pt.y - car_pose.position.y;
-  double car_theta = getYawFromPose(car_pose);
 
-  float car_car2wayPt_x = std::cos(car_theta) * car2way_pt_x + std::sin(car_theta) * car2way_pt_y;
-  float car_car2wayPt_y = -std::sin(car_theta) * car2way_pt_x + std::cos(car_theta) * car2way_pt_y;
+  tf::Transform car_trans;
+  car_trans.setOrigin(tf::Vector3(car_pose_in_map.position.x,
+                                  car_pose_in_map.position.y,
+                                  car_pose_in_map.position.z));
+  tf::Quaternion car_quat;
+  tf::quaternionMsgToTF(car_pose_in_map.orientation, car_quat);
+  car_trans.setRotation(car_quat);
 
-  if (car_car2wayPt_x > 0) /*is Forward WayPt*/
+  auto car_trans_inv = car_trans.inverse();
+  tf::Vector3 waypoint_vec_in_map(waypoint_in_map.x, waypoint_in_map.y, waypoint_in_map.z);
+  auto waypoint_vec_in_car = car_trans_inv * waypoint_vec_in_map;
+
+
+  if (waypoint_vec_in_car.x() > 0) /*is Forward WayPt*/
     return true;
   else
     return false;
@@ -213,7 +223,6 @@ bool PurePursuit::isForwardWayPt(const geometry_msgs::Point &way_pt, const geome
 bool PurePursuit::isWayPtAwayFromLfwDist(const geometry_msgs::Point &way_pt, const geometry_msgs::Point &car_pos)
 {
   double dist = std::hypot(way_pt.x - car_pos.x, way_pt.y - car_pos.y);
-
   if (dist >= Lfw_) {
     return true;
   } else{
@@ -221,40 +230,39 @@ bool PurePursuit::isWayPtAwayFromLfwDist(const geometry_msgs::Point &way_pt, con
   }
 }
 
-geometry_msgs::Point PurePursuit::get_odom_car2WayPtVec(const geometry_msgs::Pose &car_pose)
+geometry_msgs::Point PurePursuit::get_odom_car2WayPtVec(const geometry_msgs::Pose &car_pose_in_map)
 {
-  geometry_msgs::Point carPose_pos = car_pose.position;
-  double carPose_yaw = getYawFromPose(car_pose);
+  geometry_msgs::Point car_position_in_map = car_pose_in_map.position;
+  double carPose_yaw = getYawFromPose(car_pose_in_map);
   geometry_msgs::Point forwardPt;
   geometry_msgs::Point odom_car2WayPtVec;
   found_forward_pt_ = false;
 
   if (!goal_reached_)
   {
+
     for (int i = 0; i < map_path_.poses.size(); i++)
     {
-      geometry_msgs::PoseStamped map_path_pose = map_path_.poses[i];
+      geometry_msgs::Point waypoint_in_map = map_path_.poses[i].pose.position;
+      bool is_forward_waypoint = isForwardWayPt(waypoint_in_map, car_pose_in_map);
 
-      geometry_msgs::Point odom_path_wayPt = map_path_pose.pose.position;
-      bool _isForwardWayPt = isForwardWayPt(odom_path_wayPt, car_pose);
-
-      if (_isForwardWayPt)
+      if (is_forward_waypoint)
       {
-        bool _isWayPtAwayFromLfwDist = isWayPtAwayFromLfwDist(odom_path_wayPt, carPose_pos);
+        bool _isWayPtAwayFromLfwDist = isWayPtAwayFromLfwDist(waypoint_in_map, car_position_in_map);
         if (_isWayPtAwayFromLfwDist)
         {
-          forwardPt = odom_path_wayPt;
+          forwardPt = waypoint_in_map;
+          map_path_.poses.erase(map_path_.poses.begin(), map_path_.poses.begin()+i);
           found_forward_pt_ = true;
           break;
         }
       }
     }
   }
-  else if (goal_reached_)
-  {
-    forwardPt = odom_goal_pos_;
+  else {
+    forwardPt = goal_pos_;
     found_forward_pt_ = false;
-    //ROS_INFO("goal REACHED!");
+    ROS_INFO("Goal REACHED!");
   }
 
   points_.points.clear();
@@ -262,34 +270,33 @@ geometry_msgs::Point PurePursuit::get_odom_car2WayPtVec(const geometry_msgs::Pos
 
   if (found_forward_pt_ && !goal_reached_)
   {
-    points_.points.push_back(carPose_pos);
+    points_.points.push_back(car_position_in_map);
     points_.points.push_back(forwardPt);
-    line_strip_.points.push_back(carPose_pos);
+    line_strip_.points.push_back(car_position_in_map);
     line_strip_.points.push_back(forwardPt);
   }
 
   marker_pub_.publish(points_);
   marker_pub_.publish(line_strip_);
 
-  odom_car2WayPtVec.x = cos(carPose_yaw) * (forwardPt.x - carPose_pos.x) + sin(carPose_yaw) * (forwardPt.y - carPose_pos.y);
-  odom_car2WayPtVec.y = -sin(carPose_yaw) * (forwardPt.x - carPose_pos.x) + cos(carPose_yaw) * (forwardPt.y - carPose_pos.y);
+  odom_car2WayPtVec.x = cos(carPose_yaw) * (forwardPt.x - car_position_in_map.x) + sin(carPose_yaw) * (forwardPt.y - car_position_in_map.y);
+  odom_car2WayPtVec.y = -sin(carPose_yaw) * (forwardPt.x - car_position_in_map.x) + cos(carPose_yaw) * (forwardPt.y - car_position_in_map.y);
   return odom_car2WayPtVec;
 }
 
 double PurePursuit::getEta(const geometry_msgs::Pose &carPose)
 {
-  geometry_msgs::Point odom_car2WayPtVec = get_odom_car2WayPtVec(carPose);
-  return atan2(odom_car2WayPtVec.y, odom_car2WayPtVec.x);
+  geometry_msgs::Point look_ahead_point = get_odom_car2WayPtVec(carPose);
+  return atan2(look_ahead_point.y, look_ahead_point.x);
 }
 
-double PurePursuit::getCar2GoalDist()
-{
-  geometry_msgs::Point car_pose = odom_.pose.pose.position;
-  double car2goal_x = odom_goal_pos_.x - car_pose.x;
-  double car2goal_y = odom_goal_pos_.y - car_pose.y;
-
-  return sqrt(car2goal_x * car2goal_x + car2goal_y * car2goal_y);
-}
+//double PurePursuit::getCar2GoalDist() const
+//{
+//  geometry_msgs::Point car_pose = odom_.pose.pose.position;
+//  double car2goal_x = odom_goal_pos_.x - car_pose.x;
+//  double car2goal_y = odom_goal_pos_.y - car_pose.y;
+//  return std::sqrt(car2goal_x * car2goal_x + car2goal_y * car2goal_y);
+//}
 
 double PurePursuit::getSteering(double eta) const
 {
@@ -337,11 +344,12 @@ void PurePursuit::ExecuteCallback(const carla_nav_msgs::TrackingPathGoal::ConstP
   }
 
   if(plan_mutex_.try_lock()){
-    map_path_ = goal_msg->path;
-      goal_pos_ = map_path_.poses.back().pose.position;
-      goal_circle_.pose = map_path_.poses.back().pose;
-      plan_mutex_.unlock();
-      plan_condition_.notify_one();
+    map_path_ =  goal_msg->path;
+    waypoints_vec_ = goal_msg->path.poses;
+    goal_pos_ = map_path_.poses.back().pose.position;
+    goal_circle_.pose = map_path_.poses.back().pose;
+    plan_mutex_.unlock();
+    plan_condition_.notify_one();
   }
   marker_pub_.publish(goal_circle_);
 
@@ -365,8 +373,10 @@ void PurePursuit::ExecuteCallback(const carla_nav_msgs::TrackingPathGoal::ConstP
     }
     node_state = getNodeState();
 
-    if (node_state == NodeState::RUNNING|| node_state == NodeState::SUCCESS
-        || node_state == NodeState::FAILURE) {
+    if (node_state == NodeState::RUNNING ||
+        node_state == NodeState::SUCCESS ||
+        node_state == NodeState::FAILURE)
+    {
       carla_nav_msgs::TrackingPathFeedback feedback;
       carla_nav_msgs::TrackingPathResult result;
 
@@ -429,9 +439,7 @@ void PurePursuit::trackingLoop() {
 
   std::chrono::microseconds sleep_time = std::chrono::microseconds(0);
   while (getNodeState() == NodeState::RUNNING){
-//    std::cout << "start tracking loop" << std::endl;
     std::unique_lock<std::mutex> plan_lock(plan_mutex_);
-//    std::cout << "wait condition!" << std::endl;
     plan_condition_.wait_for(plan_lock, sleep_time);
     auto begin_time = std::chrono::steady_clock::now();
 
@@ -439,9 +447,9 @@ void PurePursuit::trackingLoop() {
     geometry_msgs::Twist carVel;
     {
       std::lock_guard<std::mutex> guard(odom_mutex_);
+      // get carPose in map frame
       carPose = odom_.pose.pose;
       carVel = odom_.twist.twist;
-//      std::cout << "got odom!" << std::endl;
     }
 
     double eta = getEta(carPose);
