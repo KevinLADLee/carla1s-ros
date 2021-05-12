@@ -12,4 +12,6 @@
     <param name="timeout" value="$(arg timeout)" />
   </node>
 
+  <node pkg="carla_global_planner" type="carla_map_visualization.py" name="carla_map_visualization" output="screen" />
+
 </launch>

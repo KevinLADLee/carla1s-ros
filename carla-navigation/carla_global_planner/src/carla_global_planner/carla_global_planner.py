@@ -21,19 +21,8 @@ import math
 import rospy
 import sys
 import threading
-
 import geometry_msgs.msg
 import rospy
-# from ros_compatibility import (CompatibleNode,
-#                                QoSProfile,
-#                                ROSException,
-#                                ros_timestamp,
-#                                latch_on,
-#                                ros_init,
-#                                get_service_response,
-#                                loginfo,
-#                                ROS_VERSION,
-#                                ros_shutdown)
 
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
