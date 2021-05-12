@@ -44,9 +44,14 @@ ARG CARLA_VERSION
 COPY --from=carla --chown=root /home/carla/PythonAPI /opt/carla/PythonAPI
 COPY --from=gtsam_builder --chown=root /opt/gtsam-install /usr/local
 
-COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
+# COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
+# RUN cd /opt/carla-ros-bridge/src/ros-bridge
 # RUN git clone https://github.com/carla-simulator/ros-bridge.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge
-COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
+#COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
+
+COPY . /opt/carla-ros-bridge/src/carla-ros-bridge
+RUN cd /opt/carla-ros-bridge/src/carla-ros-bridge && \
+    git submodule update --init
 
 ARG EDD_FILE
 
