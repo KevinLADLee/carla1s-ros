@@ -51,6 +51,7 @@ COPY --from=gtsam_builder --chown=root /opt/gtsam-install /usr/local
 
 COPY . /opt/carla-ros-bridge/src/carla-ros-bridge
 RUN cd /opt/carla-ros-bridge/src/carla-ros-bridge && \
+    sed -i "s@github.com@gitlab.isus.tech@g" .gitmodules && \
     git submodule update --init --recursive
 
 ARG EDD_FILE
