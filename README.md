@@ -44,3 +44,7 @@ docker run -d --name=carla-server --ipc=host --network=host --runtime=nvidia --g
 ```
  docker run -it --rm --name=carla-ros --network=host -e DISPLAY --runtime=nvidia harbor.isus.tech/carla-ros/carla-ros:0.9.11 bash
 ```
+
+## 整体设计与开发情况
+
+![carla-ros-bridge.png](/carla-ros-bridge.png)
