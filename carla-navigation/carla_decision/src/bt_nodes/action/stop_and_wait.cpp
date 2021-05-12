@@ -3,16 +3,21 @@
 StopAndWait::StopAndWait(const std::string &name, const BT::NodeConfiguration &config) : AsyncActionNode(name,
                                                                                                          config) {
   config.blackboard->get<ros::NodeHandlePtr>("node_handler", nh_ptr_);
-  cmd_vel_pub_ = nh_ptr_->advertise<ackermann_msgs::AckermannDrive>("/carla/ego_vehicle/ackermann_cmd", 10);
+  config.blackboard->get<std::string>("role_name", role_name_);
+  cmd_pub_ = nh_ptr_->advertise<carla_msgs::CarlaEgoVehicleControl>("/carla/" + role_name_ + "/vehicle_control_cmd", 10);
 }
 
 BT::NodeStatus StopAndWait::tick() {
   std::cout << "StopAndWait" << std::endl;
   setStatus(BT::NodeStatus::RUNNING);
   while (status() == BT::NodeStatus::RUNNING) {
-    ackermann_msg_.speed = 0;
-    ackermann_msg_.steering_angle = 0;
-    cmd_vel_pub_.publish(ackermann_msg_);
+    carla_msgs::CarlaEgoVehicleControl control_msg;
+    control_msg.steer = 0.0;
+    control_msg.throttle = 0.0;
+    control_msg.brake = 1.0;
+    control_msg.hand_brake = 0;
+    control_msg.manual_gear_shift = 0;
+    cmd_pub_.publish(control_msg);
   }
   return BT::NodeStatus::SUCCESS;
 }

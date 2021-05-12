@@ -5,16 +5,22 @@
         <Fallback>
             <ReactiveSequence>
                 <Condition ID="CheckTrafficLight"/>
-                <ReactiveFallback>
-                    <Condition ID="GoalUpdated"/>
-                    <Control ID="PipelineSequence">
-                        <Action ID="ComputePathToGoal"/>
-                        <Action ID="TrackingPath"/>
-                    </Control>
-                </ReactiveFallback>
+                <Fallback>
+                    <ReactiveFallback>
+                        <Condition ID="GoalUpdated"/>
+                        <Control ID="PipelineSequence">
+                            <Action ID="ComputePathToGoal"/>
+                            <Action ID="TrackingPath"/>
+                        </Control>
+                    </ReactiveFallback>
+                    <ReactiveFallback>
+                        <Condition ID="GoalUpdated"/>
+                        <Action ID="StopAndWait"/>
+                    </ReactiveFallback>
+                </Fallback>
             </ReactiveSequence>
             <ReactiveFallback>
-                <Condition ID="GoalUpdated"/>
+                <Condition ID="CheckTrafficLight"/>
                 <Action ID="StopAndWait"/>
             </ReactiveFallback>
         </Fallback>

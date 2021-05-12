@@ -132,6 +132,21 @@ void TrafficLightPerception::CreateMarker(const TrafficLight& tl){
   marker.scale.y = tl.box.size.y;
   marker.scale.z = tl.box.size.z;
   tl_viz_marker_vec_msgs_.markers.push_back(marker);
+
+  visualization_msgs::Marker text_marker;
+  text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+  text_marker.header.frame_id = "map";
+  text_marker.id = tl.id * 10;
+  text_marker.color.r = 1;
+  text_marker.color.g = 1;
+  text_marker.color.b = 1;
+  text_marker.color.a = 1;
+  poseTFToMsg(tl.transform, text_marker.pose);
+  std::stringstream ss;
+  ss << "ID " << tl.id;
+  text_marker.text = ss.str();
+  text_marker.scale.z = tl.box.size.z;
+  tl_viz_marker_vec_msgs_.markers.push_back(text_marker);
 }
 
 tf::Transform TrafficLightPerception::BoxinTrafficToMap(const geometry_msgs::Vector3 &box_pos_in_traffic,
@@ -160,43 +175,43 @@ void TrafficLightPerception::UpdateMarker(unsigned int id, unsigned char status)
 
 
 bool TrafficLightPerception::CheckPassable() {
-  // TODO: Use odom_ and traffic_lights_ to determine traffic passable
-  double safe_distance = 1.0;  // adjustalbe
 
-  bool should_stop = false;
+  double safe_distance = 3.5;
+
+  bool passable = true;
 
   // get current vehicle position
   tf::Transform vehicle_trans_in_map = PoseMsgToTfTransform(odom_.pose.pose);
-  tf::Vector3 vehicle_forward_vec = vehicle_trans_in_map * tf::Vector3(1,0,0);
+  auto vehicle_trans_in_map_inv = vehicle_trans_in_map.inverse();
 
   for(auto &tl : traffic_lights_){
     if (tl.passable) continue;
 
-    auto tl_box_trans_in_map = tl.box.box_trans;
-    tf::Vector3 tl_box_forward_vec = tl_box_trans_in_map * tf::Vector3(1,0,0);
+    auto tl_point_in_map = tl.transform.getOrigin();
+    auto tl_point_in_vehicle = vehicle_trans_in_map_inv * tl_point_in_map;
 
-    auto dot = (vehicle_forward_vec.x() * tl_box_forward_vec.x()) +
-        (vehicle_forward_vec.y() * tl_box_forward_vec.y()) +
-        (vehicle_forward_vec.z() * tl_box_forward_vec.z());
+    // Check if the traffic light is in front of the right side of the vehicle
 
-    if(dot < 0){
+    if(tl_point_in_vehicle.x() > 0 && tl_point_in_vehicle.y() < 0) {
+
+      auto diff_x = tl.box.box_trans.getOrigin().x() - vehicle_trans_in_map.getOrigin().x();
+      auto diff_y = tl.box.box_trans.getOrigin().y() - vehicle_trans_in_map.getOrigin().y();
+      auto dist = std::hypot(diff_x, diff_y);
+
+      if (dist > safe_distance) {
+        passable = true;
+      } else {
+        std::cout << "Traffic Light Red! " << "ID: " << tl.id << " dist: " << dist << std::endl;
+        passable = false;
+        return passable;
+      }
+    } else{
       continue;
     }
 
-    double dist = tl_box_trans_in_map.getOrigin().distance(vehicle_trans_in_map.getOrigin());
-
-    if(dist < 0.001){
-      return true;
-    }
-
-    if(dist > safe_distance){
-      return false;
-    } else{
-      return true;
-    }
   }
 
-  return should_stop;
+  return passable;
 }
 
 

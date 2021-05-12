@@ -23,6 +23,7 @@ bool CarlaDecision::LoadBehaviorTree(const std::string &filename) {
   // Create the blackboard that will be shared by all of the nodes in the tree
   bt_blackboard_ = BT::Blackboard::create();
   bt_blackboard_->set<ros::NodeHandlePtr>("node_handler", nh_ptr_);
+  bt_blackboard_->set<std::string>("role_name", "ego_vehicle");
 
   // Nodes Register
   for (const auto & plugin : plugin_libs_) {

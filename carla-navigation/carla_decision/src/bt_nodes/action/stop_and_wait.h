@@ -6,6 +6,7 @@
 #define SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_DECISION_SRC_ACTION_STOPANDWAIT_H_
 
 #include "common.h"
+#include <carla_msgs/CarlaEgoVehicleControl.h>
 #include <ackermann_msgs/AckermannDrive.h>
 
 class StopAndWait : public BT::AsyncActionNode{
@@ -22,7 +23,8 @@ class StopAndWait : public BT::AsyncActionNode{
 
  private:
   ros::NodeHandlePtr nh_ptr_;
-  ros::Publisher cmd_vel_pub_;
+  std::string role_name_;
+  ros::Publisher cmd_pub_;
   ackermann_msgs::AckermannDrive ackermann_msg_;
 
 };
