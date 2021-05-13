@@ -33,6 +33,7 @@ RUN apt-get update && \
     ros-$ROS_VERSION-map-server \
     ros-$ROS_VERSION-ackermann-msgs \
     ros-$ROS_VERSION-derived-object-msgs \
+    ros-$ROS_VERSION-behaviortree-cpp-v3 \
     vim git wget curl \
     ninja-build \
     && rm -rf /var/lib/apt/lists/* \
@@ -43,9 +44,15 @@ ARG CARLA_VERSION
 COPY --from=carla --chown=root /home/carla/PythonAPI /opt/carla/PythonAPI
 COPY --from=gtsam_builder --chown=root /opt/gtsam-install /usr/local
 
-COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
+# COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
+# RUN cd /opt/carla-ros-bridge/src/ros-bridge
 # RUN git clone https://github.com/carla-simulator/ros-bridge.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge
-COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
+#COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
+
+COPY . /opt/carla-ros-bridge/src/carla-ros-bridge
+RUN cd /opt/carla-ros-bridge/src/carla-ros-bridge && \
+    sed -i "s@github.com@gitlab.isus.tech@g" .gitmodules && \
+    git submodule update --init --recursive
 
 ARG EDD_FILE
 

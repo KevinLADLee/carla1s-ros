@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Fallback>
+            <ReactiveSequence>
+                <Condition ID="CheckTrafficLight"/>
+                <Fallback>
+                    <ReactiveFallback>
+                        <Condition ID="GoalUpdated"/>
+                        <Control ID="PipelineSequence">
+                            <Action ID="ComputePathToGoal"/>
+                            <Action ID="TrackingPath"/>
+                        </Control>
+                    </ReactiveFallback>
+                    <ReactiveFallback>
+                        <Condition ID="GoalUpdated"/>
+                        <Action ID="StopAndWait"/>
+                    </ReactiveFallback>
+                </Fallback>
+            </ReactiveSequence>
+            <ReactiveFallback>
+                <Condition ID="CheckTrafficLight"/>
+                <Action ID="StopAndWait"/>
+            </ReactiveFallback>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Condition ID="CheckTrafficLight"/>
+        <Action ID="ComputePathToGoal"/>
+        <Condition ID="GoalUpdated"/>
+        <Control ID="PipelineSequence"/>
+        <Action ID="StopAndWait"/>
+        <Action ID="TrackingPath"/>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+

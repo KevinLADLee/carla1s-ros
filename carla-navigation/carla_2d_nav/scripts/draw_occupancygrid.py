@@ -17,7 +17,10 @@ import collections
 
 # 10 cm/pix
 # PIXELS_PER_METER = 10
-PIXELS_PER_METER = 2
+PIXELS_PER_METER = 20
+
+
+ROAD_COLOR = 255
 
 class CarlaGrid(object):
     def __init__(self, name, args, timeout):
