@@ -44,3 +44,60 @@ docker run -d --name=carla-server --ipc=host --network=host --runtime=nvidia --g
 ```
  docker run -it --rm --name=carla-ros --network=host -e DISPLAY --runtime=nvidia harbor.isus.tech/carla-ros/carla-ros:0.9.11 bash
 ```
+
+## 本地编译
+
+### 安装系统依赖
+
+```bash
+sudo apt install -y \
+    libpng16-16 \
+    ros-noetic-tf \
+    ros-noetic-derived-object-msgs \
+    ros-noetic-cv-bridge \
+    ros-noetic-pcl-conversions \
+    ros-noetic-pcl-ros \
+    ros-noetic-pointcloud-to-laserscan \
+    ros-noetic-map-server \
+    ros-noetic-ackermann-msgs \
+    ros-noetic-derived-object-msgs \
+    ros-noetic-behaviortree-cpp-v3 \
+    vim git wget curl \
+    ninja-build
+    
+pip3 --no-cache-dir install --upgrade \
+        networkx distro pygame simple-pid numpy==1.18.4 transforms3d    
+```
+
+### 安装GTSAM (optional)
+此依赖为`carla-sc-lego-loam`使用，如不需要，请在`carla-sc-lego-loam`文件夹下添加`CATKIN_IGNORE`文件。
+
+```bash
+curl -o gtsam.tar.gz -LJ https://github.com/borglab/gtsam/archive/refs/tags/4.0.3.tar.gz
+tar -zxf gtsam.tar.gz
+cd gtsam-4.0.3
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j
+sudo make install
+```
+
+### 下载源码编译并测试
+
+```bash
+mkdir -p carla_ws/src
+cd carla_ws/src
+git clone --recurse-submodules https://gitlab.isus.tech/kevinlad/carla-ros-bridge.git
+cd ..
+catkin_make -DCMAKE_BUILD_TYPE=Release --use-ninja
+
+source devel/setup.zsh
+
+roslaunch carla_2d_nav carla_example_ego_vehicle.launch town:=Town02
+roslaunch carla_decision carla_decision_test.launch
+```
+
+## 整体设计与开发情况
+
+![carla-ros-bridge.png](/carla-ros-bridge.png)
