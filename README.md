@@ -20,8 +20,8 @@
 
 - [x] SLAM (SC-Lego-LOAM)
 - [x] Fake Localization 
-- [ ] Behevior Tree Based Decision
-- [ ] Path Planner
+- [x] Behevior Tree Based Decision
+- [x] Path Planner
 - [ ] Trajectory Planner
 - [x] Path Tracking (Pure-Pursuit)
 - [x] Ackermann Controller

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.12.0)
 project(carla_nav_msgs)
 
 find_package(ros_environment REQUIRED)
