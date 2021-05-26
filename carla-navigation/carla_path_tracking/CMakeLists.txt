@@ -38,7 +38,7 @@ include_directories(
 
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(pure_pursuit_node src/pure_pursuit.cpp)
+add_executable(path_tracking_node src/path_tracking_node.cpp src/path_tracking.cpp src/pure_pursuit.cpp)
 #add_dependencies(pure_pursuit_node ${catkin_EXPORTED_TARGETS} carla_msgs_generate_messages)
-target_link_libraries(pure_pursuit_node ${catkin_LIBRARIES})
+target_link_libraries(path_tracking_node ${catkin_LIBRARIES})
 

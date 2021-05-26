@@ -486,17 +486,3 @@ void PurePursuit::trackingLoop() {
 
 }
 
-
-/*****************/
-/* MAIN FUNCTION */
-/*****************/
-int main(int argc, char **argv)
-{
-  //Initiate ROS
-  ros::init(argc, argv, "pure_pursuit_node");
-  PurePursuit controller("pure_pursuit");
-  ros::AsyncSpinner spinner(2); // Use multi threads
-  spinner.start();
-  ros::waitForShutdown();
-  return 0;
-}
