@@ -7,9 +7,9 @@
 
 #include "common.h"
 
-#include <carla_nav_msgs/TrackingPathAction.h>
+#include <carla_nav_msgs/PathTrackingAction.h>
 
-class TrackingPath : public BT::RosActionNode<carla_nav_msgs::TrackingPathAction> {
+class TrackingPath : public BT::RosActionNode<carla_nav_msgs::PathTrackingAction> {
  public:
   TrackingPath(const std::string &name, const std::string &action_client_name, const BT::NodeConfiguration &conf);
   TrackingPath() = delete;

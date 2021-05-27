@@ -6,7 +6,7 @@ find_package(ros_environment REQUIRED)
 set(ROS_VERSION $ENV{ROS_VERSION})
 
 set(ACTION_FILES
-        TrackingPath.action
+        PathTracking.action
         PathPlanner.action
         )
 

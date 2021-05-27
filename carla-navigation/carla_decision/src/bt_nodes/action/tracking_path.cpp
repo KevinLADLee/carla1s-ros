@@ -17,7 +17,7 @@ void TrackingPath::on_tick() {
   }
 }
 
-BT::NodeStatus TrackingPath::on_result(const carla_nav_msgs::TrackingPathResult_<std::allocator<void>> &res) {
+BT::NodeStatus TrackingPath::on_result(const ResultType &res) {
   std::cout << res.error_info << std::endl;
 
   switch (res.error_code) {

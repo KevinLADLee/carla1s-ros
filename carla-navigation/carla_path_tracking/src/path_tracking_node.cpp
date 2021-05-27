@@ -5,14 +5,14 @@
 #include <ros/ros.h>
 #include "path_tracking.h"
 
-/*****************/
-/* MAIN FUNCTION */
-/*****************/
+
 int main(int argc, char **argv)
 {
   //Initiate ROS
   ros::init(argc, argv, "pure_pursuit_node");
-  PurePursuit controller("pure_pursuit");
+
+  PathTracking path_tracking;
+
   ros::AsyncSpinner spinner(2); // Use multi threads
   spinner.start();
   ros::waitForShutdown();
