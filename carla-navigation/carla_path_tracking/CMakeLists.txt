@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   carla_msgs
 )
 
+find_package(Eigen3 REQUIRED)
+
 catkin_package(
   # INCLUDE_DIRS include
   # LIBRARIES carla_drive_with_uncertainty
@@ -28,6 +30,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   # include
+  src
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -38,7 +41,9 @@ include_directories(
 
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_library(pure_pursuit src/impl/pure_pursuit.cpp)
+
 add_executable(path_tracking_node src/path_tracking_node.cpp src/path_tracking.cpp src/pure_pursuit.cpp)
 #add_dependencies(pure_pursuit_node ${catkin_EXPORTED_TARGETS} carla_msgs_generate_messages)
-target_link_libraries(path_tracking_node ${catkin_LIBRARIES})
+target_link_libraries(path_tracking_node ${catkin_LIBRARIES} pure_pursuit)
 

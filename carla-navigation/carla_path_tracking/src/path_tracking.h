@@ -28,6 +28,7 @@ class PathTracking {
   using ActionGoalT   = typename ActionT::_action_goal_type::_goal_type;
   using ActionResultT = typename ActionT::_action_result_type::_result_type;
   using ActionServerT = actionlib::SimpleActionServer<ActionT>;
+  using LockGuardMutex = std::lock_guard<std::mutex>;
 
   PathTracking();
 
@@ -35,15 +36,23 @@ class PathTracking {
 
   void OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg);
 
-  void VehicleInfoCallback(const carla_msgs::CarlaEgoVehicleInfoConstPtr &vehicle_info_msg);
+//  void VehicleInfoCallback(const carla_msgs::CarlaEgoVehicleInfoConstPtr &vehicle_info_msg);
 
-  void PathCallback(const nav_msgs::Path::ConstPtr &path_msg);
+//  void PathCallback(const nav_msgs::Path::ConstPtr &path_msg);
 
-  NodeState GetNodeState();
+  const NodeState &GetNodeState();
+
+  void SetNodeState(const NodeState & node_state);
 
  private:
 
-  void SetNodeState(const NodeState & node_state);
+  void StartPathTracking();
+
+  void StopPathTracking();
+
+  void PathTrackingLoop();
+
+  bool UpdateParam();
 
   bool GoalReached();
 
@@ -52,7 +61,11 @@ class PathTracking {
   //! Parameters
   bool use_vehicle_info = true;
   std::string role_name = "ego_vehicle";
-  int controller_freq_;
+  int controller_freq = 100;
+  float goal_radius = 0.5;
+  float vehicle_wheelbase = 2.0;
+  float vehicle_track = 2.0;
+  float base_angle = 0.0;
 
   ros::NodeHandle nh_;
   ros::Subscriber odom_sub_, vehicle_info_sub_;
@@ -69,7 +82,10 @@ class PathTracking {
 
   std::mutex path_mutex_, node_state_mutex_, odom_mutex_;
   std::condition_variable plan_condition_;
-  std::thread tracking_path_thread_;
+  std::thread path_tracking_thread_;
+
+  float speed_;
+  float steering_;
 
 
 
