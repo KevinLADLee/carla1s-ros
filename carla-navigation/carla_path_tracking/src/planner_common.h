@@ -16,6 +16,8 @@ enum NodeState{
 };
 
 struct Pose2d{
+  Pose2d() = default;
+  Pose2d(float x, float y, float yaw) : x(x), y(y), yaw(yaw) {};
   float x = 0;
   float y = 0;
   float yaw = 0;

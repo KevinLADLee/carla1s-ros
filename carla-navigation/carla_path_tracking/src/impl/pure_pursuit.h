@@ -7,6 +7,7 @@
 
 #include "path_tracking_base.h"
 #include <cmath>
+#include <eigen3/Eigen/Core>
 
 // PurePursuit Implementation
 // Ref: http://acl.mit.edu/papers/KuwataGNC08.pdf
@@ -25,25 +26,36 @@ class PurePursuit : PathTrackingBase{
 //  void UpdateVehiclePose(const Pose2d &pose) override;
 
  private:
-  float CalculateEta(const Pose2d &vehicle_pose);
+  float CalculateSteering(const Pose2d &vehicle_pose);
 
-  bool IsForwardWaypoint(const Pose2d &waypoint_pose, const Pose2d &vehicle_pose);
+  Pose2d ToVehicleFrame(const Pose2d &point_in_map, const Pose2d &vehicle_pose_in_map);
+
+  inline bool IsForwardWaypoint(const Pose2d &waypoint_pose, const Pose2d &vehicle_pose);
+
+  inline bool IsWaypointAwayFromLookAheadDist(const Pose2d &waypoint_pose, const Pose2d &vehicle_pose);
 
  private:
   float wheel_base = 0; // Wheelbase (L, distance between front and back wheel)
-  float l_fw = 0; // Forward look-ahead distance (L_fw)
-  float l_anchor_fw = 0; // Forward anchor distance (l_fw)
+  float L_fw = 0; // Forward look-ahead distance (L_fw)
+  float l_anchor_fw = 0; // Forward anchor distance (L_fw)
   float l_rv = 0; // Reverse look-ahead distance (L_rv)
   float l_anchor_rv = 0; // Reverse anchor distance (l_rv)
+  float base_angle = 0.0;
+  float steering_gain = 2.0;
+  float speed_increment = 2.0;
+  float max_speed = 15.0;
+  float goal_radius = 1.0;
   bool use_seg = false;
+
 
   Path2d path_;
   PathSeg path_seg_;
   Pose2d goal_;
   Pose2d vehicle_pose_;
   bool found_forward_point_;
-  float eta_; // heading of look ahead point
 
+  float speed_;
+  float steering_;
 
 };
 
