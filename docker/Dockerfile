@@ -1,4 +1,3 @@
-me
 ARG ROS_VERSION='noetic'
 ARG CARLA_VERSION='0.9.11'
 ARG EDD_FILE='carla-0.9.11-py3.7-linux-x86_64.egg'
