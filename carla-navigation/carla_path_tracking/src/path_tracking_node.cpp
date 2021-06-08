@@ -9,11 +9,11 @@
 int main(int argc, char **argv)
 {
   //Initiate ROS
-  ros::init(argc, argv, "pure_pursuit_node");
+  ros::init(argc, argv, "path_tracking_node");
 
   PathTracking path_tracking;
 
-  ros::AsyncSpinner spinner(2); // Use multi threads
+  ros::AsyncSpinner spinner(4); // Use multi threads
   spinner.start();
   ros::waitForShutdown();
   return 0;

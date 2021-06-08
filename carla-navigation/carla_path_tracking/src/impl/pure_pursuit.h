@@ -7,23 +7,26 @@
 
 #include "path_tracking_base.h"
 #include <cmath>
-#include <eigen3/Eigen/Core>
+#include <Eigen/Dense>
 
 // PurePursuit Implementation
 // Ref: http://acl.mit.edu/papers/KuwataGNC08.pdf
 
-class PurePursuit : PathTrackingBase{
+class PurePursuit : public PathTrackingBase{
  public:
 
-  int Initialize(float wheelbase, float look_ahead_dist_fwd, float anchor_dist_fwd);
+  int Initialize(float wheelbase, float look_ahead_dist_fwd = 2.5, float anchor_dist_fwd = 1.5);
 
   int ComputeAckermannCmd(const Pose2d &vehicle_pose, AckermannCmd &ackermann_cmd) override;
 
   bool IsGoalReached() override;
 
-  int SetPlan(const Path2d &path) override;
+  int SetPlan(const Path2d &path, const PathDirection &path_direction) override;
 
 //  void UpdateVehiclePose(const Pose2d &pose) override;
+
+
+  Pose2d GetCurrentTrackPoint();
 
  private:
   float CalculateSteering(const Pose2d &vehicle_pose);
@@ -34,28 +37,32 @@ class PurePursuit : PathTrackingBase{
 
   inline bool IsWaypointAwayFromLookAheadDist(const Pose2d &waypoint_pose, const Pose2d &vehicle_pose);
 
+  float DistToGoal(const Pose2d& pose);
+
  private:
   float wheel_base = 0; // Wheelbase (L, distance between front and back wheel)
-  float L_fw = 0; // Forward look-ahead distance (L_fw)
-  float l_anchor_fw = 0; // Forward anchor distance (L_fw)
+  float L_fw = 2.5; // Forward look-ahead distance (L_fw)
+  float l_anchor_fw = 1.5; // Forward anchor distance (L_fw)
   float l_rv = 0; // Reverse look-ahead distance (L_rv)
-  float l_anchor_rv = 0; // Reverse anchor distance (l_rv)
+  float l_anchor_rv = 0.0; // Reverse anchor distance (l_rv)
   float base_angle = 0.0;
   float steering_gain = 2.0;
   float speed_increment = 2.0;
-  float max_speed = 15.0;
+  float max_speed = 10.0;
   float goal_radius = 1.0;
+  float safe_dist = 5.0;
   bool use_seg = false;
 
-
   Path2d path_;
-  PathSeg path_seg_;
+  PathDirection path_direction_ = PathDirection::FWD;
   Pose2d goal_;
   Pose2d vehicle_pose_;
-  bool found_forward_point_;
+  bool found_forward_point_ = false;
 
-  float speed_;
-  float steering_;
+  std::vector<Pose2d>::iterator current_waypoint_it_;
+
+  float speed_ = 0.0;
+  float steering_ = 0.0;
 
 };
 

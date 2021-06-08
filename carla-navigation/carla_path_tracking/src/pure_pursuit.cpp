@@ -71,7 +71,8 @@ class PurePursuit
   std::thread tracking_path_thread_;
 
   visualization_msgs::Marker points_, line_strip_, goal_circle_;
-  geometry_msgs::Point goal_pos_;
+  geometry_msgs::P  float l_rv = 0; // Reverse look-ahead distance (L_rv)
+  float l_anchor_rv = 0; // Reverse anchor distance (l_rv)oint goal_pos_;
   geometry_msgs::Twist cmd_vel_;
   ackermann_msgs::AckermannDrive ackermann_cmd_;
   nav_msgs::Odometry odom_;

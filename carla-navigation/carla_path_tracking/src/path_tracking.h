@@ -11,16 +11,19 @@
 #include <thread>
 
 #include <ros/ros.h>
+#include <tf2/utils.h>
 #include <actionlib/server/simple_action_server.h>
+#include <ackermann_msgs/AckermannDrive.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/Odometry.h>
-#include <ackermann_msgs/AckermannDrive.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include <carla_nav_msgs/TrackingPathAction.h>
 #include <carla_msgs/CarlaEgoVehicleInfo.h>
 
 #include "planner_common.h"
+#include "impl/pure_pursuit.h"
 
 class PathTracking {
  public:
@@ -29,6 +32,7 @@ class PathTracking {
   using ActionResultT = typename ActionT::_action_result_type::_result_type;
   using ActionServerT = actionlib::SimpleActionServer<ActionT>;
   using LockGuardMutex = std::lock_guard<std::mutex>;
+  using PathTrackerT = PurePursuit;
 
   PathTracking();
 
@@ -44,7 +48,12 @@ class PathTracking {
 
   void SetNodeState(const NodeState & node_state);
 
+
  private:
+
+  void InitMarkers();
+
+  void PublishMarkers(const Pose2d &vehicle_pose, const Pose2d &track_point);
 
   void StartPathTracking();
 
@@ -54,7 +63,9 @@ class PathTracking {
 
   bool UpdateParam();
 
-  bool GoalReached();
+//  bool GoalReached();
+
+  Path2d RosPathToPath2d(const nav_msgs::Path &ros_path);
 
  private:
 
@@ -69,13 +80,14 @@ class PathTracking {
 
   ros::NodeHandle nh_;
   ros::Subscriber odom_sub_, vehicle_info_sub_;
-  ros::Publisher cmd_vel_pub_;
+  ros::Publisher cmd_vel_pub_, tracking_point_pub_;
   std::unique_ptr<ActionServerT> as_;
 
   ackermann_msgs::AckermannDrive ackermann_cmd_;
   nav_msgs::Odometry odom_;
   nav_msgs::Path path_in_map_;
   geometry_msgs::PoseStamped goal_pose_;
+  visualization_msgs::MarkerArray visualize_markers_;
 
   NodeState node_state_ = NodeState::IDLE;
   bool goal_reached_ = false;
@@ -83,11 +95,7 @@ class PathTracking {
   std::mutex path_mutex_, node_state_mutex_, odom_mutex_;
   std::condition_variable plan_condition_;
   std::thread path_tracking_thread_;
-
-  float speed_;
-  float steering_;
-
-
+  std::unique_ptr<PurePursuit> path_tracker_ptr_;
 
 };
 

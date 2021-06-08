@@ -40,7 +40,7 @@ BT_REGISTER_NODES(factory)
       [](const std::string & name, const BT::NodeConfiguration & config)
       {
         return std::make_unique<TrackingPath>(
-            name, "tracking_path_action", config);
+            name, "path_tracking_action", config);
       };
   factory.registerBuilder<TrackingPath>(
       "TrackingPath", builder);

@@ -1,5 +1,5 @@
-{   
-    "objects": 
+{
+    "objects":
     [
         {
             "type": "sensor.pseudo.traffic_lights",
@@ -22,9 +22,9 @@
             "id": "map"
         },
         {
-            "type": "vehicle.lincoln2020.mkz2020",
+            "type": "vehicle.tesla.model3",
             "id": "ego_vehicle",
-            "sensors": 
+            "sensors":
             [
                 {
                     "type": "sensor.camera.rgb",
@@ -53,11 +53,11 @@
                     "type": "sensor.lidar.ray_cast",
                     "id": "lidar",
                     "spawn_point": {"x": 0.0, "y": 0.0, "z": 2.4, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
-                    "range": 120,
+                    "range": 50,
                     "channels": 32,
-                    "points_per_second": 600000,
-                    "upper_fov": 15.0,
-                    "lower_fov": -15.0,
+                    "points_per_second": 320000,
+                    "upper_fov": 2.0,
+                    "lower_fov": -26.8,
                     "rotation_frequency": 20,
                     "noise_stddev": 0.0
                 },
@@ -85,17 +85,9 @@
                     "type": "sensor.camera.semantic_segmentation",
                     "id": "semantic_segmentation_front",
                     "spawn_point": {"x": 2.0, "y": 0.0, "z": 2.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
-                    "fov": 120.0,
-                    "image_size_x": 640,
-                    "image_size_y": 480
-                },
-                {
-                    "type": "sensor.camera.semantic_segmentation",
-                    "id": "semantic_segmentation_rear",
-                    "spawn_point": {"x": -2.0, "y": 0.0, "z": 2.0, "roll": 0.0, "pitch": 10.0, "yaw": 180.0},
-                    "fov": 120.0,
-                    "image_size_x": 640,
-                    "image_size_y": 320
+                    "fov": 90.0,
+                    "image_size_x": 400,
+                    "image_size_y": 70
                 },
                 {
                     "type": "sensor.camera.depth",

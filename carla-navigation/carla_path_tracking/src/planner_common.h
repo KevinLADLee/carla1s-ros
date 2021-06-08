@@ -24,7 +24,7 @@ struct Pose2d{
 };
 
 struct Path2d{
-  std::vector<Pose2d> path;
+  std::vector<Pose2d> poses;
 };
 
 enum class PathDirection : int{
@@ -34,7 +34,7 @@ enum class PathDirection : int{
 
 struct PathWithDirection{
   std::vector<Pose2d> poses;
-  int directions;
+  PathDirection directions;
 };
 
 struct PathSeg{

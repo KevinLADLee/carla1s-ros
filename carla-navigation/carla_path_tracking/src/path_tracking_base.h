@@ -15,7 +15,7 @@ class PathTrackingBase{
 
   virtual bool IsGoalReached() = 0;
 
-  virtual int SetPlan(const Path2d &path) = 0;
+  virtual int SetPlan(const Path2d &path, const PathDirection &path_direction) = 0;
 
 //  virtual int SetPlan(const PathSeg &path_seg) = 0;
 
