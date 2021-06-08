@@ -19,7 +19,7 @@
 #include <nav_msgs/Odometry.h>
 #include <visualization_msgs/MarkerArray.h>
 
-#include <carla_nav_msgs/TrackingPathAction.h>
+#include <carla_nav_msgs/PathTrackingAction.h>
 #include <carla_msgs/CarlaEgoVehicleInfo.h>
 
 #include "planner_common.h"
@@ -27,9 +27,10 @@
 
 class PathTracking {
  public:
-  using ActionT = carla_nav_msgs::TrackingPathAction;
+  using ActionT = carla_nav_msgs::PathTrackingAction;
   using ActionGoalT   = typename ActionT::_action_goal_type::_goal_type;
   using ActionResultT = typename ActionT::_action_result_type::_result_type;
+  using ActionFeedbackT   = typename ActionT::_action_feedback_type::_feedback_type;
   using ActionServerT = actionlib::SimpleActionServer<ActionT>;
   using LockGuardMutex = std::lock_guard<std::mutex>;
   using PathTrackerT = PurePursuit;

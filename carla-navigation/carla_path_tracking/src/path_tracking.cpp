@@ -72,7 +72,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
       ROS_INFO("Action Preempted");
       StopPathTracking();
       SetNodeState(NodeState::IDLE);
-      carla_nav_msgs::TrackingPathResult result;
+      ActionResultT result;
       result.error_code = NodeState::SUCCESS;
       goal_reached_ = false;
       as_->setPreempted(result);
@@ -84,8 +84,8 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
         node_state == NodeState::SUCCESS ||
         node_state == NodeState::FAILURE)
     {
-      carla_nav_msgs::TrackingPathFeedback feedback;
-      carla_nav_msgs::TrackingPathResult result;
+      ActionFeedbackT feedback;
+      ActionResultT result;
 
       feedback.error_code = node_state;
       as_->publishFeedback(feedback);
