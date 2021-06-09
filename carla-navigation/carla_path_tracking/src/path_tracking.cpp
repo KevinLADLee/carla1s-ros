@@ -18,6 +18,7 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
 
   odom_sub_ = nh_.subscribe("/carla/ego_vehicle/odometry", 1, &PathTracking::OdomCallback, this);
   cmd_vel_pub_ = nh_.advertise<ackermann_msgs::AckermannDrive>("/carla/ego_vehicle/ackermann_cmd", 10);
+  markers_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("/carla/path_tracking/markers", 1);
 
   as_->start();
   SetNodeState(NodeState::IDLE);
@@ -56,6 +57,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
 
   if(path_mutex_.try_lock()){
     path_tracker_ptr_->SetPlan(RosPathToPath2d(action_goal_msg->path), PathDirection::FWD);
+    InitMarkers(action_goal_msg->path.poses.back());
     path_mutex_.unlock();
     plan_condition_.notify_one();
   }
@@ -139,6 +141,48 @@ void PathTracking::SetNodeState(const NodeState &node_state) {
 //  return false;
 //}
 
+void PathTracking::InitMarkers(const geometry_msgs::PoseStamped &goal_pose) {
+  visualize_markers_.markers.clear();
+  visualize_markers_.markers.reserve(2);
+  visualization_msgs::Marker goal_marker;
+  goal_marker.header.frame_id = "map";
+  goal_marker.header.stamp = ros::Time();
+  goal_marker.id = 0;
+  goal_marker.action = visualization_msgs::Marker::ADD;
+  goal_marker.type = visualization_msgs::Marker::SPHERE;
+  goal_marker.pose.position = goal_pose.pose.position;
+  goal_marker.scale.x = goal_radius;
+  goal_marker.scale.y = goal_radius;
+  goal_marker.scale.z = goal_radius;
+  goal_marker.color.a = 0.8;
+  goal_marker.color.r = 0.0;
+  goal_marker.color.g = 0.8;
+  goal_marker.color.b = 0.0;
+  visualize_markers_.markers.push_back(goal_marker);
+  visualization_msgs::Marker line_marker;
+  line_marker.header.frame_id = "map";
+  line_marker.header.stamp = ros::Time();
+  line_marker.id = 1;
+  line_marker.action = visualization_msgs::Marker::ADD;
+  line_marker.type = visualization_msgs::Marker::LINE_STRIP;
+  line_marker.color.a = 0.8;
+  line_marker.color.r = 0.0;
+  line_marker.color.g = 0.0;
+  line_marker.color.b = 0.8;
+  line_marker.scale.x = 0.2;
+  line_marker.points.resize(2);
+  visualize_markers_.markers.push_back(line_marker);
+}
+
+void PathTracking::PublishMarkers(const Pose2d &vehicle_pose, const Pose2d &track_point) {
+  auto line_marker_it = visualize_markers_.markers.begin() + 1;
+  line_marker_it->points.at(0).x = vehicle_pose.x;
+  line_marker_it->points.at(0).y = vehicle_pose.y;
+  line_marker_it->points.at(1).x = track_point.x;
+  line_marker_it->points.at(1).y = track_point.y;
+  markers_pub_.publish(visualize_markers_);
+}
+
 void PathTracking::StartPathTracking() {
   if(path_tracking_thread_.joinable()){
     path_tracking_thread_.join();
@@ -179,6 +223,8 @@ void PathTracking::PathTrackingLoop() {
     if (sleep_time <= std::chrono::milliseconds(0)) {
       sleep_time = std::chrono::milliseconds(0);
     }
+
+    PublishMarkers(vehicle_pose, path_tracker_ptr_->GetCurrentTrackPoint());
 
     ackermann_cmd_.speed = ackermann_cmd.speed;
     ackermann_cmd_.steering_angle = ackermann_cmd.steering_angle;

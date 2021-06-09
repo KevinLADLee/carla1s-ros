@@ -52,7 +52,7 @@ class PathTracking {
 
  private:
 
-  void InitMarkers();
+  void InitMarkers(const geometry_msgs::PoseStamped &goal_pose);
 
   void PublishMarkers(const Pose2d &vehicle_pose, const Pose2d &track_point);
 
@@ -81,7 +81,7 @@ class PathTracking {
 
   ros::NodeHandle nh_;
   ros::Subscriber odom_sub_, vehicle_info_sub_;
-  ros::Publisher cmd_vel_pub_, tracking_point_pub_;
+  ros::Publisher cmd_vel_pub_, markers_pub_;
   std::unique_ptr<ActionServerT> as_;
 
   ackermann_msgs::AckermannDrive ackermann_cmd_;
