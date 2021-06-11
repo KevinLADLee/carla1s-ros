@@ -13,16 +13,20 @@ namespace carla_decision{
 
     BlackboardHandler(BT::Blackboard::Ptr bb_ptr, ros::NodeHandlePtr nh_ptr, const std::string &role_name = "ego_vehicle");
 
+    bool LoadParam();
+
+    void TrafficLightCallback(const std_msgs::BoolConstPtr& msg);
+
     void OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg);
+
+    void GoalCallback(const geometry_msgs::PoseStampedConstPtr &goal);
 
    private:
     BT::Blackboard::Ptr bb_ptr_;
     ros::NodeHandlePtr nh_ptr_;
     std::string role_name_;
-
-    ros::Subscriber odom_sub_;
+    ros::Subscriber odom_sub_, traffic_light_sub_, goal_sub_;
     nav_msgs::Odometry odom_;
-
   };
 }
 

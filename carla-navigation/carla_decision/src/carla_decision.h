@@ -12,8 +12,6 @@ class CarlaDecision{
 
   void Tick();
 
-  void GoalCallback(const geometry_msgs::PoseStamped::ConstPtr& goal);
-
  private:
   std::string DetermineLibPath(const std::string &path);
 
@@ -23,6 +21,7 @@ class CarlaDecision{
   BT::BehaviorTreeFactory bt_factory_;
   ros::NodeHandlePtr nh_ptr_;
   std::unique_ptr<BT::PublisherZMQ> publisher_zmq_ptr_;
+  std::unique_ptr<carla_decision::BlackboardHandler> bt_blackboard_handler_;
 
   ros::Subscriber goal_sub_;
 

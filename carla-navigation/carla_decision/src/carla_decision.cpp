@@ -24,6 +24,7 @@ bool CarlaDecision::LoadBehaviorTree(const std::string &filename) {
   bt_blackboard_ = BT::Blackboard::create();
   bt_blackboard_->set<ros::NodeHandlePtr>("node_handler", nh_ptr_);
   bt_blackboard_->set<std::string>("role_name", "ego_vehicle");
+  bt_blackboard_handler_ = std::make_unique<carla_decision::BlackboardHandler>(bt_blackboard_, nh_ptr_);
 
   // Nodes Register
   for (const auto & plugin : plugin_libs_) {

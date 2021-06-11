@@ -86,12 +86,9 @@ class PathTracking {
 
   ackermann_msgs::AckermannDrive ackermann_cmd_;
   nav_msgs::Odometry odom_;
-  nav_msgs::Path path_in_map_;
-  geometry_msgs::PoseStamped goal_pose_;
   visualization_msgs::MarkerArray visualize_markers_;
 
   NodeState node_state_ = NodeState::IDLE;
-  bool goal_reached_ = false;
 
   std::mutex path_mutex_, node_state_mutex_, odom_mutex_;
   std::condition_variable plan_condition_;

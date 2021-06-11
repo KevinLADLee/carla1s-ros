@@ -1,0 +1,11 @@
+float32 road_width
+float32 parking_spot_length
+# Corner Points Definition (2 points / 4 points)
+#  1---0
+#  |   |
+#  2---3
+geometry_msgs/Point[] parking_spot_corners
+---
+bool success
+---
+nav_msgs/Path path

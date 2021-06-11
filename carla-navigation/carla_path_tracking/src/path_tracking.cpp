@@ -12,9 +12,9 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
 
   UpdateParam();
 
+  // TODO: Add algorithm selector
   path_tracker_ptr_ = std::make_unique<PathTrackerT>();
   path_tracker_ptr_->Initialize(vehicle_wheelbase);
-
 
   odom_sub_ = nh_.subscribe("/carla/ego_vehicle/odometry", 1, &PathTracking::OdomCallback, this);
   cmd_vel_pub_ = nh_.advertise<ackermann_msgs::AckermannDrive>("/carla/ego_vehicle/ackermann_cmd", 10);
@@ -22,8 +22,6 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
 
   as_->start();
   SetNodeState(NodeState::IDLE);
-  goal_reached_ = false;
-
 
 }
 
@@ -76,7 +74,6 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
       SetNodeState(NodeState::IDLE);
       ActionResultT result;
       result.error_code = NodeState::SUCCESS;
-      goal_reached_ = false;
       as_->setPreempted(result);
       break;
     }
@@ -224,14 +221,12 @@ void PathTracking::PathTrackingLoop() {
       sleep_time = std::chrono::milliseconds(0);
     }
 
-    PublishMarkers(vehicle_pose, path_tracker_ptr_->GetCurrentTrackPoint());
 
     ackermann_cmd_.speed = ackermann_cmd.speed;
     ackermann_cmd_.steering_angle = ackermann_cmd.steering_angle;
     cmd_vel_pub_.publish(ackermann_cmd_);
 
-    // TODO: Publish markers for debug
-    auto track_point = path_tracker_ptr_->GetCurrentTrackPoint();
+    PublishMarkers(vehicle_pose, path_tracker_ptr_->GetCurrentTrackPoint());
 
     if(path_tracker_ptr_->IsGoalReached()){
       ROS_INFO("Reached goal!");

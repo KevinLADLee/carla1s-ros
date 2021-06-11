@@ -8,6 +8,7 @@ set(ROS_VERSION $ENV{ROS_VERSION})
 set(ACTION_FILES
         PathTracking.action
         PathPlanner.action
+        ParkingPlanner.action
         )
 
 # Find catkin macros and libraries
