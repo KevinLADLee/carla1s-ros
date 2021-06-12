@@ -1,6 +1,3 @@
-//
-// Created by kevinlad on 2021/4/23.
-//
 
 #include "tracking_path.h"
 TrackingPath::TrackingPath(const std::string &name,
@@ -19,7 +16,6 @@ void TrackingPath::on_tick() {
 
 BT::NodeStatus TrackingPath::on_result(const ResultType &res) {
   std::cout << res.error_info << std::endl;
-
   switch (res.error_code) {
     case 0:
       return BT::NodeStatus::IDLE;

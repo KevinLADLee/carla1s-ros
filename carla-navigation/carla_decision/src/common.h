@@ -23,7 +23,7 @@
 #include <dlfcn.h>
 
 #include "bt_node_base/bt_action_node.h"
-//#include "bt_node_base/bt_planner_node.h"
+#include "bt_node_base/bt_planner_node.h"
 #include "util/log.h"
 #include "util/bt_conversions.h"
 
