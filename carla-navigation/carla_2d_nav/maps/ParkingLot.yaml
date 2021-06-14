@@ -1,0 +1,9 @@
+free_thresh: 0.2
+image: ParkingLot.png
+negate: 0
+occupied_thresh: 0.65
+origin:
+- -139.3499984741211
+- -95.6500015258789
+- 0
+resolution: 0.05
