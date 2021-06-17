@@ -1,6 +1,7 @@
 controller_frequency: 100 # Hz
 goal_tolerance_xy: 0.5 # goal radius (m)
 goal_tolerance_yaw: 0.2 # goal radius (m)
+max_speed: 5.5 # max vehicle speed (m/s)
 base_angle: 0.0 # neutral point of servo (rad)
 smooth_accel: true # smooth the acceleration of car
 speed_incremental: 1.5 # speed incremental value (discrete acceleration), unit: m/s

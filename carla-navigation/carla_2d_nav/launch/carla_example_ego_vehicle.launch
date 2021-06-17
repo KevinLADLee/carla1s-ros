@@ -9,11 +9,11 @@
   <!-- Ego vehicle -->
   <arg name='role_name' default='ego_vehicle'/>
   <arg name="vehicle_filter" default='vehicle.lincoln2020.mkz2020'/>
-<!--   <arg name="spawn_point" default="" /> -->
+  <arg name="spawn_point" default="" />
 
 
-  <arg name="town" default='Town02' />
-  <arg name="spawn_point" default="189.681, -254.954,0.5,0,0,-90"/>
+<!--   <arg name="town" default='Town02' /> -->
+<!--   <arg name="spawn_point" default="189.681, -254.954,0.5,0,0,-90"/> -->
 
 <!--   <arg name="town" default='Town01'/> -->
 <!--   <arg name="spawn_point" default="295.082, -199.060, 0.2, 0, 0, 0"/> -->
@@ -44,7 +44,7 @@
 
   <!-- the ego vehicle, that will be controlled by an agent (e.g. carla_ad_agent) -->
   <include file="$(find carla_spawn_objects)/launch/carla_example_ego_vehicle.launch">
-    <arg name="objects_definition_file" value='$(find carla_2d_nav)/config/objects.json'/>
+    <arg name="objects_definition_file" value='$(find carla_2d_nav)/config/nav_minimum.json'/>
     <arg name='role_name' value='$(arg role_name)'/>
     <arg name="spawn_point_ego_vehicle" value="$(arg spawn_point)"/>
     <arg name="spawn_sensors_only" value="false"/>

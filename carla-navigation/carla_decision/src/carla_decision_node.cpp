@@ -11,7 +11,7 @@ int main(int argc, char** argv){
   if(argc > 1) {
     xml_path = argv[1];
   } else{
-    xml_path = ros::package::getPath("carla_decision") + "/trees/goal_behavior.xml";
+    xml_path = ros::package::getPath("carla_decision") + "/trees/avp_demo.xml";
   }
   carla_bt_tree.LoadBehaviorTree(xml_path);
   carla_bt_tree.Tick();

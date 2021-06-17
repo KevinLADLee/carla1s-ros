@@ -8,6 +8,7 @@
 #include "path_tracking_base.h"
 #include <cmath>
 #include <Eigen/Dense>
+#include <iostream>
 
 // PurePursuit Implementation
 // Ref: http://acl.mit.edu/papers/KuwataGNC08.pdf
@@ -15,7 +16,7 @@
 class PurePursuit : public PathTrackingBase{
  public:
 
-  int Initialize(float wheelbase, float look_ahead_dist_fwd = 2.5, float anchor_dist_fwd = 1.5);
+  int Initialize(float wheelbase, float max_speed = 8.0, float look_ahead_dist_fwd = 2.5, float anchor_dist_fwd = 1.5);
 
   int ComputeAckermannCmd(const Pose2d &vehicle_pose, AckermannCmd &ackermann_cmd) override;
 
@@ -48,7 +49,7 @@ class PurePursuit : public PathTrackingBase{
   float base_angle = 0.0;
   float steering_gain = 2.0;
   float speed_increment = 2.0;
-  float max_speed = 10.0;
+  float max_speed_ = 5.5; // ~20km/h
   float goal_radius = 1.0;
   float safe_dist = 5.0;
   bool use_seg = false;
@@ -60,6 +61,7 @@ class PurePursuit : public PathTrackingBase{
   bool found_forward_point_ = false;
 
   std::vector<Pose2d>::iterator current_waypoint_it_;
+  int current_waypoint_index_ = 0;
 
   float speed_ = 0.0;
   float steering_ = 0.0;

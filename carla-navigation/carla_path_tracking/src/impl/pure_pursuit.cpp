@@ -11,7 +11,7 @@ int PurePursuit::ComputeAckermannCmd(const Pose2d &vehicle_pose,
   auto steering = CalculateSteering(vehicle_pose);
   if(found_forward_point_){
     steering_ =  base_angle + steering * steering_gain;
-    speed_ = std::min(speed_ + speed_increment, max_speed);
+    speed_ = std::min(speed_ + speed_increment, max_speed_);
   }
 
   auto dist = DistToGoal(vehicle_pose);
@@ -19,6 +19,7 @@ int PurePursuit::ComputeAckermannCmd(const Pose2d &vehicle_pose,
     speed_ = 0.0;
     steering_ = 0.0;
   } else if(dist < safe_dist){
+//      std::cout << "Dist: " << dist << std::endl;
     speed_ = 1.0;
   }
 
@@ -42,6 +43,7 @@ int PurePursuit::SetPlan(const Path2d &path, const PathDirection &path_direction
   path_ = path;
   path_direction_ = path_direction;
   current_waypoint_it_ = path_.poses.begin();
+  current_waypoint_index_ = 0;
   goal_ = path_.poses.back();
   return 0;
 }
@@ -62,6 +64,7 @@ float PurePursuit::CalculateSteering(const Pose2d &vehicle_pose) {
             break;
           }
         }
+        current_waypoint_index_++;
       }
     } else{
       forward_point = goal_;
@@ -82,7 +85,8 @@ float PurePursuit::CalculateSteering(const Pose2d &vehicle_pose) {
 
 bool PurePursuit::IsForwardWaypoint(const Pose2d &waypoint_pose, const Pose2d &vehicle_pose) {
   auto waypoint_pose_in_vehicle_frame = ToVehicleFrame(waypoint_pose, vehicle_pose);
-  if(waypoint_pose_in_vehicle_frame.x > 0){
+  // -45° - 45 °
+  if(waypoint_pose_in_vehicle_frame.x > 0 && std::abs(waypoint_pose_in_vehicle_frame.y) < std::abs(waypoint_pose_in_vehicle_frame.x)){
     return true;
   } else{
     return false;
@@ -121,8 +125,9 @@ Pose2d PurePursuit::GetCurrentTrackPoint() {
   return (*current_waypoint_it_);
 }
 
-int PurePursuit::Initialize(float wheelbase, float look_ahead_dist_fwd, float anchor_dist_fwd) {
+int PurePursuit::Initialize(float wheelbase, float max_speed, float look_ahead_dist_fwd, float anchor_dist_fwd) {
   wheel_base = wheelbase;
+  max_speed_ = max_speed;
   L_fw = look_ahead_dist_fwd;
   l_anchor_fw = anchor_dist_fwd;
   return 0;
