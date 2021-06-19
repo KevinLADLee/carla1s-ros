@@ -1,4 +1,4 @@
 [submodule "ros-bridge"]
 	path = ros-bridge
 	url = https://gitlab.isus.tech/carla1s/ros-bridge
-	branch = 0.9.11-fisheye
+	branch = master
