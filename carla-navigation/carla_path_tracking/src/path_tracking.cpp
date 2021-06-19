@@ -14,7 +14,7 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
 
   // TODO: Add algorithm selector
   path_tracker_ptr_ = std::make_unique<PathTrackerT>();
-  path_tracker_ptr_->Initialize(vehicle_wheelbase);
+  path_tracker_ptr_->Initialize(vehicle_wheelbase, max_speed);
 
   odom_sub_ = nh_.subscribe("/carla/ego_vehicle/odometry", 1, &PathTracking::OdomCallback, this);
   cmd_vel_pub_ = nh_.advertise<ackermann_msgs::AckermannDrive>("/carla/ego_vehicle/ackermann_cmd", 10);
@@ -32,6 +32,7 @@ bool PathTracking::UpdateParam() {
   nh_.param<float>("goal_tolerance_yaw", 0.2);
   nh_.param<bool>("use_vehicle_info", use_vehicle_info,true);
   nh_.param<float>("base_angle", base_angle, 0.0);
+  nh_.param<float>("max_speed", max_speed, 8.0);
 
   if(use_vehicle_info) {
     auto vehicle_info_msg = ros::topic::waitForMessage<carla_msgs::CarlaEgoVehicleInfo>("/carla/"+role_name+"/vehicle_info", nh_, ros::Duration(120));

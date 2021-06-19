@@ -30,6 +30,7 @@ class CarlaDecision{
       "bt_action_compute_path_to_goal",
       "bt_action_tracking_path",
       "bt_action_move_to_goal",
+      "bt_action_cruise",
       "bt_condition_goal_updated",
       "bt_condition_check_traffic_light",
       "bt_control_pipeline_sequence"

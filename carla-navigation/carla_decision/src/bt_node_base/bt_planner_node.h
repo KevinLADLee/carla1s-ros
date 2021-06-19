@@ -29,10 +29,26 @@ class RosPlanningActionNode : public BT::ActionNodeBase {
   using GlobalPlannerActionGoalT = typename GlobalPlannerActionT::_action_goal_type::_goal_type;
   using GlobalPlannerActionFeedbackT = typename GlobalPlannerActionT::_action_feedback_type::_feedback_type;
   using LocalPlannerActionGoalT = typename LocalPlannerActionT::_action_goal_type::_goal_type;
+  using LocalPlannerActionResultT = typename LocalPlannerActionT::_action_result_type::_result_type;
   using ActionSimpleClientGoalState = actionlib::SimpleClientGoalState;
 
  public:
   RosPlanningActionNode() = delete;
+
+  RosPlanningActionNode(const std::string& bt_node_name,
+                        const std::string &global_action_client_name,
+                        const std::string &local_action_client_name,
+                        const BT::NodeConfiguration & conf) : BT::ActionNodeBase(bt_node_name, conf){
+    global_action_client_name_ = global_action_client_name;
+    local_action_client_name_ = local_action_client_name;
+    nh_ = config().blackboard->template get<ros::NodeHandlePtr>("node_handler");
+    global_planner_action_client_ = std::make_shared<GlobalPlannerActionClientT>(*nh_, global_action_client_name_, true);
+    local_planner_action_client_ = std::make_shared<LocalPlannerActionClientT>(*nh_, local_action_client_name_, true);
+
+    WaitActionServer(global_action_client_name_, global_planner_action_client_);
+    WaitActionServer(local_action_client_name_, local_planner_action_client_);
+
+  }
 
   virtual ~RosPlanningActionNode() = default;
 
@@ -50,10 +66,10 @@ class RosPlanningActionNode : public BT::ActionNodeBase {
     return true;
   };
 
-//  virtual NodeStatus on_result(const ResultType &res) {
-//    setStatus(BT::NodeStatus::IDLE);
-//    return BT::NodeStatus::SUCCESS;
-//  };
+  virtual NodeStatus on_result(const LocalPlannerActionResultT &res) {
+    setStatus(BT::NodeStatus::IDLE);
+    return BT::NodeStatus::SUCCESS;
+  };
 
   virtual BT::NodeStatus on_success() {
     return BT::NodeStatus::SUCCESS;
@@ -90,8 +106,8 @@ class RosPlanningActionNode : public BT::ActionNodeBase {
 
   void halt() override {
     if (status() == NodeStatus::RUNNING) {
-      global_planner_action_client_.cancelGoal();
-      local_planner_action_client_.cancelGoal();
+      global_planner_action_client_->cancelGoal();
+      local_planner_action_client_->cancelGoal();
     }
     setStatus(NodeStatus::IDLE);
   }
@@ -116,9 +132,9 @@ class RosPlanningActionNode : public BT::ActionNodeBase {
       if (status() == BT::NodeStatus::FAILURE) {
         return BT::NodeStatus::FAILURE;
       } else {
-        global_planner_action_client_.sendGoal(goal_,
-                                               GlobalPlannerActionClientT::SimpleDoneCallback(),
-                                               GlobalPlannerActionClientT::SimpleActiveCallback,
+        global_planner_action_client_->sendGoal(goal_,
+                                               typename GlobalPlannerActionClientT::SimpleDoneCallback(),
+                                               typename GlobalPlannerActionClientT::SimpleActiveCallback(),
                                                boost::bind(&RosPlanningActionNode::GlobalPlannerFeedbackCallback, this, _1));
       }
     }
@@ -143,38 +159,29 @@ class RosPlanningActionNode : public BT::ActionNodeBase {
     }
   }
 
- protected:
-  RosPlanningActionNode(const std::string &name,
-                        const std::string &global_action_client_name,
-                        const std::string &local_action_client_name,
-                        const BT::NodeConfiguration &conf) : BT::ActionNodeBase(name, conf) {
-    nh_ = config().blackboard->template get<ros::NodeHandlePtr>("node_handler");
-    global_planner_action_client_ = std::make_shared<GlobalPlannerActionClientT>(*nh_, global_action_client_name, true);
-    local_planner_action_client_ = std::make_shared<LocalPlannerActionClientT>(*nh_, local_action_client_name, true);
-    std::cout << "[BT ROS Action Node]: " << "Waiting action server (" << global_action_client_name << ")..."
-              << std::endl;
-    global_planner_action_client_->waitForServer();
-    std::cout << "[BT ROS Action Node]: " << "Waiting action server (" << local_action_client_name << ")..."
-              << std::endl;
-    local_planner_action_client_->waitForServer();
-  }
+  virtual void GlobalPlannerFeedbackCallback(const typename GlobalPlannerActionFeedbackT::ConstPtr &global_planner_feedback) {}
 
  private:
   bool IsServerConnected() {
-    return (local_planner_action_client_.isServerConnected() && global_planner_action_client_.isServerConnected());
+    return (local_planner_action_client_->isServerConnected() && global_planner_action_client_->isServerConnected());
   };
 
-  void GlobalPlannerFeedbackCallback(const typename GlobalPlannerActionFeedbackT::ConstPtr &global_planner_feedback) {
-    if (IsGlobalPlanValid()) {
-      on_send_local_planner_goal();
-    }
-  }
+  template<class ActionClientT>
+  void WaitActionServer(const std::string &action_client_name, const ActionClientT &action_client){
+    std::cout << "[BT ROS Planner Action Node]: " << "Waiting action server (" << action_client_name << ")..." << std::endl;
+    action_client->waitForServer();
+    std::cout << "[BT ROS Planner Action Node]: Action Server (" << action_client_name << ") connected success!" << std::endl;
+  };
+
+
 
  protected:
   ros::NodeHandlePtr nh_;
 
-  GlobalPlannerActionClientT global_planner_action_client_;
-  LocalPlannerActionClientT local_planner_action_client_;
+  std::string global_action_client_name_;
+  std::string local_action_client_name_;
+  std::shared_ptr<GlobalPlannerActionClientT> global_planner_action_client_;
+  std::shared_ptr<LocalPlannerActionClientT> local_planner_action_client_;
   GlobalPlannerActionGoalT goal_;
   LocalPlannerActionGoalT local_goal_;
   bool first_goal_received_ = false;

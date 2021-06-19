@@ -78,6 +78,7 @@ class PathTracking {
   float vehicle_wheelbase = 2.0;
   float vehicle_track = 2.0;
   float base_angle = 0.0;
+  float max_speed = 8.0;
 
   ros::NodeHandle nh_;
   ros::Subscriber odom_sub_, vehicle_info_sub_;

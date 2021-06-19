@@ -29,6 +29,7 @@ from geometry_msgs.msg import PoseStamped
 import carla_common.transforms as trans
 from carla_msgs.msg import CarlaWorldInfo
 from carla_nav_msgs.msg import PathPlannerAction, PathPlannerResult, PathPlannerFeedback
+from carla_nav_msgs.msg import GlobalPlannerAction, GlobalPlannerResult, GlobalPlannerFeedback
 
 import carla
 
@@ -68,8 +69,10 @@ class CarlaToRosWaypointConverter:
 
         self.current_route = None
 
-        self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal", PathPlannerAction,
-                                                                  execute_cb=self.execute_cb, auto_start=False)
+        self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal",
+                                                                  PathPlannerAction,
+                                                                  execute_cb=self.execute_cb,
+                                                                  auto_start=False)
         self.route_polanner_server.start()
         self._feedback = PathPlannerFeedback()
         self._result = PathPlannerResult()

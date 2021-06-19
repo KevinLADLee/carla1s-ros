@@ -6,10 +6,8 @@ Panels:
       Expanded:
         - /View Camera1/Visibility1
         - /TF1/Frames1
-        - /Marker1
-        - /MarkerArray1
       Splitter Ratio: 0.5
-    Tree Height: 245
+    Tree Height: 333
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -28,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Lidar
+    SyncSource: Birdview
   - Class: rviz_carla_plugin/CarlaControl
     Name: CarlaControl
 Preferences:
@@ -65,7 +63,7 @@ Visualization Manager:
     - Class: rviz/Camera
       Enabled: false
       Image Rendering: background and overlay
-      Image Topic: /carla/ego_vehicle/rgb_view/image
+      Image Topic: /carla/ego_vehicle/rgb_birdview/image
       Name: View Camera
       Overlay Alpha: 0.5
       Queue Size: 2
@@ -73,13 +71,13 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         CarlaDebugMarkers: true
         Depth Camera: true
         Image: true
         Lidar: true
         Map: true
         Marker: true
+        MarkerArray: true
         OpenDrive_Map: true
         Path: true
         PointCloud2: true
@@ -101,12 +99,12 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0.9842574596405029
+      Max Intensity: 0.9871285557746887
       Min Color: 0; 0; 0
-      Min Intensity: 0.8189417123794556
+      Min Intensity: 0.8259177207946777
       Name: Lidar
       Position Transformer: XYZ
       Queue Size: 10
@@ -118,7 +116,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/Image
       Enabled: false
       Image Topic: /carla/ego_vehicle/depth_front/image
@@ -180,25 +178,11 @@ Visualization Manager:
         All Enabled: false
         ego_vehicle:
           Value: true
-        ego_vehicle/depth_front:
-          Value: false
-        ego_vehicle/dvs_front:
-          Value: false
-        ego_vehicle/gnss:
-          Value: false
-        ego_vehicle/imu:
-          Value: false
         ego_vehicle/lidar:
           Value: true
-        ego_vehicle/radar_front:
-          Value: false
-        ego_vehicle/rgb_front:
-          Value: false
+        ego_vehicle/rgb_birdview:
+          Value: true
         ego_vehicle/rgb_view:
-          Value: false
-        ego_vehicle/semantic_lidar:
-          Value: false
-        ego_vehicle/semantic_segmentation_front:
           Value: false
         map:
           Value: true
@@ -212,25 +196,11 @@ Visualization Manager:
         map:
           ego_vehicle:
             {}
-          ego_vehicle/depth_front:
-            {}
-          ego_vehicle/dvs_front:
-            {}
-          ego_vehicle/gnss:
-            {}
-          ego_vehicle/imu:
-            {}
           ego_vehicle/lidar:
             {}
-          ego_vehicle/radar_front:
-            {}
-          ego_vehicle/rgb_front:
+          ego_vehicle/rgb_birdview:
             {}
           ego_vehicle/rgb_view:
-            {}
-          ego_vehicle/semantic_lidar:
-            {}
-          ego_vehicle/semantic_segmentation_front:
             {}
       Update Interval: 0
       Value: true
@@ -289,7 +259,7 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /carla/ego_vehicle/semantic_segmentation_front/image
       Max Value: 1
       Median window: 5
@@ -299,7 +269,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /carla/ego_vehicle/traffic_light_markers
@@ -309,7 +279,7 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /carla/ego_vehicle/semantic_segmentation_rear/image
       Max Value: 1
       Median window: 5
@@ -319,7 +289,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -341,8 +311,62 @@ Visualization Manager:
       Marker Topic: /carla/path_tracking/markers
       Name: MarkerArray
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
+      Value: true
+    - Class: rviz/Image
+      Enabled: false
+      Image Topic: /carla/ego_vehicle/rgb_birdview/image
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: false
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /carla/ego_vehicle/rgb_birdview/image
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Birdview
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: ObjTag
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 18
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.10000000149011612
+      Style: Flat Squares
+      Topic: /carla/ego_vehicle/semantic_lidar
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
@@ -371,7 +395,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 3.1299993991851807
+      Angle: 6.280028343200684
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -381,12 +405,14 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 94.81670379638672
-      Target Frame: ego_vehicle
-      X: 0
-      Y: 0
+      Scale: -24.609804153442383
+      Target Frame: map
+      X: -73.1188735961914
+      Y: -38.29735565185547
     Saved: ~
 Window Geometry:
+  Birdview:
+    collapsed: false
   CarlaControl:
     collapsed: false
   Depth Camera:
@@ -398,7 +424,7 @@ Window Geometry:
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001b200000386fc020000000ffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afc0000003d0000014f000000e60100001cfa000000010100000003fb0000000a005600690065007700730100000000ffffffff0000010000fffffffb000000100044006900730070006c00610079007301000000000000023f0000015600fffffffb000000160056006900650077002000430061006d0065007200610100000000ffffffff0000008e00fffffffb00000018004300610072006c00610043006f006e00740072006f006c010000019200000111000000bc00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006501000002a9000000530000001600fffffffb0000000a0049006d0061006700650100000302000000c10000001600fffffffb0000000a0049006d00610067006501000002c70000001a0000000000000000fb0000000c00430061006d0065007200610000000000ffffffff0000000000000000fb0000000c00430061006d0065007200610000000000ffffffff0000000000000000fb0000000a0049006d00610067006501000002fa000000c9000000000000000000000001000001cd00000386fc0200000008fb00000014005200470042002000430061006d006500720061000000003d0000025e0000001600fffffffb0000000a0049006d00610067006501000001c60000013e0000000000000000fb00000014004400560053002000430061006d0065007200610000000227000000820000000000000000fb0000001e00530065006d0061006e007400690063002000430061006d0065007200610000000281000000930000000000000000fb0000001800440065007000740068002000430061006d00650072006100000002a1000001220000001600fffffffb0000001e00530065006d0061006e007400690063002000430061006d00650072006100000001dc000001da0000000000000000fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b20000000000000000000000020000077e000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000053c0000005afc0100000002fb0000000800540069006d006501000000000000053c000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000003840000038600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001b200000386fc0200000011fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afc0000003d000001a7000000e60100001cfa000000010100000003fb0000000a005600690065007700730100000000ffffffff0000010000fffffffb000000100044006900730070006c00610079007301000000000000023f0000015600fffffffb000000160056006900650077002000430061006d0065007200610100000000ffffffff0000008e00fffffffb00000018004300610072006c00610043006f006e00740072006f006c01000001ea0000011a000000bc00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002820000009f0000001600fffffffb0000000a0049006d0061006700650000000302000000c10000001600fffffffb0000000a0049006d00610067006500000002880000009e0000001600fffffffb0000000c00430061006d0065007200610000000000ffffffff0000000000000000fb0000000c00430061006d0065007200610000000000ffffffff0000000000000000fb0000001000420069007200640076006900650077010000030a000000b90000001600fffffffb0000000a0049006d00610067006501000002940000012f0000000000000000fb0000000a0049006d0061006700650100000306000000bd000000000000000000000001000001cd00000386fc0200000008fb00000014005200470042002000430061006d006500720061000000003d0000025e0000001600fffffffb0000000a0049006d00610067006501000001c60000013e0000000000000000fb00000014004400560053002000430061006d0065007200610000000227000000820000000000000000fb0000001e00530065006d0061006e007400690063002000430061006d0065007200610000000281000000930000000000000000fb0000001800440065007000740068002000430061006d00650072006100000002a1000001220000001600fffffffb0000001e00530065006d0061006e007400690063002000430061006d00650072006100000001dc000001da0000000000000000fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b20000000000000000000000020000077e000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000053c0000005afc0100000002fb0000000800540069006d006501000000000000053c000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000003840000038600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   RGB Camera:
     collapsed: true
   Selection:
@@ -412,5 +438,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1340
-  X: 1412
+  X: 86
   Y: 27

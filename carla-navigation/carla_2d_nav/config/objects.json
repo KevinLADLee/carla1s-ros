@@ -22,7 +22,7 @@
             "id": "map"
         },
         {
-            "type": "vehicle.tesla.model3",
+            "type": "vehicle.audi.a2",
             "id": "ego_vehicle",
             "sensors":
             [
@@ -41,6 +41,21 @@
                     "image_size_x": 800,
                     "image_size_y": 600,
                     "fov": 90.0,
+                    "attached_objects":
+                    [
+                        {
+                            "type": "actor.pseudo.control",
+                            "id": "control"
+                        }
+                    ]
+                },
+                {
+                    "type": "sensor.camera.rgb",
+                    "id": "rgb_birdview",
+                    "spawn_point": {"x": 0, "y": 0.0, "z": 2.5, "roll": 0.0, "pitch": 90.0, "yaw": 0.0},
+                    "image_size_x": 500,
+                    "image_size_y": 500,
+                    "fov": 120.0,
                     "attached_objects":
                     [
                         {
