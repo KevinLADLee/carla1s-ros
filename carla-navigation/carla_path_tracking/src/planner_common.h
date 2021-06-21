@@ -27,18 +27,18 @@ struct Path2d{
   std::vector<Pose2d> poses;
 };
 
-enum class PathDirection : int{
-  FWD = 1,
-  BCK = -1
+enum class DrivingDirection : int{
+  FORWARD = 0,
+  BACKWARDS = 1
 };
 
-struct PathWithDirection{
+struct PathSegment{
   std::vector<Pose2d> poses;
-  PathDirection directions;
+  DrivingDirection driving_direction;
 };
 
-struct PathSeg{
-  std::vector<PathWithDirection> paths;
+struct Path{
+  std::vector<PathSegment> path_segment;
 };
 
 struct AckermannCmd{

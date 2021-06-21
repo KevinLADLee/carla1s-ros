@@ -22,7 +22,9 @@ class PurePursuit : public PathTrackingBase{
 
   bool IsGoalReached() override;
 
-  int SetPlan(const Path2d &path, const PathDirection &path_direction) override;
+  int SetPlan(const Path2d &path, const DrivingDirection &path_direction) override;
+
+//  int SetPlan(const Path &path) override;
 
 //  void UpdateVehiclePose(const Pose2d &pose) override;
 
@@ -44,18 +46,16 @@ class PurePursuit : public PathTrackingBase{
   float wheel_base = 0; // Wheelbase (L, distance between front and back wheel)
   float L_fw = 2.5; // Forward look-ahead distance (L_fw)
   float l_anchor_fw = 1.5; // Forward anchor distance (L_fw)
-  float l_rv = 0; // Reverse look-ahead distance (L_rv)
-  float l_anchor_rv = 0.0; // Reverse anchor distance (l_rv)
+  float L_rv = 2.5; // Reverse look-ahead distance (L_rv)
+  float l_anchor_rv = 1.0; // Reverse anchor distance (l_rv)
   float base_angle = 0.0;
   float steering_gain = 2.0;
-  float speed_increment = 2.0;
   float max_speed_ = 5.5; // ~20km/h
   float goal_radius = 1.0;
-  float safe_dist = 5.0;
-  bool use_seg = false;
+  float safe_dist = 12.0;
 
   Path2d path_;
-  PathDirection path_direction_ = PathDirection::FWD;
+  DrivingDirection path_direction_ = DrivingDirection::FORWARD;
   Pose2d goal_;
   Pose2d vehicle_pose_;
   bool found_forward_point_ = false;

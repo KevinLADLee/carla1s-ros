@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(carla_path_tracking)
+
+
+set(CMAKE_BUILD_TYPE Release)
 add_compile_options(-std=c++14)
 ## Find catkin macros and libraries
 
@@ -47,7 +50,7 @@ include_directories(
 add_library(pure_pursuit src/impl/pure_pursuit.cpp)
 target_link_libraries(pure_pursuit ${EIGEN3_LIBRARIES})
 
-add_executable(path_tracking_node src/path_tracking_node.cpp src/path_tracking.cpp)
-#add_dependencies(pure_pursuit_node ${catkin_EXPORTED_TARGETS} carla_msgs_generate_messages)
-target_link_libraries(path_tracking_node ${catkin_LIBRARIES} pure_pursuit ${EIGEN3_LIBRARIES})
+add_executable(carla_path_tracking_node src/path_tracking_node.cpp src/path_tracking.cpp)
+add_dependencies(carla_path_tracking_node ${catkin_EXPORTED_TARGETS} carla_nav_msgs_generate_messages)
+target_link_libraries(carla_path_tracking_node ${catkin_LIBRARIES} pure_pursuit ${EIGEN3_LIBRARIES})
 

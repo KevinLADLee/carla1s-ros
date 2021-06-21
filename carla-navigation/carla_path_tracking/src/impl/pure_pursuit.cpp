@@ -11,7 +11,12 @@ int PurePursuit::ComputeAckermannCmd(const Pose2d &vehicle_pose,
   auto steering = CalculateSteering(vehicle_pose);
   if(found_forward_point_){
     steering_ =  base_angle + steering * steering_gain;
-    speed_ = std::min(speed_ + speed_increment, max_speed_);
+    if(path_direction_ == DrivingDirection::FORWARD) {
+      speed_ = max_speed_;
+    } else{
+      speed_ = -max_speed_;
+    }
+//    speed_ = std::min(speed_ + speed_increment, max_speed_);
   }
 
   auto dist = DistToGoal(vehicle_pose);
@@ -19,7 +24,7 @@ int PurePursuit::ComputeAckermannCmd(const Pose2d &vehicle_pose,
     speed_ = 0.0;
     steering_ = 0.0;
   } else if(dist < safe_dist){
-//      std::cout << "Dist: " << dist << std::endl;
+      std::cout << "Dist: " << dist << std::endl;
     speed_ = 1.0;
   }
 
@@ -39,7 +44,7 @@ bool PurePursuit::IsGoalReached() {
   }
 }
 
-int PurePursuit::SetPlan(const Path2d &path, const PathDirection &path_direction) {
+int PurePursuit::SetPlan(const Path2d &path, const DrivingDirection &path_direction) {
   path_ = path;
   path_direction_ = path_direction;
   current_waypoint_it_ = path_.poses.begin();
@@ -49,9 +54,9 @@ int PurePursuit::SetPlan(const Path2d &path, const PathDirection &path_direction
 }
 
 float PurePursuit::CalculateSteering(const Pose2d &vehicle_pose) {
-  if(path_direction_ == PathDirection::FWD) {
-    Pose2d forward_point;
-    found_forward_point_ = false;
+  Pose2d forward_point;
+  found_forward_point_ = false;
+  if(path_direction_ == DrivingDirection::FORWARD) {
     // make sure vehicle_pose is in map frame
     if (!IsGoalReached()) {
       for (auto wp_it = current_waypoint_it_; wp_it !=path_.poses.end(); wp_it++) {
@@ -70,14 +75,33 @@ float PurePursuit::CalculateSteering(const Pose2d &vehicle_pose) {
       forward_point = goal_;
       found_forward_point_ = false;
     }
-
     auto forward_point_in_vehicle_frame = ToVehicleFrame(forward_point, vehicle_pose);
     auto eta = std::atan2(forward_point_in_vehicle_frame.y, forward_point_in_vehicle_frame.x);
     float steering = std::atan2(wheel_base * std::sin(eta), (L_fw / 2.0f + l_anchor_fw * std::cos(eta)));
     return steering;
-  } else if(path_direction_ == PathDirection::BCK){
-    // TODO: Backward tracking
-    return 0;
+
+  } else if(path_direction_ == DrivingDirection::BACKWARDS){
+    if (!IsGoalReached()) {
+      for (auto wp_it = current_waypoint_it_; wp_it !=path_.poses.end(); wp_it++) {
+        auto waypoint_in_map = *wp_it;
+        if(!IsForwardWaypoint(waypoint_in_map, vehicle_pose)){
+          if(IsWaypointAwayFromLookAheadDist(waypoint_in_map, vehicle_pose)){
+            forward_point = waypoint_in_map;
+            current_waypoint_it_ = wp_it;
+            found_forward_point_ = true;
+            break;
+          }
+        }
+        current_waypoint_index_++;
+      }
+    } else{
+      forward_point = goal_;
+      found_forward_point_ = false;
+    }
+    auto forward_point_in_vehicle_frame = ToVehicleFrame(forward_point, vehicle_pose);
+    auto eta = std::atan2(forward_point_in_vehicle_frame.y, forward_point_in_vehicle_frame.x);
+    float steering = std::atan2(wheel_base * std::sin(eta), (L_rv / 2.0f + l_anchor_rv * std::cos(eta)));
+    return steering;
   } else{
     return 0;
   }
@@ -85,8 +109,7 @@ float PurePursuit::CalculateSteering(const Pose2d &vehicle_pose) {
 
 bool PurePursuit::IsForwardWaypoint(const Pose2d &waypoint_pose, const Pose2d &vehicle_pose) {
   auto waypoint_pose_in_vehicle_frame = ToVehicleFrame(waypoint_pose, vehicle_pose);
-  // -45° - 45 °
-  if(waypoint_pose_in_vehicle_frame.x > 0 && std::abs(waypoint_pose_in_vehicle_frame.y) < std::abs(waypoint_pose_in_vehicle_frame.x)){
+  if(waypoint_pose_in_vehicle_frame.x > 0 ){
     return true;
   } else{
     return false;
@@ -95,9 +118,15 @@ bool PurePursuit::IsForwardWaypoint(const Pose2d &waypoint_pose, const Pose2d &v
 
 bool PurePursuit::IsWaypointAwayFromLookAheadDist(const Pose2d &waypoint_pose, const Pose2d &vehicle_pose) {
   float dist = std::hypot(waypoint_pose.x - vehicle_pose.x, waypoint_pose.y - vehicle_pose.y);
-  if (dist >= L_fw) {
-    return true;
+  float look_ahead_dist = 0.0;
+  if(path_direction_ == DrivingDirection::FORWARD) {
+    look_ahead_dist = L_fw;
   } else{
+    look_ahead_dist = L_rv;
+  }
+  if (dist >= look_ahead_dist) {
+    return true;
+  } else {
     return false;
   }
 }
@@ -112,7 +141,6 @@ Pose2d PurePursuit::ToVehicleFrame(const Pose2d &point_in_map, const Pose2d &veh
   auto vehicle_trans_inv = vehicle_trans.inverse();
   Eigen::Vector3f point_vec(point_in_map.x, point_in_map.y, 1);
   auto point_vec_in_vehicle_frame = vehicle_trans_inv * point_vec;
-
   return {point_vec_in_vehicle_frame[0], point_vec_in_vehicle_frame[1], point_in_map.yaw-vehicle_pose_in_map.yaw};
 }
 
@@ -132,3 +160,4 @@ int PurePursuit::Initialize(float wheelbase, float max_speed, float look_ahead_d
   l_anchor_fw = anchor_dist_fwd;
   return 0;
 }
+

@@ -17,7 +17,7 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
   path_tracker_ptr_->Initialize(vehicle_wheelbase, max_speed);
 
   odom_sub_ = nh_.subscribe("/carla/ego_vehicle/odometry", 1, &PathTracking::OdomCallback, this);
-  cmd_vel_pub_ = nh_.advertise<ackermann_msgs::AckermannDrive>("/carla/ego_vehicle/ackermann_cmd", 10);
+  cmd_vel_pub_ = nh_.advertise<ackermann_msgs::AckermannDrive>("/carla/ego_vehicle/ackermann_cmd", 1);
   markers_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("/carla/path_tracking/markers", 1);
 
   as_->start();
@@ -27,7 +27,7 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
 
 bool PathTracking::UpdateParam() {
   nh_.param<std::string>("role_name", role_name, "ego_vehicle");
-  nh_.param<int>("controller_frequency", controller_freq, 100);
+  nh_.param<int>("controller_frequency", controller_freq, 50);
   nh_.param<float>("goal_tolerance_xy", 0.5);
   nh_.param<float>("goal_tolerance_yaw", 0.2);
   nh_.param<bool>("use_vehicle_info", use_vehicle_info,true);
@@ -45,6 +45,7 @@ bool PathTracking::UpdateParam() {
 
 void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goal_msg) {
 
+  ROS_INFO("Path Tracking Goal Received!");
   auto node_state = GetNodeState();
 
   if(node_state == NodeState::FAILURE){
@@ -55,7 +56,8 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
   }
 
   if(path_mutex_.try_lock()){
-    path_tracker_ptr_->SetPlan(RosPathToPath2d(action_goal_msg->path), PathDirection::FWD);
+//    path_tracker_ptr_->SetPlan(RosPathToPath2d(action_goal_msg->path), DrivingDirection::FORWARD);
+    path_tracker_ptr_->SetPlan(RosPathToPath2d(action_goal_msg->path), DrivingDirection::BACKWARDS);
     InitMarkers(action_goal_msg->path.poses.back());
     path_mutex_.unlock();
     plan_condition_.notify_one();

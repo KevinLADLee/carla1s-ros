@@ -2,12 +2,9 @@
     <arg name="odom_topic" default="/carla/ego_vehicle/odometry" />
     <arg name='role_name' default='ego_vehicle'/>
 
-    <node name="path_tracking_node" pkg="carla_path_tracking" type="path_tracking_node" output="screen">
+    <node name="carla_path_tracking_node" pkg="carla_path_tracking" type="carla_path_tracking_node" output="screen">
         <rosparam file="$(find carla_path_tracking)/config/path_tracking.yaml" command="load" />
         <remap from="odom" to="$(arg odom_topic)"/>
     </node>
 
-    <node pkg="carla_ackermann_control" type="carla_ackermann_control_node.py" name="carla_ackermann_control_$(arg role_name)" output="log">
-        <param name="role_name" value="$(arg role_name)" />
-    </node>
 </launch>
