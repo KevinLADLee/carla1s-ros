@@ -15,7 +15,7 @@ Cruise::Cruise(const std::string &bt_node_name,
 void Cruise::GlobalPlannerFeedbackCallback(const GlobalPlannerActionFeedbackT::ConstPtr &global_planner_feedback) {
   if(!global_planner_feedback->path.poses.empty())
   {
-    local_goal_.path = global_planner_feedback->path;
+//    local_goal_.path = global_planner_feedback->path;
     local_planner_action_client_->sendGoal(local_goal_);
   }
 }

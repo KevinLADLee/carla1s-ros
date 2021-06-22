@@ -6,7 +6,7 @@ string role_name # default: ego_vehicle
 bool use_start # If true, use current robot pose as path start, if false, use start above instead
 ---
 #result definition
-nav_msgs/Path path
+carla_nav_msgs/Path path
 duration planning_time
 ---
 #feedback

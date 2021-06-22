@@ -18,16 +18,18 @@ The calculated route is published on '/carla/<ROLE NAME>/waypoints'
 Additionally, services are provided to interface CARLA waypoints.
 """
 import math
+import nav_msgs.msg
 import rospy
 import sys
 import threading
 import geometry_msgs.msg
 import rospy
 
-from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 import carla_common.transforms as trans
 from carla_msgs.msg import CarlaWorldInfo
+import carla_nav_msgs.msg
+from carla_nav_msgs.msg import Path
 from carla_nav_msgs.msg import PathPlannerAction, PathPlannerResult, PathPlannerFeedback
 from carla_nav_msgs.msg import GlobalPlannerAction, GlobalPlannerResult, GlobalPlannerFeedback
 
@@ -61,7 +63,7 @@ class CarlaToRosWaypointConverter:
         self.ego_vehicle_location = None
         self.on_tick = None
         self.role_name = rospy.get_param("role_name", 'ego_vehicle')
-        self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), Path, latch=True,
+        self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), nav_msgs.msg.Path, latch=True,
                                                   queue_size=1)
 
         # set initial goal
@@ -90,6 +92,11 @@ class CarlaToRosWaypointConverter:
         self._result.path = Path()
         self._result.path.header.frame_id = "map"
         self._result.path.header.stamp = rospy.Time.now()
+        path = nav_msgs.msg.Path()
+        self._result.path.paths.append(path)
+        self._result.path.paths[0].header.frame_id = "map"
+        self._result.path.paths[0].header.stamp = rospy.Time.now()
+        self._result.path.driving_direction.append(0)
 
         if self.ego_vehicle is None or self.goal is None:
             self.route_polanner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
@@ -101,14 +108,15 @@ class CarlaToRosWaypointConverter:
                 for wp in self.current_route:
                     pose = PoseStamped()
                     pose.pose = trans.carla_transform_to_ros_pose(wp[0].transform)
-                    self._result.path.poses.append(pose)
+                    self._result.path.paths[0].poses.append(pose)
 
-            result_info = "Got path {} waypoints.".format(len(self._result.path.poses))
+            waypoint_num = len(self._result.path.paths[0].poses)
+            result_info = "Got path {} waypoints.".format(waypoint_num)
             rospy.loginfo(result_info)
-            if len(self._result.path.poses) <= 1:
+            if waypoint_num <= 1:
                 self.route_polanner_server.set_aborted(self._result, result_info)
             else:
-                self.waypoint_publisher.publish(self._result.path)
+                self.waypoint_publisher.publish(self._result.path.paths[0])
                 self.route_polanner_server.set_succeeded(self._result, result_info)
 
     def is_goal_reached(self, goal):
@@ -198,7 +206,7 @@ class CarlaToRosWaypointConverter:
         """
         Publish the ROS message containing the waypoints
         """
-        msg = Path()
+        msg = nav_msgs.msg.Path()
         msg.header.frame_id = "map"
         msg.header.stamp = rospy.Time.now()
         if self.current_route is not None:

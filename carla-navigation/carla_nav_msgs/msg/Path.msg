@@ -1,2 +1,7 @@
-std_msgs/Header header
-carla_nav_msgs/PathSegment[] path_segment
+
+int8 FORWARD = 0
+int8 BACKWARDS = 1
+
+Header header
+nav_msgs/Path[] paths
+int8[] driving_direction

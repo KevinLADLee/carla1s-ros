@@ -27,7 +27,7 @@ struct Path2d{
   std::vector<Pose2d> poses;
 };
 
-enum class DrivingDirection : int{
+enum class DrivingDirection : int {
   FORWARD = 0,
   BACKWARDS = 1
 };
@@ -42,8 +42,9 @@ struct Path{
 };
 
 struct AckermannCmd{
-  float speed = 0;
-  float steering_angle = 0;
+  float speed = 0.0;
+  float acceleration = 0.0;
+  float steering_angle = 0.0;
 };
 
 

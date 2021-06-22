@@ -14,7 +14,7 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
 
   // TODO: Add algorithm selector
   path_tracker_ptr_ = std::make_unique<PathTrackerT>();
-  path_tracker_ptr_->Initialize(vehicle_wheelbase, max_speed);
+  path_tracker_ptr_->Initialize(vehicle_wheelbase);
 
   odom_sub_ = nh_.subscribe("/carla/ego_vehicle/odometry", 1, &PathTracking::OdomCallback, this);
   cmd_vel_pub_ = nh_.advertise<ackermann_msgs::AckermannDrive>("/carla/ego_vehicle/ackermann_cmd", 1);
@@ -45,63 +45,69 @@ bool PathTracking::UpdateParam() {
 
 void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goal_msg) {
 
-  ROS_INFO("Path Tracking Goal Received!");
-  auto node_state = GetNodeState();
+  int current_path_index = 0;
+  for(current_path_index = 0; current_path_index < action_goal_msg->path.paths.size(); current_path_index++) {
+    ROS_INFO("Path Tracking Goal Received!");
+    auto node_state = GetNodeState();
 
-  if(node_state == NodeState::FAILURE){
-    ActionResultT  result;
-    result.error_code = NodeState::FAILURE;
-    as_->setAborted(result, "Failed to track path!");
-    return;
-  }
-
-  if(path_mutex_.try_lock()){
-//    path_tracker_ptr_->SetPlan(RosPathToPath2d(action_goal_msg->path), DrivingDirection::FORWARD);
-    path_tracker_ptr_->SetPlan(RosPathToPath2d(action_goal_msg->path), DrivingDirection::BACKWARDS);
-    InitMarkers(action_goal_msg->path.poses.back());
-    path_mutex_.unlock();
-    plan_condition_.notify_one();
-  }
-
-  ROS_INFO("Start tracking!");
-  if(node_state == NodeState::IDLE){
-    StartPathTracking();
-  }
-
-  while (ros::ok()) {
-    std::this_thread::sleep_for(std::chrono::microseconds(1));
-
-    if (as_->isPreemptRequested()) {
-      ROS_INFO("Action Preempted");
-      StopPathTracking();
-      SetNodeState(NodeState::IDLE);
+    if (node_state == NodeState::FAILURE) {
       ActionResultT result;
-      result.error_code = NodeState::SUCCESS;
-      as_->setPreempted(result);
-      break;
+      result.error_code = NodeState::FAILURE;
+      as_->setAborted(result, "Failed to track path!");
+      return;
     }
-    node_state = GetNodeState();
 
-    if (node_state == NodeState::RUNNING ||
-        node_state == NodeState::SUCCESS ||
-        node_state == NodeState::FAILURE)
-    {
-      ActionFeedbackT feedback;
-      ActionResultT result;
+    if (path_mutex_.try_lock()) {
+      auto driving_direction = DrivingDirection::FORWARD;
+      if (action_goal_msg->path.driving_direction.at(current_path_index) == carla_nav_msgs::Path::BACKWARDS) {
+        driving_direction = DrivingDirection::BACKWARDS;
+      }
+      path_tracker_ptr_->SetPlan(RosPathToPath2d(action_goal_msg->path.paths.at(current_path_index)),
+                                 driving_direction);
+      InitMarkers(action_goal_msg->path.paths.at(current_path_index).poses.back());
+      path_mutex_.unlock();
+      plan_condition_.notify_one();
+    }
 
-      feedback.error_code = node_state;
-      as_->publishFeedback(feedback);
+    ROS_INFO("Start tracking!");
+    if (node_state == NodeState::IDLE) {
+      StartPathTracking();
+    }
 
-      if(node_state == NodeState::SUCCESS) {
-        result.error_code = node_state;
-        as_->setSucceeded(result,"Tracking succeed!");
+    while (ros::ok()) {
+      std::this_thread::sleep_for(std::chrono::microseconds(1));
+
+      if (as_->isPreemptRequested()) {
+        ROS_INFO("Action Preempted");
         StopPathTracking();
+        SetNodeState(NodeState::IDLE);
+        ActionResultT result;
+        result.error_code = NodeState::SUCCESS;
+        as_->setPreempted(result);
         break;
-      } else if(node_state == NodeState::FAILURE) {
-        result.error_code = node_state;
-        as_->setAborted(result, "Error!");
-        StopPathTracking();
-        break;
+      }
+      node_state = GetNodeState();
+
+      if (node_state == NodeState::RUNNING ||
+          node_state == NodeState::SUCCESS ||
+          node_state == NodeState::FAILURE) {
+        ActionFeedbackT feedback;
+        ActionResultT result;
+
+        feedback.error_code = node_state;
+        as_->publishFeedback(feedback);
+
+        if (node_state == NodeState::SUCCESS) {
+          result.error_code = node_state;
+          as_->setSucceeded(result, "Tracking succeed!");
+          StopPathTracking();
+          break;
+        } else if (node_state == NodeState::FAILURE) {
+          result.error_code = node_state;
+          as_->setAborted(result, "Error!");
+          StopPathTracking();
+          break;
+        }
       }
     }
   }
@@ -112,17 +118,6 @@ void PathTracking::OdomCallback(const nav_msgs::Odometry_<std::allocator<void>>:
   std::lock_guard<std::mutex> lock_guard(odom_mutex_);
   odom_ = *odom_msg;
 }
-
-//void PathTracking::VehicleInfoCallback(const carla_msgs::CarlaEgoVehicleInfoConstPtr &vehicle_info_msg) {
-//    auto wheels = vehicle_info_msg->wheels;
-//    vehicle_wheelbase = std::abs(wheels.at(0).position.x - wheels.at(2).position.x);
-//    std::cout << "VehicleInfo: wheel_base = " << vehicle_wheelbase << std::endl;
-//}
-
-//void PathTracking::PathCallback(const nav_msgs::Path_<std::allocator<void>>::ConstPtr &path_msg) {
-//  std::lock_guard<std::mutex> lock_guard(path_mutex_);
-//  path_in_map_ = *path_msg;
-//}
 
 const NodeState &PathTracking::GetNodeState (){
   LockGuardMutex lock_guard(node_state_mutex_);
@@ -224,8 +219,8 @@ void PathTracking::PathTrackingLoop() {
       sleep_time = std::chrono::milliseconds(0);
     }
 
-
     ackermann_cmd_.speed = ackermann_cmd.speed;
+    ackermann_cmd_.acceleration = ackermann_cmd.acceleration;
     ackermann_cmd_.steering_angle = ackermann_cmd.steering_angle;
     cmd_vel_pub_.publish(ackermann_cmd_);
 

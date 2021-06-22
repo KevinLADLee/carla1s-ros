@@ -17,7 +17,7 @@ void ComputePathToGoal::on_tick() {
 
 BT::NodeStatus ComputePathToGoal::on_result(const carla_nav_msgs::PathPlannerResult &res) {
   goal_result_.path = res.path;
-  config().blackboard->set<nav_msgs::Path>("path", goal_result_.path);
+  config().blackboard->set<carla_nav_msgs::Path>("path", goal_result_.path);
   return BT::NodeStatus::SUCCESS;
 }
 

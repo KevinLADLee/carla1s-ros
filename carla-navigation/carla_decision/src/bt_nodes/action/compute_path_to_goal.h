@@ -3,6 +3,7 @@
 #define SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_DECISION_SRC_ACTION_COMPUTE_PATH_TO_GOAL_H_
 
 #include "common.h"
+#include <carla_nav_msgs/Path.h>
 #include <carla_nav_msgs/PathPlannerAction.h>
 #include <actionlib/client/simple_action_client.h>
 

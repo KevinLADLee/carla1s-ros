@@ -1,5 +1,5 @@
 #goal definition
-nav_msgs/Path path
+carla_nav_msgs/Path path
 ---
 #result definition RUNNING = 0, SUCCESS = 1, FAILURE = 2
 int32  error_code

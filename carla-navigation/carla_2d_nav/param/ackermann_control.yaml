@@ -1,8 +1,11 @@
 # override the default values of the pid speed controller
 # (only relevant for ackermann control mode)
-speed_Kp: 0.35
+#speed_Kp: 0.35
+#speed_Ki: 0.00
+#speed_Kd: 0.6
+speed_Kp: 0.05
 speed_Ki: 0.00
-speed_Kd: 0.6
+speed_Kd: 0.5
 # override the default values of the pid acceleration controller
 # (only relevant for ackermann control mode)
 accel_Kp: 0.02
@@ -13,4 +16,4 @@ accel_Kd: 0.05
 # at more or less constant speed.
 # If the absolute value of the ackermann drive target acceleration exceeds this value,
 # directly the input acceleration is controlled
-min_accel: 1.0
+min_accel: 0.2

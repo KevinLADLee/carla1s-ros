@@ -5,12 +5,12 @@ TrackingPath::TrackingPath(const std::string &name,
                            const BT::NodeConfiguration &conf) : RosActionNode(name, action_client_name, conf) {}
 
 void TrackingPath::on_tick() {
-  config().blackboard->get<nav_msgs::Path>("path", goal_.path);
-  if(goal_.path.poses.empty()) {
+  config().blackboard->get<carla_nav_msgs::Path>("path", goal_.path);
+  if(goal_.path.paths.empty() || goal_.path.paths.at(0).poses.empty()) {
     on_failed_request(FailureCause::NOT_VALID_PATH);
     std::cerr << "not valid path" << std::endl;
   }else{
-    std::cout << "Received "  << goal_.path.poses.size() << " waypoints" << std::endl;
+    std::cout << "Received "  << goal_.path.paths.size() << " paths" << std::endl;
   }
 }
 

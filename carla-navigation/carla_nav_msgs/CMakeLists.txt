@@ -14,7 +14,6 @@ set(ACTION_FILES
 
 set(MESSAGE_FILES
         Path.msg
-        PathSegment.msg
         )
 
 # Find catkin macros and libraries
