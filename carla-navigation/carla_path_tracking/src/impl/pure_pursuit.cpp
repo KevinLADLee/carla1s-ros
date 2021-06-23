@@ -26,9 +26,9 @@ int PurePursuit::ComputeAckermannCmd(const Pose2d &vehicle_pose,
   ackermann_cmd.acceleration = acc_;
   ackermann_cmd.speed = speed_;
   ackermann_cmd.steering_angle = steering_;
-  std::cout << "Ackermann: " << (int)path_direction_ << std::endl;
-  std::cout << "Speed: " << ackermann_cmd.speed << std::endl;
-  std::cout << "Steering: " << (ackermann_cmd.steering_angle) / M_PI * 180.0f << std::endl;
+//  std::cout << "Ackermann: " << (int)path_direction_ << std::endl;
+//  std::cout << "Speed: " << ackermann_cmd.speed << std::endl;
+//  std::cout << "Steering: " << (ackermann_cmd.steering_angle) / M_PI * 180.0f << std::endl;
   return status;
 }
 

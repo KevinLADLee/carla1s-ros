@@ -40,6 +40,7 @@ from agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
 
 import actionlib
 from rospy import ROSException
+import reeds_ros_inter
 
 
 class CarlaToRosWaypointConverter:
@@ -71,6 +72,9 @@ class CarlaToRosWaypointConverter:
 
         self.current_route = None
 
+        self.rs_curve = reeds_ros_inter(min_radius=1)
+        self.pose_list = []
+
         self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal",
                                                                   PathPlannerAction,
                                                                   execute_cb=self.execute_cb,
@@ -87,37 +91,48 @@ class CarlaToRosWaypointConverter:
     def execute_cb(self, goal_msg):
 
         rospy.loginfo("Received goal, trigger rerouting...")
-        carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
-        self.goal = carla_goal
-        self._result.path = Path()
-        self._result.path.header.frame_id = "map"
-        self._result.path.header.stamp = rospy.Time.now()
-        path = nav_msgs.msg.Path()
-        self._result.path.paths.append(path)
-        self._result.path.paths[0].header.frame_id = "map"
-        self._result.path.paths[0].header.stamp = rospy.Time.now()
-        self._result.path.driving_direction.append(0)
+        rospy.loginfo("Planner id: {}".format(goal_msg.planner_id))
 
-        if self.ego_vehicle is None or self.goal is None:
-            self.route_polanner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
-        elif self.is_goal_reached(self.goal):
-            self.route_polanner_server.set_aborted(text="Already reached goal!")
+        if goal_msg.planner_id == "reeds_shepp":
+            self.pose_list.clear()
+            vehicle_pose = trans.carla_transform_to_ros_pose(self.ego_vehicle.get_location())
+            self.pose_list.append(vehicle_pose)
+            self.pose_list.append(goal_msg.goal.pose)
+            paths = self.rs_curve.shortest_path(self.pose_list)
+            # TODO: Action server send result.
         else:
-            self.current_route = self.calculate_route(self.goal)
-            if self.current_route is not None:
-                for wp in self.current_route:
-                    pose = PoseStamped()
-                    pose.pose = trans.carla_transform_to_ros_pose(wp[0].transform)
-                    self._result.path.paths[0].poses.append(pose)
-
-            waypoint_num = len(self._result.path.paths[0].poses)
-            result_info = "Got path {} waypoints.".format(waypoint_num)
-            rospy.loginfo(result_info)
-            if waypoint_num <= 1:
-                self.route_polanner_server.set_aborted(self._result, result_info)
+            carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
+            self.goal = carla_goal
+            self._result.path = Path()
+            self._result.path.header.frame_id = "map"
+            self._result.path.header.stamp = rospy.Time.now()
+            path = nav_msgs.msg.Path()
+            self._result.path.paths.append(path)
+            self._result.path.paths[0].header.frame_id = "map"
+            self._result.path.paths[0].header.stamp = rospy.Time.now()
+            self._result.path.driving_direction.append(0)
+            if self.ego_vehicle is None or self.goal is None:
+                self.route_polanner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
+            elif self.is_goal_reached(self.goal):
+                self.route_polanner_server.set_aborted(text="Already reached goal!")
             else:
-                self.waypoint_publisher.publish(self._result.path.paths[0])
-                self.route_polanner_server.set_succeeded(self._result, result_info)
+                self.current_route = self.calculate_route(self.goal)
+                if self.current_route is not None:
+                    for wp in self.current_route:
+                        pose = PoseStamped()
+                        pose.pose = trans.carla_transform_to_ros_pose(wp[0].transform)
+                        self._result.path.paths[0].poses.append(pose)
+
+                waypoint_num = len(self._result.path.paths[0].poses)
+                result_info = "Got path {} waypoints.".format(waypoint_num)
+                rospy.loginfo(result_info)
+                if waypoint_num <= 1:
+                    self.route_polanner_server.set_aborted(self._result, result_info)
+                else:
+                    self.waypoint_publisher.publish(self._result.path.paths[0])
+                    self.route_polanner_server.set_succeeded(self._result, result_info)
+        
+
 
     def is_goal_reached(self, goal):
         vehicle_location = self.ego_vehicle.get_location()

@@ -20,9 +20,7 @@ class ComputePathToGoal : public BT::RosActionNode<carla_nav_msgs::PathPlannerAc
   static BT::PortsList providedPorts()
   {
     return {
-//        BT::OutputPort<nav_msgs::Path>("path", "Path created by ComputePathToGoal node"),
-//        BT::InputPort<geometry_msgs::PoseStamped>("goal", "Destination to plan to"),
-//        BT::InputPort<geometry_msgs::PoseStamped>("start", "Start pose of the path if overriding current robot pose"),
+        BT::InputPort<std::string>("planner_id")
     };
   };
 };

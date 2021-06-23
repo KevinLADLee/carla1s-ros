@@ -7,6 +7,13 @@ ComputePathToGoal::ComputePathToGoal(const std::string &name, const std::string 
 }
 
 void ComputePathToGoal::on_tick() {
+  BT::Optional<std::string> planner_id = getInput<std::string>("planner_id");
+  if (!planner_id)
+  {
+    goal_.planner_id = "waypoint";
+    throw BT::RuntimeError("missing required input [planner_id]: ", planner_id.error());
+  }
+  goal_.planner_id = planner_id.value();
   config().blackboard->get<bool>("first_goal_received", first_goal_received_);
   config().blackboard->get<geometry_msgs::PoseStamped>("goal", goal_.goal);
   goal_.role_name = "ego_vehicle";

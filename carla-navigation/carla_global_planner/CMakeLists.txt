@@ -19,6 +19,7 @@ catkin_install_python(
         PROGRAMS
         src/carla_global_planner/carla_global_planner.py
         src/carla_global_planner/carla_map_visualization.py
+        src/carla_global_planner/reeds_shepp/reeds_path.py
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch/
