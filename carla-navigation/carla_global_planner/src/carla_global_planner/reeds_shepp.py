@@ -7,7 +7,7 @@ import numpy as np
 from collections import namedtuple
 from math import sqrt, atan2, sin, cos, pi, inf, asin, acos
 
-class reeds_shepp:
+class ReedsShepp:
 
     def __init__(self, min_radius=1):
 

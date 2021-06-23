@@ -18,29 +18,30 @@ The calculated route is published on '/carla/<ROLE NAME>/waypoints'
 Additionally, services are provided to interface CARLA waypoints.
 """
 import math
+from os import path
 import nav_msgs.msg
 import rospy
 import sys
 import threading
 import geometry_msgs.msg
 import rospy
+import actionlib
 
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Point
 import carla_common.transforms as trans
 from carla_msgs.msg import CarlaWorldInfo
 import carla_nav_msgs.msg
-from carla_nav_msgs.msg import Path
+from carla_nav_msgs.msg import Path as PathArray
 from carla_nav_msgs.msg import PathPlannerAction, PathPlannerResult, PathPlannerFeedback
 from carla_nav_msgs.msg import GlobalPlannerAction, GlobalPlannerResult, GlobalPlannerFeedback
+from visualization_msgs.msg import Marker, MarkerArray
 
 import carla
-
 from agents.navigation.global_route_planner import GlobalRoutePlanner
 from agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
 
-import actionlib
 from rospy import ROSException
-import reeds_ros_inter
+from reeds_ros_inter import reeds_ros_inter
 
 
 class CarlaToRosWaypointConverter:
@@ -66,6 +67,11 @@ class CarlaToRosWaypointConverter:
         self.role_name = rospy.get_param("role_name", 'ego_vehicle')
         self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), nav_msgs.msg.Path, latch=True,
                                                   queue_size=1)
+        
+        self.path_markers_publisher = rospy.Publisher('/carla/{}/path_markers'.format(self.role_name), MarkerArray, latch=True,
+                                                  queue_size=1)
+        self.markers = MarkerArray()                                          
+                                                
 
         # set initial goal
         self.goal = None
@@ -95,15 +101,17 @@ class CarlaToRosWaypointConverter:
 
         if goal_msg.planner_id == "reeds_shepp":
             self.pose_list.clear()
-            vehicle_pose = trans.carla_transform_to_ros_pose(self.ego_vehicle.get_location())
+            vehicle_pose = trans.carla_transform_to_ros_pose(self.ego_vehicle.get_transform())
             self.pose_list.append(vehicle_pose)
             self.pose_list.append(goal_msg.goal.pose)
-            paths = self.rs_curve.shortest_path(self.pose_list)
+            self._result.path = self.rs_curve.shortest_path(self.pose_list)
+            self.publish_path_array_markers(self._result.path)
+            self.route_polanner_server.set_succeeded(self._result, "success")
             # TODO: Action server send result.
         else:
             carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
             self.goal = carla_goal
-            self._result.path = Path()
+            self._result.path = PathArray()
             self._result.path.header.frame_id = "map"
             self._result.path.header.stamp = rospy.Time.now()
             path = nav_msgs.msg.Path()
@@ -132,6 +140,38 @@ class CarlaToRosWaypointConverter:
                     self.waypoint_publisher.publish(self._result.path.paths[0])
                     self.route_polanner_server.set_succeeded(self._result, result_info)
         
+
+    def publish_path_array_markers(self, path_array):
+        self.markers = MarkerArray()
+        for i in range (len(path_array.paths)):
+            path_marker = Marker()
+            path_marker.header.frame_id = path_array.header.frame_id
+            path_marker.header.stamp = path_array.header.stamp
+            path_marker.ns = "path"
+            path_marker.id = 100+i
+            path_marker.type = Marker.LINE_STRIP
+            path_marker.action = Marker.ADD
+            path_marker.scale.x = 0.2
+            path_marker.pose.orientation.w = 1.0
+            for pose_stamp in path_array.paths[i].poses:
+                point = Point()
+                point.x = pose_stamp.pose.position.x
+                point.y = pose_stamp.pose.position.y
+                point.z = pose_stamp.pose.position.z
+                path_marker.points.append(point)
+            if path_array.driving_direction[i] == PathArray.BACKWARDS:
+                path_marker.color.a = 0.8
+                path_marker.color.g = 0
+                path_marker.color.b = 0
+                path_marker.color.r = 0.8
+            else:
+                path_marker.color.a = 0.8
+                path_marker.color.g = 0.8
+                path_marker.color.b = 0
+                path_marker.color.r = 0  
+            self.markers.markers.append(path_marker)        
+        self.path_markers_publisher.publish(self.markers)        
+
 
 
     def is_goal_reached(self, goal):

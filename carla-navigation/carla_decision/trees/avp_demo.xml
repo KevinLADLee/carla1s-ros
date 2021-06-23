@@ -6,8 +6,6 @@
             <ReactiveFallback>
                 <Condition ID="GoalUpdated"/>
                 <Control ID="PipelineSequence">
-                    <Action ID="ComputePathToGoal" planner_id="waypoint"/>
-                    <Action ID="TrackingPath"/>
                     <Action ID="ComputePathToGoal" planner_id="reeds_shepp"/>
                     <Action ID="TrackingPath"/>
                 </Control>
@@ -20,17 +18,13 @@
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
-        <Condition ID="CheckTrafficLight"/>
         <Action ID="ComputePathToGoal">
-            <input_port default="waypoint" name="planner_id">waypoint | reeds_shepp</input_port>
+            <input_port name="planner_id" type="std::string"/>
         </Action>
-        <Action ID="Cruise"/>
         <Condition ID="GoalUpdated"/>
-        <Action ID="Parking"/>
         <Control ID="PipelineSequence"/>
         <Action ID="StopAndWait"/>
         <Action ID="TrackingPath"/>
-        <Condition ID="TriggerParking"/>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>

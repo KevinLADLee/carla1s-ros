@@ -1,15 +1,16 @@
 from sys import path
 import numpy as np
 import carla_nav_msgs
-from reeds_shepp import reeds_shepp
 from scipy.spatial.transform import Rotation as rot
 from math import sqrt, atan2, sin, cos, pi, inf, asin, acos
-from geometry_msgs.msg import PoseArray, Pose
+from geometry_msgs.msg import PoseArray, Pose, PoseStamped
 from carla_nav_msgs.msg import Path as PathArray
 from nav_msgs.msg import Path
 import rospy
 
-class reeds_ros_inter(reeds_shepp):
+from reeds_shepp import ReedsShepp
+
+class reeds_ros_inter(ReedsShepp):
 
     def __init__(self, min_radius):
         super().__init__(min_radius)
@@ -55,26 +56,26 @@ class reeds_ros_inter(reeds_shepp):
 
         for i in range(len(path)):
             
-            path, driving_direction, end_point = self.element_sample(element=path[i], start_point=start_point, step_size=step_size)
+            sample_path, driving_direction, end_point = self.element_sample(element=path[i], start_point=start_point, step_size=step_size)
 
             start_point = end_point
-            path_array.paths.append(path)
+            path_array.paths.append(sample_path)
             path_array.driving_direction.append(driving_direction)
 
         return path_array
 
     def element_sample(self, element, start_point, step_size):
         
-        path = Path()
-        path.header.frame_id = "map"
-        path.header.stamp = rospy.Time.now()
+        sample_path = Path()
+        sample_path.header.frame_id = "map"
+        sample_path.header.stamp = rospy.Time.now()
         driving_direction = 0 if element.gear == 1 else 1
 
         cur_x = start_point[0, 0]
         cur_y = start_point[1, 0]
         cur_theta = start_point[2, 0]
 
-        path.points.append(self.point2pose(start_point))
+        sample_path.poses.append(self.point2pose(start_point))
 
         steer = element.steer
         gear = element.gear
@@ -113,15 +114,15 @@ class reeds_ros_inter(reeds_shepp):
 
             next_point = np.array([[next_x], [next_y], [next_theta]])
 
-            path.poses.append(self.point2pose(next_point))
+            sample_path.poses.append(self.point2pose(next_point))
 
             cur_x = next_x
             cur_y = next_y
             cur_theta = next_theta
 
-        path.poses.append(self.point2pose(endpoint))
+        sample_path.poses.append(self.point2pose(endpoint))
 
-        return path, driving_direction, endpoint
+        return sample_path, driving_direction, endpoint
 
     def pose2point(self, pose):
 
@@ -141,19 +142,20 @@ class reeds_ros_inter(reeds_shepp):
 
     def point2pose(self, point):
 
-        pose = Pose()
-        pose.position.x = point[0, 0]
-        pose.position.y = point[1, 0]
+        pose = PoseStamped()
+        pose.header.frame_id = "map"
+        pose.pose.position.x = point[0, 0]
+        pose.pose.position.y = point[1, 0]
         
         theta = point[2, 0]
 
         r = rot.from_euler('z', theta)
         quat = r.as_quat()
 
-        pose.orientation.x = quat[0]
-        pose.orientation.y = quat[1]
-        pose.orientation.z = quat[2]
-        pose.orientation.w = quat[3]
+        pose.pose.orientation.x = quat[0]
+        pose.pose.orientation.y = quat[1]
+        pose.pose.orientation.z = quat[2]
+        pose.pose.orientation.w = quat[3]
 
         return pose
 
