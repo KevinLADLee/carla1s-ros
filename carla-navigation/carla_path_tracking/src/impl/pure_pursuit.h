@@ -51,7 +51,7 @@ class PurePursuit : public PathTrackingBase{
   float max_backwards_acc_ = 1.1; // ~20km/h
 
   float goal_radius = 1.0;
-  float safe_dist = 8.0;
+  float safe_dist = 5.0;
 
   Path2d path_;
   DrivingDirection path_direction_ = DrivingDirection::FORWARD;

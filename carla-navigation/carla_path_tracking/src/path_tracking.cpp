@@ -44,16 +44,17 @@ bool PathTracking::UpdateParam() {
 }
 
 void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goal_msg) {
-
-  int current_path_index = 0;
   bool preempted = false;
-  unsigned int path_num = action_goal_msg->path.paths.size();
-  for(current_path_index = 0; current_path_index < path_num; current_path_index++) {
+  auto current_path_it = action_goal_msg->path.paths.begin();
+  auto current_direction_it = action_goal_msg->path.driving_direction.begin();
+  auto path_num = action_goal_msg->path.paths.size();
+  while(current_path_it != action_goal_msg->path.paths.end()) {
     if(preempted){
       preempted = false;
       break;
     }
     ROS_INFO("Path Tracking Goal Received!");
+    ROS_INFO("Current Path Index: %ld / Total %ld", 1 + current_path_it - action_goal_msg->path.paths.begin(), path_num);
     auto node_state = GetNodeState();
 
     if (node_state == NodeState::FAILURE) {
@@ -65,12 +66,12 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
 
     if (path_mutex_.try_lock()) {
       auto driving_direction = DrivingDirection::FORWARD;
-      if (action_goal_msg->path.driving_direction.at(current_path_index) == carla_nav_msgs::Path::BACKWARDS) {
+      if (*current_direction_it == carla_nav_msgs::Path::BACKWARDS) {
         driving_direction = DrivingDirection::BACKWARDS;
       }
-      path_tracker_ptr_->SetPlan(RosPathToPath2d(action_goal_msg->path.paths.at(current_path_index)),
+      path_tracker_ptr_->SetPlan(RosPathToPath2d(*current_path_it),
                                  driving_direction);
-      InitMarkers(action_goal_msg->path.paths.at(current_path_index).poses.back());
+      InitMarkers((*current_path_it).poses.back());
       path_mutex_.unlock();
       plan_condition_.notify_one();
     }
@@ -104,12 +105,19 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
         feedback.error_code = node_state;
         as_->publishFeedback(feedback);
 
-        if (node_state == NodeState::SUCCESS && current_path_index == path_num - 1) {
-          result.error_code = node_state;
-          as_->setSucceeded(result, "Tracking succeed!");
-          StopPathTracking();
-          break;
-        } else if (node_state == NodeState::FAILURE) {
+        if (node_state == NodeState::SUCCESS) {
+          if(current_path_it != action_goal_msg->path.paths.end()-1){
+            SetNodeState(NodeState::IDLE);
+            StopPathTracking();
+            break;
+          }else {
+            result.error_code = node_state;
+            as_->setSucceeded(result, "Tracking succeed!");
+            StopPathTracking();
+            break;
+          }
+        }
+        else if (node_state == NodeState::FAILURE) {
           result.error_code = node_state;
           as_->setAborted(result, "Error!");
           StopPathTracking();
@@ -117,6 +125,8 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
         }
       }
     }
+    current_path_it++;
+    current_direction_it++;
   }
   ROS_INFO("Path Tracking Action Succeed!");
 }
