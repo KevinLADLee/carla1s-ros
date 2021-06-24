@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>carla_global_planner</name>
-  <version>0.0.0</version>
-  <description>The carla_waypoint_publisher package</description>
+  <version>0.1.0</version>
+  <description>The carla_global_planner package</description>
   <maintainer email="carla.simulator@gmail.com">CARLA Simulator Team</maintainer>
   <license>MIT</license>
 

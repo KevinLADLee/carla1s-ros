@@ -31,6 +31,7 @@ from geometry_msgs.msg import PoseStamped, Point
 import carla_common.transforms as trans
 from carla_msgs.msg import CarlaWorldInfo
 import carla_nav_msgs.msg
+from nav_msgs.msg import Path
 from carla_nav_msgs.msg import Path as PathArray
 from carla_nav_msgs.msg import PathPlannerAction, PathPlannerResult, PathPlannerFeedback
 from carla_nav_msgs.msg import GlobalPlannerAction, GlobalPlannerResult, GlobalPlannerFeedback
@@ -41,7 +42,611 @@ from agents.navigation.global_route_planner import GlobalRoutePlanner
 from agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
 
 from rospy import ROSException
-from reeds_ros_inter import reeds_ros_inter
+
+from sys import path
+import numpy as np
+from collections import namedtuple
+from scipy.spatial.transform import Rotation as rot
+from math import sqrt, atan2, sin, cos, pi, inf, asin, acos
+
+"""
+Author: Han Ruihua
+Reference: paper 'Optimal paths for a car that goes both forwards and backwards', github: https://github.com/nathanlct/reeds-shepp-curves/tree/master
+"""
+
+class ReedsShepp:
+
+    def __init__(self, min_radius=1):
+
+        self.min_r = min_radius
+        self.element = namedtuple('element','len steer gear') # steer 1,0,-1, gear 1,-1
+        self.path_formula1 = [self.LpSpLp, self.LpSpRp, self.LpRnLp, self.LpRpLnnRn, self.LpRnLnRp, self.LpRnRnLnRp]
+        self.path_formula2 = [self.LpRnLn, self.LpRnSnLn, self.LpRnSnRn]
+
+    # preprocess
+    def preprocess(self, start_point=np.zeros((3, 1)), goal_point=np.zeros((3, 1))):
+        
+        ro_phi = start_point[2, 0]
+        ro_matrix = np.array([[cos(ro_phi), sin(ro_phi)], 
+                             [-sin(ro_phi), cos(ro_phi)]])
+
+        diff = goal_point[0:2] - start_point[0:2]
+        new_pos = ro_matrix @ diff
+
+        new_x = new_pos[0, 0] / self.min_r
+        new_y = new_pos[1, 0] / self.min_r
+        new_phi = goal_point[2, 0] - start_point[2, 0]
+
+        return new_x, new_y, new_phi
+
+    # shortest path
+    def shortest_path(self, start_point=np.zeros((3, 1)), goal_point=np.ones((3, 1)), step_size=0.01):
+        
+        x, y, phi = self.preprocess(start_point, goal_point)
+
+        path_list1, List1 = self.symmetry_curve1(x, y, phi)
+        path_list2, List2 = self.symmetry_curve2(x, y, phi)
+
+        total_path_list = path_list1 + path_list2
+        total_L_list = List1 + List2
+
+        L_min = min(total_L_list) 
+        path_min = total_path_list[total_L_list.index(L_min)]
+
+        path_point_list = self.reeds_path_generate(start_point, path_min, step_size)
+
+        return path_point_list
+
+    # calculate curves
+    def symmetry_curve1(self, x, y, phi):
+        
+        path_list = []
+        L_list = []
+
+        for timeflip in [False, True]:
+            for reflect in [False, True]:
+                for cal_formula in self.path_formula1:
+
+                    rg_flag = -1 if timeflip else 1
+                    rs_flag = -1 if reflect else 1
+                    
+                    path, L = cal_formula(rg_flag*x, rs_flag*y, rs_flag*rg_flag*phi, timeflip=timeflip, reflect=reflect)
+
+                    path_list.append(path.copy())
+                    L_list.append(L)
+        
+        return path_list, L_list
+
+    def symmetry_curve2(self, x, y, phi):
+        
+        path_list = []
+        L_list = []
+
+        for timeflip in [False, True]:
+            for reflect in [False, True]:
+                for backward in [False, True]:
+                    for cal_formula in self.path_formula2:
+
+                        rg_flag = -1 if timeflip else 1
+                        rs_flag = -1 if reflect else 1
+                        sx, sy, sphi = self.backward(x,y,phi) if backward else (x,y,phi)
+                        
+                        path, L = cal_formula(rg_flag*sx, rs_flag*sy, rs_flag*rg_flag*sphi, timeflip=timeflip, reflect=reflect, backward=backward)
+
+                        path_list.append(path.copy())
+                        L_list.append(L)
+        
+        return path_list, L_list
+
+    # path generate
+    def reeds_path_generate(self, start_point, path, step_size):
+
+        path_point_list = []
+        start_point = start_point
+        end_point = None
+
+        if len(path) == 0:
+            print('no path')
+            return path_point_list
+
+        for i in range(len(path)):
+            
+            path_list, end_point = self.element_sample(element=path[i], start_point=start_point, step_size=step_size)
+
+            path_point_list = path_point_list + path_list
+            start_point = end_point
+
+        return path_point_list
+
+    def element_sample(self, element, start_point, step_size):
+
+        cur_x = start_point[0, 0]
+        cur_y = start_point[1, 0]
+        cur_theta = start_point[2, 0]
+
+        steer = element.steer
+        gear = element.gear
+        length = element.len * self.min_r
+
+        # calculate end point
+        endpoint = np.zeros((3, 1))
+        path_list = [start_point]
+
+        curvature = steer * 1/self.min_r
+        center_x = cur_x + cos(cur_theta + steer * pi/2) * self.min_r
+        center_y = cur_y + sin(cur_theta + steer * pi/2) * self.min_r
+        rot_len = abs(steer) * length 
+        trans_len = (1 - abs(steer)) * length
+
+        rot_theta = rot_len * curvature * gear
+        rot_matrix = np.array([[cos(rot_theta), -sin(rot_theta)], [sin(rot_theta), cos(rot_theta)]])
+        trans_matrix = trans_len * np.array([[cos(cur_theta)], [sin(cur_theta)]])
+        center = np.array([[center_x], [center_y]])
+
+        endpoint[0:2] = rot_matrix @ (start_point[0:2] - center) + center + gear * trans_matrix
+        endpoint[2, 0] = self.M(cur_theta + rot_theta)
+
+        cur_length = 0
+
+        if length < 0:
+            length = 2 * pi * self.min_r + length
+
+        while cur_length < length:
+
+            next_x = cur_x + gear * cos(cur_theta) * step_size
+            next_y = cur_y + gear * sin(cur_theta) * step_size
+            next_theta = cur_theta + gear * curvature * step_size
+
+            d_length = np.sqrt( (next_x - cur_x) **2 + (next_y - cur_y) ** 2 )
+            cur_length = cur_length + d_length
+
+            next_point = np.array([[next_x], [next_y], [next_theta]])
+
+            path_list.append(next_point)
+
+            cur_x = next_x
+            cur_y = next_y
+            cur_theta = next_theta
+
+        path_list.append(endpoint)
+
+        return path_list, endpoint
+    
+    # transform
+    # mode 2pi
+    def M(self, theta):
+        theta = theta % (2*pi)
+        if theta < - pi: return theta + 2*pi
+        if theta >= pi: return theta - 2*pi
+        return theta
+
+    # polar 
+    def R(self, x, y):   
+       r = sqrt(x**2 + y**2)
+       theta = atan2(y, x)
+       return r, theta
+
+    def backward(self, x, y, phi):
+        new_x = x*cos(phi) + y*sin(phi)
+        new_y = x*sin(phi) - y*cos(phi)
+        return new_x, new_y, phi
+
+    # curve formula
+    # formula 8.1
+    def LpSpLp(self, x, y, phi, timeflip=False, reflect=False):
+        
+        path = []
+        gear_flag = -1 if timeflip else 1
+        steer_flag = -1 if reflect else 1
+
+        #calculate
+        u, t = self.R(x - sin(phi), y-1+cos(phi))
+        v = (phi - t) % (2*pi)
+
+        path.append(self.element(t, steer_flag, gear_flag)) 
+        path.append(self.element(u, 0, gear_flag)) 
+        path.append(self.element(v, steer_flag, gear_flag))
+
+        if t < 0 or t > pi or v < 0 or v> pi:
+            return path, inf
+        
+        L = abs(t) + abs(u) + abs(v)
+
+        return path, L
+
+    # formula 8.2
+    def LpSpRp(self, x, y, phi, timeflip=False, reflect=False):
+
+        path = []
+        gear_flag = -1 if timeflip else 1
+        steer_flag = -1 if reflect else 1
+
+        u1, t1 = self.R(x+sin(phi), y-1-cos(phi))
+
+        if u1**2 < 4:
+            L = inf
+        else:
+            u = sqrt(u1**2 - 4)
+
+            T, theta = self.R(u, 2)
+            t = self.M(t1+theta)
+            v = self.M(t-phi)
+            L = abs(t) + abs(u) + abs(v)
+
+            path.append(self.element(t, steer_flag*1, gear_flag)) 
+            path.append(self.element(u, 0, gear_flag)) 
+            path.append(self.element(v, steer_flag*-1, gear_flag))   
+
+        return path, L
+
+    # formula 8.3  typo in paper
+    def LpRnLp(self, x, y, phi, timeflip=False, reflect=False):
+
+        path = []
+        gear_flag = -1 if timeflip else 1
+        steer_flag = -1 if reflect else 1
+
+        xi = x - sin(phi)
+        eta = y - 1 + cos(phi)
+        u1, theta = self.R(xi, eta)
+
+        if u1 ** 2 > 4:
+            return path, inf
+        
+        A = acos(u1/4)
+        t = self.M(theta + pi/2 + A)
+        u = self.M(pi - 2*A)
+        v = self.M(phi-t-u)
+        
+        L = abs(t) + abs(u) + abs(v)
+
+        path.append(self.element(t, steer_flag*1, gear_flag*1)) 
+        path.append(self.element(u, steer_flag*-1, gear_flag*-1)) 
+        path.append(self.element(v, steer_flag*1, gear_flag*1)) 
+
+        return path, L
+
+    # formula 8.4, typo in paper, 
+    def LpRnLn(self, x, y, phi, timeflip=False, reflect=False, backward=False):
+
+        path = []
+        gear_flag = -1 if timeflip else 1
+        steer_flag = -1 if reflect else 1
+
+        xi = x - sin(phi)
+        eta = y - 1 + cos(phi)
+        u1, theta = self.R(xi, eta)
+
+        if u1 ** 2 > 4:
+            return path, inf
+        
+        A = acos(u1/4)
+        t = self.M(theta + pi/2 + A)
+        u = self.M(pi - 2*A)
+        v = self.M(t+u-phi)
+        
+        L = abs(t) + abs(u) + abs(v)
+
+        if backward:
+            path.append(self.element(v, steer_flag*1, gear_flag*-1))
+            path.append(self.element(u, steer_flag*-1, gear_flag*-1))
+            path.append(self.element(t, steer_flag*1, gear_flag*1))
+        else:
+            path.append(self.element(t, steer_flag*1, gear_flag*1)) 
+            path.append(self.element(u, steer_flag*-1, gear_flag*-1)) 
+            path.append(self.element(v, steer_flag*1, gear_flag*-1)) 
+
+        return path, L
+    
+    # formula 8.7 typo in paper
+    def LpRpLnnRn(self, x, y, phi, timeflip=False, reflect=False):
+
+        path = []
+        gear_flag = -1 if timeflip else 1
+        steer_flag = -1 if reflect else 1
+
+        xi = x + sin(phi)
+        eta = y - 1 - cos(phi)
+        u1, theta = self.R(xi, eta)
+
+        if u1 > 4:
+            return path, inf 
+        
+        if u1 <= 2:
+            A = acos((u1+2)/4)
+            t = self.M(theta+pi/2+A)
+            u = self.M(A)
+            v = self.M(phi-t+2*u)
+        else:
+            A = acos((u1-2)/4)
+            t = self.M(theta+pi/2-A)
+            u = self.M(pi-A)
+            v = self.M(phi-t+2*u)
+        
+        L = abs(t) + 2*abs(u) + abs(v)
+
+        path.append(self.element(t, steer_flag*1, gear_flag*1)) 
+        path.append(self.element(u, steer_flag*-1, gear_flag*1)) 
+        path.append(self.element(u, steer_flag*1, gear_flag*-1))
+        path.append(self.element(v, steer_flag*-1, gear_flag*-1))  
+
+        return path, L
+
+    # formula 8.8 
+    def LpRnLnRp(self, x, y, phi, timeflip=False, reflect=False):
+        
+        path = []
+        gear_flag = -1 if timeflip else 1
+        steer_flag = -1 if reflect else 1
+
+        xi = x + sin(phi)
+        eta = y - 1 - cos(phi)
+        u1, theta = self.R(xi, eta)
+        rho = (20 - u1**2) / 16
+
+        if rho >= 0 and rho <= 1:
+            u = acos(rho)
+            A = asin(2*sin(u)/u1)
+            t = self.M(theta+pi/2+A)
+            v = self.M(t-phi)
+
+            L = abs(t) + 2*abs(u) + abs(v)
+
+            path.append(self.element(t, steer_flag*1, gear_flag*1)) 
+            path.append(self.element(u, steer_flag*-1, gear_flag*-1)) 
+            path.append(self.element(u, steer_flag*1, gear_flag*-1))
+            path.append(self.element(v, steer_flag*-1, gear_flag*1))  
+
+        else:
+            return path, inf
+
+        return path, L
+    
+    # formula 8.9
+    def LpRnSnLn(self, x, y, phi, timeflip=False, reflect=False, backward=False):
+        
+        path = []
+        gear_flag = -1 if timeflip else 1
+        steer_flag = -1 if reflect else 1
+
+        xi = x - sin(phi)
+        eta = y - 1 + cos(phi)
+        rho, theta = self.R(xi, eta)
+        
+        if rho < 2:
+            return path, inf
+        
+        u = sqrt(rho**2-4) -2
+        A = atan2(2, u+2)
+        t = self.M(theta+pi/2+A)
+        v = self.M(t-phi+pi/2)
+
+        L = abs(t) + pi/2 + abs(u) + abs(v)
+
+        if backward:
+            path.append(self.element(v, steer_flag*1, gear_flag*-1)) 
+            path.append(self.element(u, steer_flag*0, gear_flag*-1))
+            path.append(self.element(pi/2, steer_flag*-1, gear_flag*-1)) 
+            path.append(self.element(t, steer_flag*1, gear_flag*1))               
+        else:
+            path.append(self.element(t, steer_flag*1, gear_flag*1)) 
+            path.append(self.element(pi/2, steer_flag*-1, gear_flag*-1)) 
+            path.append(self.element(u, steer_flag*0, gear_flag*-1))
+            path.append(self.element(v, steer_flag*1, gear_flag*-1)) 
+
+        return path, L
+
+    # formula 8.10
+    def LpRnSnRn(self, x, y, phi, timeflip=False, reflect=False, backward=False):
+
+        path = []
+        gear_flag = -1 if timeflip else 1
+        steer_flag = -1 if reflect else 1
+
+        xi = x + sin(phi)
+        eta = y - 1 - cos(phi)
+        rho, theta = self.R(xi, eta)
+
+        if rho < 2:
+            return path, inf
+
+        t = self.M(theta+pi/2)
+        u = rho-2
+        v = self.M(phi - t -pi/2)
+
+        L = abs(t) + pi/2 + abs(u) + abs(v)
+        
+        if backward:
+            path.append(self.element(v, steer_flag*-1, gear_flag*-1))
+            path.append(self.element(u, steer_flag*0, gear_flag*-1)) 
+            path.append(self.element(pi/2, steer_flag*-1, gear_flag*-1)) 
+            path.append(self.element(t, steer_flag*1, gear_flag*1))
+        else:
+            path.append(self.element(t, steer_flag*1, gear_flag*1)) 
+            path.append(self.element(pi/2, steer_flag*-1, gear_flag*-1)) 
+            path.append(self.element(u, steer_flag*0, gear_flag*-1))
+            path.append(self.element(v, steer_flag*-1, gear_flag*-1))
+
+        return path, L
+
+    # formula 8.11 typo in paper
+    def LpRnRnLnRp(self, x, y, phi, timeflip=False, reflect=False):
+
+        path = []
+        gear_flag = -1 if timeflip else 1
+        steer_flag = -1 if reflect else 1
+
+        xi = x + sin(phi)
+        eta = y - 1 - cos(phi)
+        rho, theta = self.R(xi, eta)
+
+        if rho < 4:
+            return path, inf
+
+        u = sqrt(rho**2 - 4) - 4
+        A = atan2(2, u+4)
+        t = self.M(theta+pi/2+A)
+        v = self.M(t-phi)
+
+        L = abs(t) + pi/2 + abs(u) + pi/2 + abs(v)
+
+        path.append(self.element(t, steer_flag*1, gear_flag*1)) 
+        path.append(self.element(pi/2, steer_flag*-1, gear_flag*-1)) 
+        path.append(self.element(u, steer_flag*0, gear_flag*-1))
+        path.append(self.element(pi/2, steer_flag*1, gear_flag*-1))
+        path.append(self.element(v, steer_flag*-1, gear_flag*1))
+
+        return path, L
+
+
+class ReedsSheppROS(ReedsShepp):
+
+    def __init__(self, min_radius):
+        super().__init__(min_radius)
+
+    def shortest_path(self, pose_list, step_size=0.01):
+
+        path_array = PathArray()
+        path_array.header.frame_id = "map"
+        path_array.header.stamp = rospy.Time.now()
+
+        for i in range(len(pose_list) - 1):
+
+            start_point = self.pose2point(pose_list[i])
+            goal_point = self.pose2point(pose_list[i+1])
+
+            x, y, phi = self.preprocess(start_point, goal_point)
+
+            path_list1, List1 = self.symmetry_curve1(x, y, phi)
+            path_list2, List2 = self.symmetry_curve2(x, y, phi)
+
+            total_path_list = path_list1 + path_list2
+            total_L_list = List1 + List2
+
+            L_min = min(total_L_list) 
+            path_min = total_path_list[total_L_list.index(L_min)]
+
+            path_array_each_pose = self.reeds_path_generate(start_point, path_min, step_size)
+
+            path_array.paths = path_array.paths + path_array_each_pose.paths
+            path_array.driving_direction = path_array.driving_direction + path_array_each_pose.driving_direction
+
+        return path_array
+
+    def reeds_path_generate(self, start_point, path, step_size):
+
+        path_array = PathArray()
+        
+        end_point = None
+
+        if len(path) == 0:
+            print('no path')
+            return path_array
+
+        for i in range(len(path)):
+            
+            sample_path, driving_direction, end_point = self.element_sample(element=path[i], start_point=start_point, step_size=step_size)
+
+            start_point = end_point
+            path_array.paths.append(sample_path)
+            path_array.driving_direction.append(driving_direction)
+
+        return path_array
+
+    def element_sample(self, element, start_point, step_size):
+        
+        sample_path = Path()
+        sample_path.header.frame_id = "map"
+        sample_path.header.stamp = rospy.Time.now()
+        driving_direction = 0 if element.gear == 1 else 1
+
+        cur_x = start_point[0, 0]
+        cur_y = start_point[1, 0]
+        cur_theta = start_point[2, 0]
+
+        sample_path.poses.append(self.point2pose(start_point))
+
+        steer = element.steer
+        gear = element.gear
+        length = element.len * self.min_r
+
+        # calculate end point
+        endpoint = np.zeros((3, 1))
+
+        curvature = steer * 1 / self.min_r
+        center_x = cur_x + cos(cur_theta + steer * pi/2) * self.min_r
+        center_y = cur_y + sin(cur_theta + steer * pi/2) * self.min_r
+        rot_len = abs(steer) * length 
+        trans_len = (1 - abs(steer)) * length
+
+        rot_theta = rot_len * curvature * gear
+        rot_matrix = np.array([[cos(rot_theta), -sin(rot_theta)], [sin(rot_theta), cos(rot_theta)]])
+        trans_matrix = trans_len * np.array([[cos(cur_theta)], [sin(cur_theta)]])
+        center = np.array([[center_x], [center_y]])
+
+        endpoint[0:2] = rot_matrix @ (start_point[0:2] - center) + center + gear * trans_matrix
+        endpoint[2, 0] = self.M(cur_theta + rot_theta)
+
+        cur_length = 0
+
+        if length < 0:
+            length = 2 * pi * self.min_r + length
+
+        while cur_length < length:
+
+            next_x = cur_x + gear * cos(cur_theta) * step_size
+            next_y = cur_y + gear * sin(cur_theta) * step_size
+            next_theta = cur_theta + gear * curvature * step_size
+
+            d_length = np.sqrt( (next_x - cur_x) **2 + (next_y - cur_y) ** 2 )
+            cur_length = cur_length + d_length
+
+            next_point = np.array([[next_x], [next_y], [next_theta]])
+
+            sample_path.poses.append(self.point2pose(next_point))
+
+            cur_x = next_x
+            cur_y = next_y
+            cur_theta = next_theta
+
+        sample_path.poses.append(self.point2pose(endpoint))
+
+        return sample_path, driving_direction, endpoint
+
+    def pose2point(self, pose):
+
+        x = pose.position.x
+        y = pose.position.y
+
+        quater_x = pose.orientation.x
+        quater_y = pose.orientation.y
+        quater_z = pose.orientation.z
+        quater_w = pose.orientation.w
+
+        r = rot.from_quat([quater_x, quater_y, quater_z, quater_w])
+        euler_rad = r.as_euler('xyz')
+        theta = euler_rad[2]
+
+        return np.array([[x], [y], [theta]])
+
+    def point2pose(self, point):
+
+        pose = PoseStamped()
+        pose.header.frame_id = "map"
+        pose.pose.position.x = point[0, 0]
+        pose.pose.position.y = point[1, 0]
+        
+        theta = point[2, 0]
+
+        r = rot.from_euler('z', theta)
+        quat = r.as_quat()
+
+        pose.pose.orientation.x = quat[0]
+        pose.pose.orientation.y = quat[1]
+        pose.pose.orientation.z = quat[2]
+        pose.pose.orientation.w = quat[3]
+
+        return pose
 
 
 class CarlaToRosWaypointConverter:
@@ -78,7 +683,7 @@ class CarlaToRosWaypointConverter:
 
         self.current_route = None
 
-        self.rs_curve = reeds_ros_inter(min_radius=1)
+        self.rs_curve = ReedsSheppROS(min_radius=1)
         self.pose_list = []
 
         self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal",
@@ -99,14 +704,23 @@ class CarlaToRosWaypointConverter:
         rospy.loginfo("Received goal, trigger rerouting...")
         rospy.loginfo("Planner id: {}".format(goal_msg.planner_id))
 
+        carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
+        self.goal = carla_goal
+
         if goal_msg.planner_id == "reeds_shepp":
             self.pose_list.clear()
-            vehicle_pose = trans.carla_transform_to_ros_pose(self.ego_vehicle.get_transform())
-            self.pose_list.append(vehicle_pose)
-            self.pose_list.append(goal_msg.goal.pose)
-            self._result.path = self.rs_curve.shortest_path(self.pose_list)
-            self.publish_path_array_markers(self._result.path)
-            self.route_polanner_server.set_succeeded(self._result, "success")
+            if self.ego_vehicle is None or self.goal is None:
+                rospy.logerr("Error: ego_vehicle not valid now!")
+                self.route_polanner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
+            elif self.is_goal_reached(self.goal):
+                self.route_polanner_server.set_aborted(text="Already reached goal!")
+            else:       
+                vehicle_pose = trans.carla_transform_to_ros_pose(self.ego_vehicle.get_transform())     
+                self.pose_list.append(vehicle_pose)
+                self.pose_list.append(goal_msg.goal.pose)
+                self._result.path = self.rs_curve.shortest_path(self.pose_list)
+                self.publish_path_array_markers(self._result.path)
+                self.route_polanner_server.set_succeeded(self._result, "success")
             # TODO: Action server send result.
         else:
             carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
