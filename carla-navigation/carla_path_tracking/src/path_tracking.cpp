@@ -46,7 +46,13 @@ bool PathTracking::UpdateParam() {
 void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goal_msg) {
 
   int current_path_index = 0;
-  for(current_path_index = 0; current_path_index < action_goal_msg->path.paths.size(); current_path_index++) {
+  bool preempted = false;
+  unsigned int path_num = action_goal_msg->path.paths.size();
+  for(current_path_index = 0; current_path_index < path_num; current_path_index++) {
+    if(preempted){
+      preempted = false;
+      break;
+    }
     ROS_INFO("Path Tracking Goal Received!");
     auto node_state = GetNodeState();
 
@@ -81,6 +87,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
         ROS_INFO("Action Preempted");
         StopPathTracking();
         SetNodeState(NodeState::IDLE);
+        preempted = true;
         ActionResultT result;
         result.error_code = NodeState::SUCCESS;
         as_->setPreempted(result);
@@ -97,7 +104,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
         feedback.error_code = node_state;
         as_->publishFeedback(feedback);
 
-        if (node_state == NodeState::SUCCESS) {
+        if (node_state == NodeState::SUCCESS && current_path_index == path_num - 1) {
           result.error_code = node_state;
           as_->setSucceeded(result, "Tracking succeed!");
           StopPathTracking();
@@ -128,13 +135,6 @@ void PathTracking::SetNodeState(const NodeState &node_state) {
   LockGuardMutex lock_guard(node_state_mutex_);
   node_state_ = node_state;
 }
-
-
-//bool PathTracking::GoalReached(){
-//  std::lock_guard<std::mutex> lock_guard(odom_mutex_);
-//
-//  return false;
-//}
 
 void PathTracking::InitMarkers(const geometry_msgs::PoseStamped &goal_pose) {
   visualize_markers_.markers.clear();
