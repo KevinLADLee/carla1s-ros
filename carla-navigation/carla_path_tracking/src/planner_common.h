@@ -17,10 +17,10 @@ enum NodeState{
 
 struct Pose2d{
   Pose2d() = default;
-  Pose2d(float x, float y, float yaw) : x(x), y(y), yaw(yaw) {};
-  float x = 0;
-  float y = 0;
-  float yaw = 0;
+  Pose2d(double x, double y, double yaw) : x(x), y(y), yaw(yaw) {};
+  double x = 0;
+  double y = 0;
+  double yaw = 0;
 };
 
 struct Path2d{

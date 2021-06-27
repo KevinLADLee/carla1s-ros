@@ -1,4 +1,4 @@
-controller_frequency: 100 # Hz
+controller_frequency: 20 # Hz
 goal_tolerance_xy: 0.5 # goal radius (m)
 goal_tolerance_yaw: 0.2 # goal radius (m)
 max_speed: 5.5 # max vehicle speed (m/s)

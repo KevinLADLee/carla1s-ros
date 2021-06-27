@@ -109,14 +109,14 @@ bool PurePursuit::IsValidWaypoint(const Pose2d &waypoint_pose, const Pose2d &veh
 }
 
 Pose2d PurePursuit::ToVehicleFrame(const Pose2d &point_in_map, const Pose2d &vehicle_pose_in_map) {
-  Eigen::Matrix3f vehicle_trans;
+  Eigen::Matrix3d vehicle_trans;
   auto theta = vehicle_pose_in_map.yaw;
   using namespace std;
   vehicle_trans << cos(theta), -sin(theta), vehicle_pose_in_map.x,
                        sin(theta), cos(theta), vehicle_pose_in_map.y,
                        0,0,1;
   auto vehicle_trans_inv = vehicle_trans.inverse();
-  Eigen::Vector3f point_vec(point_in_map.x, point_in_map.y, 1);
+  Eigen::Vector3d point_vec(point_in_map.x, point_in_map.y, 1);
   auto point_vec_in_vehicle_frame = vehicle_trans_inv * point_vec;
   return {point_vec_in_vehicle_frame[0], point_vec_in_vehicle_frame[1], point_in_map.yaw-vehicle_pose_in_map.yaw};
 }

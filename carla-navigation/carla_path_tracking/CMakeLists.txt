@@ -47,7 +47,7 @@ include_directories(
 
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_library(pure_pursuit src/impl/pure_pursuit.cpp)
+add_library(pure_pursuit src/impl/pure_pursuit.cpp src/impl/pid.cpp src/impl/pid.h)
 target_link_libraries(pure_pursuit ${EIGEN3_LIBRARIES})
 
 add_executable(carla_path_tracking_node src/path_tracking_node.cpp src/path_tracking.cpp)
