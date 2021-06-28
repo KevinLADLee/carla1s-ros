@@ -23,9 +23,32 @@
 #ifndef _PID_H_
 #define _PID_H_
 
-class PIDImpl;
-class PID
+#include <iostream>
+#include <cmath>
+#include <assert.h>
+#include "planner_common.h"
+#include "path_tracking_base.h"
+
+class PIDImpl
 {
+ public:
+  PIDImpl( double dt, double max, double min, double Kp, double Kd, double Ki );
+  double RunStep(double target, double current);
+
+ public:
+  double dt_;
+  double max_;
+  double min_;
+  double Kp_;
+  double Kd_;
+  double Ki_;
+  double pre_error_;
+  double integral_;
+  double max_integral_;
+  double min_integral_;
+};
+
+class PID : public PathTrackingBase{
  public:
   // Kp -  proportional gain
   // Ki -  Integral gain
@@ -33,14 +56,15 @@ class PID
   // dt -  loop interval time
   // max - maximum value of manipulated variable
   // min - minimum value of manipulated variable
-  PID( double dt, double max, double min, double Kp, double Kd, double Ki );
+  PID(double dt, double max, double min, double Kp, double Kd, double Ki );
 
-  // Returns the manipulated variable given a setpoint and current process value
-  double RunStep( double setpoint, double pv );
-  ~PID();
+  virtual ~PID();
+
+  double RunStep(const double &target_speed,
+                 const double &vehicle_speed) override;
 
  private:
-  PIDImpl *pimpl;
+  std::unique_ptr<PIDImpl> pimpl;
 };
 
 

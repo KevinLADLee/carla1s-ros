@@ -10,19 +10,51 @@
 
 class PathTrackingBase{
  public:
-//  virtual int Initialize() = 0;
+  virtual ~PathTrackingBase() {
 
-  virtual int ComputeAckermannCmd(const Pose2d &vehicle_pose, AckermannCmd &ackermann_cmd) = 0;
+  }
 
-  virtual bool IsGoalReached() = 0;
+  /***
+   * @brief Running step for lateral controller
+   * @param vehicle_pose
+   * @param waypoint_pose
+   * @param driving_direction
+   * @return return vehicle control steering in [-1.0, 1.0]
+   */
+  virtual double RunStep(const Pose2d &vehicle_pose,
+                         const Path2dPtr &waypoints) {
+    return 0.0;
+  } ;
 
-  virtual int SetPlan(const Path2d &path, const DrivingDirection &path_direction) = 0;
+  /***
+   * @brief Running step for longitudinal controller
+   * @param vehicle_speed
+   * @param target_speed
+   * @param driving_direction
+   * @return return vehicle control throttle in [0.0, 1.0]
+   */
+  virtual double RunStep(const double &target_speed,
+                         const double &vehicle_speed){
+    return 0.0;
+  };
 
-//  virtual int SetPlan(const Path &path) {
-//
-//  };
+  virtual int SetPlan(const Path2d &path, const DrivingDirection &driving_direction){
+    return -1;
+  };
 
-//  virtual void UpdateVehiclePose(const Pose2d &pose) = 0;
+  virtual int SetDrivingDirection(const DrivingDirection &driving_direction){
+    driving_direction_ = driving_direction;
+    return -1;
+  };
+
+  virtual DrivingDirection GetDrivingDirection(){
+    return driving_direction_;
+  }
+
+ protected:
+  Path2dPtr waypoints_ptr_;
+  Path2d::iterator waypoint_it_;
+  DrivingDirection driving_direction_;
 
 };
 

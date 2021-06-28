@@ -6,6 +6,7 @@
 #define SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PLANNER_COMMON_H_
 
 #include <vector>
+#include <memory>
 
 enum NodeState{
   IDLE,
@@ -16,6 +17,7 @@ enum NodeState{
 };
 
 struct Pose2d{
+  using Ptr = std::shared_ptr<Pose2d>;
   Pose2d() = default;
   Pose2d(double x, double y, double yaw) : x(x), y(y), yaw(yaw) {};
   double x = 0;
@@ -23,9 +25,8 @@ struct Pose2d{
   double yaw = 0;
 };
 
-struct Path2d{
-  std::vector<Pose2d> poses;
-};
+using Path2d = std::vector<Pose2d>;
+using Path2dPtr = std::shared_ptr<Path2d>;
 
 enum class DrivingDirection : int {
   FORWARD = 0,
@@ -46,6 +47,11 @@ struct AckermannCmd{
   float acceleration = 0.0;
   float steering_angle = 0.0;
 };
+
+template <typename T>
+T clip(const T& n, const T& lower, const T& upper) {
+  return std::max(lower, std::min(n, upper));
+}
 
 
 #endif //SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PLANNER_COMMON_H_

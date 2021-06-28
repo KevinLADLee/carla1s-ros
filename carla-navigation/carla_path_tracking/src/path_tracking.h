@@ -68,6 +68,8 @@ private:
 
     bool UpdateParam();
 
+    bool StopVehicle();
+
 //  bool GoalReached();
 
     Path2d RosPathToPath2d(const nav_msgs::Path &ros_path);
@@ -83,21 +85,25 @@ private:
     float vehicle_track = 2.0;
     float base_angle = 0.0;
     float max_forward_velocity = 15.0; // km/h
-    float max_backwards_velocity = 2.0; // km/h
+    float max_backwards_velocity = 5.0; // km/h
+
+    //! PID Parameters
+    double Kp;
+    double Ki;
+    double Kd;
 
     ros::NodeHandle nh_;
     ros::Subscriber odom_sub_, vehicle_info_sub_;
     ros::Publisher cmd_vel_pub_, markers_pub_, control_cmd_pub_;
     std::unique_ptr<ActionServerT> as_;
 
-    ackermann_msgs::AckermannDrive ackermann_cmd_;
-
+    carla_msgs::CarlaEgoVehicleControl vehicle_control_msg_;
     visualization_msgs::MarkerArray visualize_markers_;
 
     std::mutex odom_mutex_;
-    nav_msgs::Odometry odom_;
     Pose2d vehicle_pose_;
-    double vehicle_speed_;
+    double vehicle_speed_ = 0;
+    double target_speed_ = max_forward_velocity;
 
     NodeState node_state_ = NodeState::IDLE;
 

@@ -5,3 +5,4 @@ max_speed: 5.5 # max vehicle speed (m/s)
 base_angle: 0.0 # neutral point of servo (rad)
 smooth_accel: true # smooth the acceleration of car
 speed_incremental: 1.5 # speed incremental value (discrete acceleration), unit: m/s
+

@@ -29,44 +29,24 @@
 #ifndef _PID_SOURCE_
 #define _PID_SOURCE_
 
-#include <iostream>
-#include <cmath>
+
 #include "pid.h"
 
 using namespace std;
 
-class PIDImpl
-{
- public:
-  PIDImpl( double dt, double max, double min, double Kp, double Kd, double Ki );
-  ~PIDImpl() = default;
-  double RunStep( double setpoint, double pv );
-
- private:
-  double dt_;
-  double max_;
-  double min_;
-  double Kp_;
-  double Kd_;
-  double Ki_;
-  double pre_error_;
-  double integral_;
-};
-
 
 PID::PID( double dt, double max, double min, double Kp, double Kd, double Ki )
 {
-  pimpl = new PIDImpl(dt,max,min,Kp,Kd,Ki);
-}
-double PID::RunStep( double setpoint, double pv )
-{
-  return pimpl->RunStep(setpoint,pv);
-}
-PID::~PID()
-{
-  delete pimpl;
+  pimpl = std::make_unique<PIDImpl>(dt,max,min,Kp,Kd,Ki);
 }
 
+double PID::RunStep(const double &target_speed,
+                    const double &vehicle_speed) {
+  return pimpl->RunStep(target_speed, vehicle_speed);
+}
+PID::~PID() {
+
+}
 
 /**
  * Implementation
@@ -75,20 +55,22 @@ PIDImpl::PIDImpl(double dt, double max, double min, double kp, double kd, double
     : dt_(dt), max_(max), min_(min), Kp_(kp), Kd_(kd), Ki_(ki), pre_error_(0), integral_(0) {}
 
 
-double PIDImpl::RunStep( double setpoint, double pv )
+double PIDImpl::RunStep( double target, double current)
 {
 
   // Calculate error
-  double error = setpoint - pv;
+  double error = target - current;
 
   // Proportional term
   double Pout = Kp_ * error;
 
   // Integral term
   integral_ += error * dt_;
+  integral_ = clip(integral_, min_integral_, max_integral_);
   double Iout = Ki_ * integral_;
 
   // Derivative term
+  assert(dt_ > 0);
   double derivative = (error - pre_error_) / dt_;
   double Dout = Kd_ * derivative;
 
@@ -96,10 +78,7 @@ double PIDImpl::RunStep( double setpoint, double pv )
   double output = Pout + Iout + Dout;
 
   // Restrict to max/min
-  if( output > max_ )
-    output = max_;
-  else if( output < min_ )
-    output = min_;
+  output = clip(output, min_, max_);
 
   // Save error to previous error
   pre_error_ = error;
