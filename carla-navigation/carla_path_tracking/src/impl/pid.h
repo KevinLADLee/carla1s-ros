@@ -25,27 +25,61 @@
 
 #include <iostream>
 #include <cmath>
-#include <assert.h>
+#include <cassert>
+#include <mutex>
 #include "planner_common.h"
 #include "path_tracking_base.h"
 
+template <typename T>
 class PIDImpl
 {
  public:
-  PIDImpl( double dt, double max, double min, double Kp, double Kd, double Ki );
-  double RunStep(double target, double current);
+  PIDImpl(T kp, T kd, T ki, T max, T min, T dt)
+      : dt_(dt), max_(max), min_(min), Kp_(kp), Kd_(kd), Ki_(ki), pre_error_(0), integral_(0) {}
+
+
+  T RunStep( T target, T current)
+  {
+
+    // Calculate error
+    T error = target - current;
+
+    // Proportional term
+    T Pout = Kp_ * error;
+
+    // Integral term
+    integral_ += error * dt_;
+    integral_ = clip(integral_, min_integral_, max_integral_);
+    T Iout = Ki_ * integral_;
+
+    // Derivative term
+    assert(dt_ > 0);
+    T derivative = (error - pre_error_) / dt_;
+    T Dout = Kd_ * derivative;
+
+    // Calculate total output
+    T output = Pout + Iout + Dout;
+
+    // Restrict to max/min
+    output = clip(output, min_, max_);
+
+    // Save error to previous error
+    pre_error_ = error;
+
+    return output;
+  }
 
  public:
-  double dt_;
-  double max_;
-  double min_;
-  double Kp_;
-  double Kd_;
-  double Ki_;
-  double pre_error_;
-  double integral_;
-  double max_integral_;
-  double min_integral_;
+  T dt_;
+  T max_;
+  T min_;
+  T Kp_;
+  T Kd_;
+  T Ki_;
+  T pre_error_;
+  T integral_;
+  T max_integral_;
+  T min_integral_;
 };
 
 class PID : public PathTrackingBase{
@@ -56,15 +90,18 @@ class PID : public PathTrackingBase{
   // dt -  loop interval time
   // max - maximum value of manipulated variable
   // min - minimum value of manipulated variable
-  PID(double dt, double max, double min, double Kp, double Kd, double Ki );
+  PID(double Kp = 1.0, double Kd = 0.0, double Ki = 0.0, double max = 1.0, double min = 0.0, double dt = 1.0);
 
   virtual ~PID();
 
   double RunStep(const double &target_speed,
                  const double &vehicle_speed) override;
 
+  void ResetParam(double Kp, double Kd, double Ki, double max = 1.0, double min = 0.0, double dt = 1.0);
+
  private:
-  std::unique_ptr<PIDImpl> pimpl;
+  std::unique_ptr<PIDImpl<double>> pimpl;
+  std::mutex pid_mutex_;
 };
 
 

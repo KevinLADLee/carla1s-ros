@@ -6,7 +6,7 @@
             <ReactiveFallback>
                 <Condition ID="GoalUpdated"/>
                 <Control ID="PipelineSequence">
-                    <Action ID="ComputePathToGoal" planner_id="reeds_shepp"/>
+                    <Action ID="ComputePathToGoal" planner_id="waypoints"/>
                     <Action ID="TrackingPath"/>
                 </Control>
             </ReactiveFallback>

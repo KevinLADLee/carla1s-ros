@@ -1,6 +1,3 @@
-//
-// Created by kevinlad on 2021/5/26.
-//
 
 #ifndef SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_H_
 #define SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_H_
@@ -13,7 +10,6 @@
 #include <ros/ros.h>
 #include <tf2/utils.h>
 #include <actionlib/server/simple_action_server.h>
-#include <ackermann_msgs/AckermannDrive.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/Odometry.h>
@@ -44,10 +40,6 @@ public:
     void ActionExecuteCallback(const ActionGoalT::ConstPtr & goal_msg);
 
     void OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg);
-
-//  void VehicleInfoCallback(const carla_msgs::CarlaEgoVehicleInfoConstPtr &vehicle_info_msg);
-
-//  void PathCallback(const nav_msgs::Path::ConstPtr &path_msg);
 
     const NodeState &GetNodeState();
 
@@ -88,9 +80,12 @@ private:
     float max_backwards_velocity = 5.0; // km/h
 
     //! PID Parameters
-    double Kp;
-    double Ki;
-    double Kd;
+    double pid_Kp;
+    double pid_Ki;
+    double pid_Kd;
+    double pid_dt;
+    double pid_max_value;
+    double pid_min_value;
 
     ros::NodeHandle nh_;
     ros::Subscriber odom_sub_, vehicle_info_sub_;

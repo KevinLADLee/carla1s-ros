@@ -35,56 +35,30 @@
 using namespace std;
 
 
-PID::PID( double dt, double max, double min, double Kp, double Kd, double Ki )
+PID::PID(double Kp, double Kd, double Ki, double max, double min, double dt)
 {
-  pimpl = std::make_unique<PIDImpl>(dt,max,min,Kp,Kd,Ki);
+  pimpl = std::make_unique<PIDImpl<double>>(Kp,Kd,Ki,max,min,dt);
 }
 
-double PID::RunStep(const double &target_speed,
-                    const double &vehicle_speed) {
-  return pimpl->RunStep(target_speed, vehicle_speed);
-}
 PID::~PID() {
 
 }
 
-/**
- * Implementation
- */
-PIDImpl::PIDImpl(double dt, double max, double min, double kp, double kd, double ki)
-    : dt_(dt), max_(max), min_(min), Kp_(kp), Kd_(kd), Ki_(ki), pre_error_(0), integral_(0) {}
 
-
-double PIDImpl::RunStep( double target, double current)
-{
-
-  // Calculate error
-  double error = target - current;
-
-  // Proportional term
-  double Pout = Kp_ * error;
-
-  // Integral term
-  integral_ += error * dt_;
-  integral_ = clip(integral_, min_integral_, max_integral_);
-  double Iout = Ki_ * integral_;
-
-  // Derivative term
-  assert(dt_ > 0);
-  double derivative = (error - pre_error_) / dt_;
-  double Dout = Kd_ * derivative;
-
-  // Calculate total output
-  double output = Pout + Iout + Dout;
-
-  // Restrict to max/min
-  output = clip(output, min_, max_);
-
-  // Save error to previous error
-  pre_error_ = error;
-
-  return output;
+double PID::RunStep(const double &target_speed,
+                    const double &vehicle_speed) {
+  std::lock_guard<std::mutex> lock_guard(pid_mutex_);
+  return pimpl->RunStep(target_speed, vehicle_speed);
 }
+
+void PID::ResetParam(double Kp, double Kd, double Ki, double max, double min, double dt) {
+  std::lock_guard<std::mutex> lock_guard(pid_mutex_);
+  pimpl.reset();
+  pimpl = std::make_unique<PIDImpl<double>>(Kp, Ki, Kd, max, min, dt);
+}
+
+
+
 
 
 

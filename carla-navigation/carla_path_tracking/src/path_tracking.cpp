@@ -13,8 +13,9 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
   UpdateParam();
 
   lateral_controller_ptr_ = std::make_unique<LateralControllerT>();
-  lateral_controller_ptr_->Initialize(vehicle_wheelbase);
-  longitudinal_controller_ptr = std::make_unique<LongitudinalControllerT>(1.0, 0.5, 0.0, 0.206, 0.0206, 0.515);
+  lateral_controller_ptr_->Initialize(vehicle_wheelbase, goal_radius);
+  longitudinal_controller_ptr = std::make_unique<LongitudinalControllerT>();
+  longitudinal_controller_ptr->ResetParam(pid_Kp, pid_Ki, pid_Kd);
 
   odom_sub_ = nh_.subscribe("/carla/"+role_name+"/odometry", 1, &PathTracking::OdomCallback, this);
   markers_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("/carla/"+role_name+"/path_tracking/markers", 1);
@@ -27,12 +28,20 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
 bool PathTracking::UpdateParam() {
   nh_.param<std::string>("role_name", role_name, "ego_vehicle");
   nh_.param<int>("controller_frequency", controller_freq, 20);
-  nh_.param<float>("goal_tolerance_xy", 0.5);
+  nh_.param<float>("goal_tolerance_xy", goal_radius,0.5);
   nh_.param<float>("goal_tolerance_yaw", 0.2);
   nh_.param<bool>("use_vehicle_info", use_vehicle_info,true);
   nh_.param<float>("base_angle", base_angle, 0.0);
   nh_.param<float>("max_forward_velocity", max_forward_velocity, 15.0);
   nh_.param<float>("max_backwards_velocity", max_backwards_velocity, 5.0);
+
+  //1.0, 0.5, 0.0, 0.206, 0.0206, 0.515
+  nh_.param<double>("pid_Kp", pid_Kp, 0.2);
+  nh_.param<double>("pid_Ki", pid_Ki, 0.02);
+  nh_.param<double>("pid_Kd", pid_Kd, 0.5);
+  nh_.param<double>("pid_dt", pid_dt, 1.0);
+  nh_.param<double>("pid_max", pid_max_value, 1.0);
+  nh_.param<double>("pid_min", pid_min_value, 0.0);
 
   if(use_vehicle_info) {
     auto vehicle_info_msg = ros::topic::waitForMessage<carla_msgs::CarlaEgoVehicleInfo>("/carla/"+role_name+"/vehicle_info", nh_, ros::Duration(120));
@@ -238,15 +247,17 @@ void PathTracking::PathTrackingLoop() {
     std::unique_lock<std::mutex> path_lock(path_mutex_);
     vehicle_control_msg_.steer = static_cast<float>(lateral_controller_ptr_->RunStep(vehicle_pose));
     path_lock.unlock();
-    std::cout << "target: " << target_speed_ << " current: " << vehicle_speed << std::endl;
+    //std::cout << "target: " << target_speed_ << " current: " << vehicle_speed << std::endl;
     vehicle_control_msg_.throttle = static_cast<float>(longitudinal_controller_ptr->RunStep(target_speed_, vehicle_speed));
     vehicle_control_msg_.brake = 0.0;
     control_cmd_pub_.publish(vehicle_control_msg_);
+    std::cout << "steering: " << vehicle_control_msg_.steer << std::endl;
 
     PublishMarkers(vehicle_pose, lateral_controller_ptr_->GetCurrentTrackPoint());
     if(lateral_controller_ptr_->IsGoalReached()){
       ROS_INFO("Reached goal!");
       SetNodeState(NodeState::SUCCESS);
+      StopVehicle();
     }
     auto cost_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin_time);
     int need_time = 1000 / controller_freq;

@@ -17,7 +17,7 @@ double PurePursuit::RunStep(const Pose2d &vehicle_pose,
 bool PurePursuit::IsGoalReached() {
   double dist2goal = std::hypot(goal_.x - vehicle_pose_.x,
                                 goal_.y - vehicle_pose_.y);
-  if (dist2goal < goal_radius)
+  if (dist2goal < goal_radius_)
   {
     return true;
   } else{
@@ -50,13 +50,18 @@ int PurePursuit::CalculateSteering(const Pose2d &vehicle_pose, double &steering)
       current_waypoint_index_++;
     }
     if(current_waypoint_it_ == path_.end()){
+      steering = 0.0;
       std::cerr << "No more valid waypoints, need replan!" << std::endl;
       return -1;
     }
   } else{
+    std::cout << "Pure pursuit: Reached Goal!" << std::endl;
     valid_waypoint = goal_;
     found_valid_waypoint_ = false;
+    steering = 0.0;
+    return 0;
   }
+  std::cout << "Pure pursuit: Found valid waypoint!" << std::endl;
   auto forward_point_in_vehicle_frame = ToVehicleFrame(valid_waypoint, vehicle_pose);
   if(GetDrivingDirection() == DrivingDirection::FORWARD){
     float eta = std::atan2(forward_point_in_vehicle_frame.y, forward_point_in_vehicle_frame.x);
@@ -68,8 +73,9 @@ int PurePursuit::CalculateSteering(const Pose2d &vehicle_pose, double &steering)
     steering = -std::atan2(wheel_base * std::sin(eta), (L_rv / 2.0f + l_anchor_rv * std::cos(eta)));
 
     return 0;
+  } else{
+    steering = 0.0;
   }
-
   return 1;
 }
 
@@ -113,8 +119,10 @@ Pose2d PurePursuit::GetCurrentTrackPoint() {
   return (*current_waypoint_it_);
 }
 
-int PurePursuit::Initialize(float wheelbase, float look_ahead_dist_fwd, float anchor_dist_fwd) {
+int PurePursuit::Initialize(float wheelbase, float goal_radius, float look_ahead_dist_fwd, float anchor_dist_fwd) {
+  std::cout << "wheel_base: " << wheelbase << "\n" << "goal_radius: " << goal_radius << std::endl;
   wheel_base = wheelbase;
+  goal_radius_ = goal_radius;
   L_fw = look_ahead_dist_fwd;
   l_anchor_fw = anchor_dist_fwd;
   return 0;

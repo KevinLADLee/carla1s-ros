@@ -16,7 +16,7 @@
 class PurePursuit : public PathTrackingBase{
  public:
 
-  int Initialize(float wheelbase, float look_ahead_dist_fwd = 2.5, float anchor_dist_fwd = 1.5);
+  int Initialize(float wheelbase, float goal_radius,float look_ahead_dist_fwd = 2.5, float anchor_dist_fwd = 1.5);
 
   double RunStep(const Pose2d &vehicle_pose,
                  const Path2dPtr &waypoints = nullptr) override;
@@ -38,19 +38,12 @@ class PurePursuit : public PathTrackingBase{
 
  private:
   float wheel_base = 0; // Wheelbase (L, distance between front and back wheel)
-  float L_fw = 2.5; // Forward look-ahead distance (L_fw)
+  float L_fw = 3.0; // Forward look-ahead distance (L_fw)
   float l_anchor_fw = 1.5; // Forward anchor distance (L_fw)
   float L_rv = 1.0; // Reverse look-ahead distance (L_rv)
   float l_anchor_rv = 0.0; // Reverse anchor distance (l_rv)
-  float base_angle = 0.0;
-  float steering_gain = 1.0;
-  float max_forward_speed_ = 5.0; // ~20km/h
-  float max_forward_acc_ = 5.1; // ~20km/h
-  float max_backwards_speed_ = 1.0; // ~20km/h
-  float max_backwards_acc_ = 1.1; // ~20km/h
 
-  float goal_radius = 1.0;
-  float safe_dist = 5.0;
+  float goal_radius_;
 
   Path2d path_;
   Pose2d goal_;
