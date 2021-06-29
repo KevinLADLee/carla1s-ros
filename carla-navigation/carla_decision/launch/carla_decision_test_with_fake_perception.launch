@@ -1,15 +1,16 @@
 <launch>
 
-    <arg name='role_name' default='ego_vehicle' />
-    <arg name='bt_tree_filename' default='avp_demo.xml' />
-
     <node name="carla_decision_node" pkg="carla_decision" type="carla_decision_node" output="screen" >
-        <param name="role_name" value="$(arg role_name)" />
-        <param name="bt_tree_filename" value="$(arg avp_demo.xml)" />
+        <rosparam>
+          role_name: "ego_vehicle"
+          bt_tree_filename: "goal_behavior.xml"
+        </rosparam>
     </node>
 
     <include file="$(find carla_global_planner)/launch/carla_global_planner.launch" />
 
     <include file="$(find carla_path_tracking)/launch/tracking.launch" />
+
+    <include file="$(find carla_fake_perception)/launch/fake_perception.launch" />
 
 </launch>

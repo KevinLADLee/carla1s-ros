@@ -9,7 +9,7 @@
                     <ReactiveFallback>
                         <Condition ID="GoalUpdated"/>
                         <Control ID="PipelineSequence">
-                            <Action ID="ComputePathToGoal"/>
+                            <Action ID="ComputePathToGoal" planner_id="waypoint"/>
                             <Action ID="TrackingPath"/>
                         </Control>
                     </ReactiveFallback>
@@ -28,7 +28,9 @@
     <!-- ////////// -->
     <TreeNodesModel>
         <Condition ID="CheckTrafficLight"/>
-        <Action ID="ComputePathToGoal"/>
+        <Action ID="ComputePathToGoal">
+            <input_port default="waypoint" name="planner_id"/>
+        </Action>
         <Condition ID="GoalUpdated"/>
         <Control ID="PipelineSequence"/>
         <Action ID="StopAndWait"/>

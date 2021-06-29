@@ -7,14 +7,18 @@
 
 CarlaDecision::CarlaDecision() {
   nh_ptr_ = boost::make_shared<ros::NodeHandle>();
+  auto ph = ros::NodeHandle("~");
+  ph.param<std::string>("role_name", role_name, "ego_vehicle");
+  ph.param<std::string>("bt_tree_filename", bt_tree_filename, "avp_demo.xml");
 }
 
-bool CarlaDecision::LoadBehaviorTree(const std::string &filename) {
-  std::cout << "Loading behavior tree..." << std::endl;
+bool CarlaDecision::LoadBehaviorTree(const std::string &xml_base_path) {
+  auto xml_full_path =  xml_base_path + bt_tree_filename;
+  std::cout << "Loading behavior tree: " << xml_full_path << std::endl;
   // Check and load behavior tree xml file as xml_string
-  std::ifstream xml_file(filename);
+  std::ifstream xml_file(xml_full_path);
   if (!xml_file.good()) {
-    ROS_ERROR("Couldn't open input XML file: %s", filename.c_str());
+    ROS_ERROR("Couldn't open input XML file: %s", xml_full_path.c_str());
     return false;
   }
   auto xml_string = std::string(std::istreambuf_iterator<char>(xml_file),
@@ -36,7 +40,7 @@ bool CarlaDecision::LoadBehaviorTree(const std::string &filename) {
   try {
     bt_tree_ = bt_factory_.createTreeFromText(xml_string, bt_blackboard_);
   } catch (BT::RuntimeError & exp) {
-    ROS_ERROR("%s: %s", filename.c_str(), exp.what());
+    ROS_ERROR("%s: %s", xml_full_path.c_str(), exp.what());
     return false;
   }
 

@@ -2,7 +2,7 @@
     <arg name="odom_topic" default="/carla/ego_vehicle/odometry" />
     <arg name='role_name' default='ego_vehicle'/>
 
-        <rosparam file="$(find carla_path_tracking)/config/path_tracking.yaml" command="load" />
+    <rosparam file="$(find carla_path_tracking)/config/path_tracking.yaml" command="load" />
     <node name="carla_path_tracking_node" pkg="carla_path_tracking" type="carla_path_tracking_node" output="screen">
         <remap from="odom" to="$(arg odom_topic)"/>
     </node>

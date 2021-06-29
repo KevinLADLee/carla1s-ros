@@ -8,7 +8,7 @@ class CarlaDecision{
  public:
   CarlaDecision();
 
-  bool LoadBehaviorTree(const std::string & filename);
+  bool LoadBehaviorTree(const std::string & xml_base_path);
 
   void Tick();
 
@@ -16,14 +16,17 @@ class CarlaDecision{
   std::string DetermineLibPath(const std::string &path);
 
  private:
+  //! Parameters
+  std::string bt_tree_filename;
+  std::string role_name;
+
+  ros::NodeHandlePtr nh_ptr_;
+
   BT::Tree bt_tree_;
   BT::Blackboard::Ptr bt_blackboard_;
   BT::BehaviorTreeFactory bt_factory_;
-  ros::NodeHandlePtr nh_ptr_;
   std::unique_ptr<BT::PublisherZMQ> publisher_zmq_ptr_;
   std::unique_ptr<carla_decision::BlackboardHandler> bt_blackboard_handler_;
-
-  ros::Subscriber goal_sub_;
 
   const std::vector<std::string> plugin_libs_ = {
       "bt_action_stop_and_wait",
