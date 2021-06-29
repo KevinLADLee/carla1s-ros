@@ -13,7 +13,7 @@
 * Ubuntu 20.04 (其他版本建议使用Docker)
 * Docker 19.03及以上
 * ROS Noetic
-* CARLA 0.9.11
+* CARLA 0.9.11 (carla1s:sustech-main)
 * [Nvidia-Docker2](https://github.com/NVIDIA/nvidia-docker)
 
 ## 支持模块
@@ -23,8 +23,7 @@
 - [x] Behevior Tree Based Decision
 - [x] Path Planner
 - [ ] Trajectory Planner
-- [x] Path Tracking (Pure-Pursuit)
-- [x] Ackermann Controller
+- [x] Path Tracking (Pure-Pursuit / PID)
 
 ## 使用Docker快速测试
 
@@ -66,7 +65,7 @@ sudo apt install -y \
     ninja-build
     
 pip3 --no-cache-dir install --upgrade \
-        networkx distro pygame simple-pid numpy==1.18.4 transforms3d    
+        networkx distro pygame simple-pid numpy==1.18.4 transforms3d \ pep8 autopep8 cmake_format==0.6.11 pylint pexpect   
 ```
 
 ### 安装GTSAM (optional)
@@ -88,16 +87,15 @@ sudo make install
 ```bash
 mkdir -p carla_ws/src
 cd carla_ws/src
-git clone --recurse-submodules https://gitlab.isus.tech/kevinlad/carla-ros-bridge.git
+git clone --recurse-submodules https://gitlab.isus.tech/carla1s/carla1s-ros.git
 cd ..
 catkin_make -DCMAKE_BUILD_TYPE=Release --use-ninja
 
-source devel/setup.zsh
+source devel/setup.bash
+#source devel/setup.zsh
 
 roslaunch carla_2d_nav carla_example_ego_vehicle.launch town:=Town02
+#roslaunch carla_2d_nav carla_example_ego_vehicle.launch town:=ParkingLot
 roslaunch carla_decision carla_decision_test.launch
 ```
 
-## 整体设计与开发情况
-
-![carla-ros-bridge.png](/carla-ros-bridge.png)
