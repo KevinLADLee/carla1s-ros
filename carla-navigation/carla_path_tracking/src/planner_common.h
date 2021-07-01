@@ -25,6 +25,7 @@ struct Pose2d{
   double yaw = 0;
 };
 
+using Pose2dPtr = Pose2d::Ptr;
 using Path2d = std::vector<Pose2d>;
 using Path2dPtr = std::shared_ptr<Path2d>;
 

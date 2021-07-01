@@ -82,7 +82,7 @@ class PIDImpl
   T min_integral_;
 };
 
-class PID : public PathTrackingBase{
+class PID : public LongitudinalController{
  public:
   // Kp -  proportional gain
   // Ki -  Integral gain

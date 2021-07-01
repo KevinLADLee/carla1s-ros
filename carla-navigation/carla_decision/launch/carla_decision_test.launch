@@ -2,10 +2,11 @@
 
     <arg name='role_name' default='ego_vehicle' />
     <arg name='bt_tree_filename' default='avp_demo.xml' />
+<!--     <arg name='bt_tree_filename' default='avp_demo_reeds_shepp.xml' /> -->
 
     <node name="carla_decision_node" pkg="carla_decision" type="carla_decision_node" output="screen" >
         <param name="role_name" value="$(arg role_name)" />
-        <param name="bt_tree_filename" value="$(arg avp_demo.xml)" />
+        <param name="bt_tree_filename" value="$(arg bt_tree_filename)" />
     </node>
 
     <include file="$(find carla_global_planner)/launch/carla_global_planner.launch" />

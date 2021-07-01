@@ -9,7 +9,7 @@ lidar_horizon_scans: 1800
 lidar_angle_resolution_x: 0.2
 lidar_angle_resolution_y: 0.3
 lidar_angle_bottom: 20.0
-lidar_ground_scan_index: 7
+lidar_ground_scan_index: 10
 lidar_min_range: 1.0
 lidar_mount_angle: 0.0
 #segment_alpha_x: lidar_angle_resolution_x  / 180.0 * M_PI

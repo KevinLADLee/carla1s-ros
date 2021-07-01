@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Fallback>
+            <ReactiveFallback>
+                <Condition ID="GoalUpdated"/>
+                <Control ID="PipelineSequence">
+                    <Action ID="ComputePathToGoal" planner_id="reeds_shepp"/>
+                    <Action ID="TrackingPath"/>
+                </Control>
+            </ReactiveFallback>
+            <ReactiveFallback>
+                <Condition ID="GoalUpdated"/>
+                <Action ID="StopAndWait"/>
+            </ReactiveFallback>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="ComputePathToGoal">
+            <input_port name="planner_id" type="std::string"/>
+        </Action>
+        <Condition ID="GoalUpdated"/>
+        <Control ID="PipelineSequence"/>
+        <Action ID="StopAndWait"/>
+        <Action ID="TrackingPath"/>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+

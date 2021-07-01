@@ -166,7 +166,7 @@ Visualization Manager:
       Color: 0; 255; 0
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 96
@@ -183,7 +183,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -196,7 +196,7 @@ Visualization Manager:
       Color: 255; 170; 255
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 96
@@ -213,7 +213,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -259,9 +259,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 87.0197982788086
+      Max Intensity: -999999
       Min Color: 0; 0; 0
-      Min Intensity: 5
+      Min Intensity: 999999
       Name: Segmentation Full
       Position Transformer: XYZ
       Queue Size: 10
@@ -349,7 +349,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 78
+      Max Intensity: 0
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: Trajectory
@@ -439,9 +439,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 89.15699768066406
+      Max Intensity: 29.178499221801758
       Min Color: 0; 0; 0
-      Min Intensity: 0
+      Min Intensity: 8.00724983215332
       Name: Map Cloud
       Position Transformer: XYZ
       Queue Size: 10
@@ -530,7 +530,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 128.4352264404297
+      Distance: 131.5012664794922
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -538,17 +538,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 3.0157294273376465
-        Y: 17.96337890625
+        X: -1.772529125213623
+        Y: -0.4368877410888672
         Z: -0.4354056715965271
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0897966623306274
+      Pitch: -0.00020301342010498047
       Target Frame: base_link
-      Yaw: 1.8500025272369385
+      Yaw: 4.730003833770752
     Saved: ~
 Window Geometry:
   Displays:

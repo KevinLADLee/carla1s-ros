@@ -4,12 +4,12 @@
 
 #include "pure_pursuit.h"
 
-double PurePursuit::RunStep(const Pose2d &vehicle_pose,
+double PurePursuit::RunStep(const Pose2dPtr &vehicle_pose,
                             const Path2dPtr &waypoints) {
 
-  vehicle_pose_ = vehicle_pose;
+  vehicle_pose_ = *vehicle_pose;
   double steering = 0.0;
-  int status = CalculateSteering(vehicle_pose, steering);
+  int status = CalculateSteering(*vehicle_pose, steering);
   steering = -clip(steering, -max_steering_angle_, max_steering_angle_);
   return steering;
 }

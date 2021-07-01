@@ -234,12 +234,12 @@ void PathTracking::PathTrackingLoop() {
 //    plan_condition_.wait_for(path_lock, sleep_time);
     auto begin_time = std::chrono::steady_clock::now();
 
-    Pose2d vehicle_pose;
+    Pose2dPtr vehicle_pose;
     double vehicle_speed;
     {
       std::lock_guard<std::mutex> guard(odom_mutex_);
       // get vehicle_pose in map frame
-      vehicle_pose = vehicle_pose_;
+      vehicle_pose = std::make_shared<Pose2d>(vehicle_pose_);
       vehicle_speed = vehicle_speed_;
     }
 
@@ -247,13 +247,14 @@ void PathTracking::PathTrackingLoop() {
     std::unique_lock<std::mutex> path_lock(path_mutex_);
     vehicle_control_msg_.steer = static_cast<float>(lateral_controller_ptr_->RunStep(vehicle_pose));
     path_lock.unlock();
-    //std::cout << "target: " << target_speed_ << " current: " << vehicle_speed << std::endl;
+
     vehicle_control_msg_.throttle = static_cast<float>(longitudinal_controller_ptr->RunStep(target_speed_, vehicle_speed));
     vehicle_control_msg_.brake = 0.0;
     control_cmd_pub_.publish(vehicle_control_msg_);
-    std::cout << "steering: " << vehicle_control_msg_.steer << std::endl;
+    //std::cout << "target: " << target_speed_ << " current: " << vehicle_speed << std::endl;
+    //std::cout << "steering: " << vehicle_control_msg_.steer << std::endl;
 
-    PublishMarkers(vehicle_pose, lateral_controller_ptr_->GetCurrentTrackPoint());
+    PublishMarkers(*vehicle_pose, lateral_controller_ptr_->GetCurrentTrackPoint());
     if(lateral_controller_ptr_->IsGoalReached()){
       ROS_INFO("Reached goal!");
       SetNodeState(NodeState::SUCCESS);

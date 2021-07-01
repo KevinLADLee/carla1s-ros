@@ -13,12 +13,12 @@
 // PurePursuit Implementation
 // Ref: http://acl.mit.edu/papers/KuwataGNC08.pdf
 
-class PurePursuit : public PathTrackingBase{
+class PurePursuit : public LateralController{
  public:
 
   int Initialize(float wheelbase, float goal_radius,float look_ahead_dist_fwd = 2.5, float anchor_dist_fwd = 1.5);
 
-  double RunStep(const Pose2d &vehicle_pose,
+  double RunStep(const Pose2dPtr &vehicle_pose,
                  const Path2dPtr &waypoints = nullptr) override;
 
   int SetPlan(const Path2d &path, const DrivingDirection &driving_direction) override;
@@ -40,8 +40,8 @@ class PurePursuit : public PathTrackingBase{
   float wheel_base = 0; // Wheelbase (L, distance between front and back wheel)
   float L_fw = 3.0; // Forward look-ahead distance (L_fw)
   float l_anchor_fw = 1.5; // Forward anchor distance (L_fw)
-  float L_rv = 1.0; // Reverse look-ahead distance (L_rv)
-  float l_anchor_rv = 0.0; // Reverse anchor distance (l_rv)
+  float L_rv = 2.0; // Reverse look-ahead distance (L_rv)
+  float l_anchor_rv = 1.0; // Reverse anchor distance (l_rv)
 
   float goal_radius_;
 

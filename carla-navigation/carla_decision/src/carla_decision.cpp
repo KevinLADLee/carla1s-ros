@@ -14,7 +14,7 @@ CarlaDecision::CarlaDecision() {
 
 bool CarlaDecision::LoadBehaviorTree(const std::string &xml_base_path) {
   auto xml_full_path =  xml_base_path + bt_tree_filename;
-  std::cout << "Loading behavior tree: " << xml_full_path << std::endl;
+  ROS_INFO("Loading behavior tree: %s", xml_full_path.c_str());
   // Check and load behavior tree xml file as xml_string
   std::ifstream xml_file(xml_full_path);
   if (!xml_file.good()) {
@@ -47,7 +47,7 @@ bool CarlaDecision::LoadBehaviorTree(const std::string &xml_base_path) {
   // This logger publish status changes using ZeroMQ. Used by Groot
   publisher_zmq_ptr_ = std::make_unique<BT::PublisherZMQ>(bt_tree_);
 
-  std::cout << "Loading success!" << std::endl;
+  ROS_INFO("Loading behavior tree success!");
   return true;
 }
 

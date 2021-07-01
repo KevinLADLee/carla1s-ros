@@ -76,6 +76,8 @@ void ImageProjection::getParamFromRos() {
   nh.param<int>("segment_valid_point_num", segment_valid_point_num, 5);
   nh.param<int>("segment_valid_line_num", segment_valid_line_num, 3);
 
+  ROS_INFO("N_SCANS: %d", N_SCAN);
+
 }
 
 
