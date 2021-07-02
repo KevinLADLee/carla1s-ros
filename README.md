@@ -1,4 +1,4 @@
-# CARLA-ROS 集成包
+# carla1s-ros
 
 本仓库主要结合CARLA ROS-Bridge以及主流的Navigation相关算法，集成打包方便用于各模块算法的验证测试。
 
@@ -93,6 +93,11 @@ sudo make install
 export CARLA_ROOT=[PATH_TO_CARLA]
 export PYTHONPATH=$PYTHONPATH:$CARLA_ROOT/PythonAPI/carla/dist/[CARLA_PYTHON_EGG_FILENAME]:$CARLA_ROOT/PythonAPI/carla/
 
+#运行Carla服务端
+cd $CARLA_ROOT
+./CarlaUE4.sh --vulkan
+
+#下载并编译carla1s-ros
 mkdir -p carla_ws/src
 cd carla_ws/src
 git clone --recurse-submodules https://gitlab.isus.tech/carla1s/carla1s-ros.git
@@ -101,6 +106,8 @@ catkin_make -DCMAKE_BUILD_TYPE=Release --use-ninja
 
 source devel/setup.bash
 #source devel/setup.zsh
+
+
 
 roslaunch carla_2d_nav carla_example_ego_vehicle.launch town:=Town02
 #roslaunch carla_2d_nav carla_example_ego_vehicle.launch town:=ParkingLot
