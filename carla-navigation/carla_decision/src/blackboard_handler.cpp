@@ -35,7 +35,7 @@ void BlackboardHandler::TrafficLightCallback(const std_msgs::BoolConstPtr& msg) 
 void BlackboardHandler::GoalCallback(const geometry_msgs::PoseStampedConstPtr &goal) {
   bb_ptr_->set<geometry_msgs::PoseStamped>("goal", *goal);
   bb_ptr_->set<bool>("first_goal_received", true);
-  DLOG_INFO( "Goal Updated!");
+  ROS_INFO( "BT Blackboard: Received new goal: (%f,%f)", goal->pose.position.x, goal->pose.position.y);
 }
 
 }

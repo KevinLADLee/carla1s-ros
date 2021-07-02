@@ -40,7 +40,7 @@ class LateralController{
  protected:
   double max_steering_angle_ = 0.0;
   Path2d path_;
-  DrivingDirection driving_direction_;
+  DrivingDirection driving_direction_ = DrivingDirection::FORWARD;
 };
 
 class LongitudinalController{
@@ -75,7 +75,7 @@ class LongitudinalController{
 
  protected:
   double max_throttle_ = 1.0;
-  DrivingDirection driving_direction_;
+  DrivingDirection driving_direction_ = DrivingDirection::FORWARD;
 
 };
 

@@ -50,14 +50,14 @@ class RosActionNode : public BT::ActionNodeBase
 
   RosActionNode(const std::string& name, const std::string & action_client_name, const BT::NodeConfiguration & conf):
       BT::ActionNodeBase(name, conf), action_client_name_(action_client_name)
-{
+  {
     nh_ = config().blackboard->template get<ros::NodeHandlePtr>("node_handler");
     action_client_ = std::make_shared<ActionClientType>( *nh_, action_client_name_, true );
 
-    std::cout << "[BT ROS Action Node]: " << "Waiting action server (" << action_client_name_ << ")..." << std::endl;
+    ROS_INFO("BT ROS Action Node: Waiting action server %s ...", action_client_name_.c_str());
     action_client_->waitForServer();
-    std::cout << "[BT ROS Action Node]: Action Server (" << action_client_name_ << ") connected success!" << std::endl;
-}
+    ROS_INFO("BT ROS Action Node: Action server %s connected!", action_client_name_.c_str());
+  }
 
  public:
 
@@ -116,19 +116,19 @@ class RosActionNode : public BT::ActionNodeBase
   {
     switch (failure) {
       case FailureCause::ABORTED_BY_SERVER:
-        std::cout << "Error: " << action_client_name_ << " ABORTED_BY_SERVER!" << std::endl;
+        ROS_WARN("BT Action Node: %s ABORTED_BY_SERVER", action_client_name_.c_str());
         break;
       case FailureCause::REJECTED_BY_SERVER:
-        std::cout << "Error: " << action_client_name_ << " REJECTED_BY_SERVER!" << std::endl;
+        ROS_WARN("BT Action Node: %s REJECTED_BY_SERVER", action_client_name_.c_str());
         break;
       case FailureCause::NOT_VALID_PATH:
-        std::cout << "Error: " << action_client_name_ << " NOT_VALID_PATH!" << std::endl;
+        ROS_WARN("BT Action Node: %s NOT_VALID_PATH", action_client_name_.c_str());
         break;
       case FailureCause::PREEMPTED:
-        std::cout << "Error: " << action_client_name_ << " PREEMPTED!" << std::endl;
+        ROS_WARN("BT Action Node: %s PREEMPTED", action_client_name_.c_str());
         break;
       default:
-        std::cout << "Error: Aborted" << std::endl;
+        ROS_WARN("BT Action Node: Action aborted!");
     }
     setStatus(NodeStatus::IDLE);
     return NodeStatus::FAILURE;
@@ -149,12 +149,11 @@ class RosActionNode : public BT::ActionNodeBase
 
   BT::NodeStatus tick() override
   {
-    // Timeout 100ms
-//    ros::Duration timeout(static_cast<double>(300.0) * 1e-3);
+
     bool connected = action_client_->isServerConnected();
-        //action_client_->waitForServer(timeout);
+    //action_client_->waitForServer(timeout);
     if( !connected ){
-      std::cerr << "[MISSING_SERVER] " << action_client_name_ << " connected failed!" << std::endl;
+      ROS_ERROR("BT Action Node: %s connect to server failed!" ,action_client_name_.c_str());
       return on_failed_request(MISSING_SERVER);
     }
 
@@ -163,7 +162,7 @@ class RosActionNode : public BT::ActionNodeBase
       // setting the status to RUNNING to notify the BT Loggers (if any)
       setStatus(BT::NodeStatus::RUNNING);
       on_tick();
-      std::cout << action_client_name_ << " send goal" << std::endl;
+      ROS_INFO("BT Action Node: %s send goal", action_client_name_.c_str());
       if (status() == BT::NodeStatus::FAILURE) {
         return BT::NodeStatus::FAILURE;
       } else{

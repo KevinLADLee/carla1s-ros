@@ -47,7 +47,7 @@ bool PathTracking::UpdateParam() {
     auto vehicle_info_msg = ros::topic::waitForMessage<carla_msgs::CarlaEgoVehicleInfo>("/carla/"+role_name+"/vehicle_info", nh_, ros::Duration(120));
     auto wheels = vehicle_info_msg->wheels;
     vehicle_wheelbase = std::abs(wheels.at(0).position.x - wheels.at(2).position.x);
-    ROS_INFO("VehicleInfo: wheel_base = %f", vehicle_wheelbase);
+    ROS_INFO("PathTracking: VehicleInfo: wheel_base = %f", vehicle_wheelbase);
   }
   return true;
 }
@@ -62,8 +62,8 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
       preempted = false;
       break;
     }
-    ROS_INFO("Path Tracking Goal Received!");
-    ROS_INFO("Current Path Index: %ld / Total %ld", 1 + current_path_it - action_goal_msg->path.paths.begin(), path_num);
+    ROS_INFO("PathTracking: Path Tracking Goal Received!");
+    ROS_INFO("PathTracking: Current Path Index: %ld / Total %ld", 1 + current_path_it - action_goal_msg->path.paths.begin(), path_num);
     auto node_state = GetNodeState();
 
     if (node_state == NodeState::FAILURE) {
@@ -91,7 +91,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
 //      plan_condition_.notify_one();
     }
 
-    ROS_INFO("Start tracking!");
+    ROS_INFO("PathTracking: Start tracking this path!");
     if (node_state == NodeState::IDLE) {
       StartPathTracking();
     }
@@ -100,7 +100,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
       std::this_thread::sleep_for(std::chrono::microseconds(1));
 
       if (as_->isPreemptRequested()) {
-        ROS_INFO("Action Preempted");
+        ROS_INFO("PathTracking: Action Preempted");
         StopPathTracking();
         SetNodeState(NodeState::IDLE);
         preempted = true;
@@ -143,7 +143,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
     current_path_it++;
     current_direction_it++;
   }
-  ROS_INFO("Path Tracking Action Succeed!");
+  ROS_INFO("PathTracking: Action Succeed!");
 }
 
 void PathTracking::OdomCallback(const nav_msgs::Odometry_<std::allocator<void>>::ConstPtr &odom_msg) {
@@ -215,6 +215,7 @@ void PathTracking::StartPathTracking() {
     path_tracking_thread_.join();
   }
   SetNodeState(NodeState::RUNNING);
+  ROS_INFO("PathTracking: start tracking path thread");
   path_tracking_thread_ = std::thread([this] { PathTrackingLoop(); });
 }
 
@@ -223,17 +224,14 @@ void PathTracking::StopPathTracking() {
   if(path_tracking_thread_.joinable()){
     path_tracking_thread_.join();
   }
-  ROS_INFO("stop tracking path");
+  ROS_INFO("PathTracking: stop tracking path thread");
 }
 
 void PathTracking::PathTrackingLoop() {
   auto sleep_time = std::chrono::milliseconds(0);
 
   while (GetNodeState() == NodeState::RUNNING){
-
-//    plan_condition_.wait_for(path_lock, sleep_time);
     auto begin_time = std::chrono::steady_clock::now();
-
     Pose2dPtr vehicle_pose;
     double vehicle_speed;
     {
@@ -256,7 +254,7 @@ void PathTracking::PathTrackingLoop() {
 
     PublishMarkers(*vehicle_pose, lateral_controller_ptr_->GetCurrentTrackPoint());
     if(lateral_controller_ptr_->IsGoalReached()){
-      ROS_INFO("Reached goal!");
+      ROS_INFO("PathTracking: Reached goal!");
       SetNodeState(NodeState::SUCCESS);
       StopVehicle();
     }
@@ -268,7 +266,7 @@ void PathTracking::PathTrackingLoop() {
     }
     std::this_thread::sleep_for(sleep_time);
   }
-  ROS_INFO("Stop path tracking loop...");
+  ROS_INFO("PathTracking: Stop path tracking loop succeed! ");
   StopVehicle();
 }
 

@@ -1,36 +1,12 @@
 #!/usr/bin/env python
-#
-# Copyright (c) 2019 Intel Corporation
-#
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
-"""
-Generates a plan of waypoints to follow
 
-It uses the current pose of the ego vehicle as starting point. If the
-vehicle is respawned or move, the route is newly calculated.
-
-The goal is either read from the ROS topic `/carla/<ROLE NAME>/move_base_simple/goal`, if available
-(e.g. published by RVIZ via '2D Nav Goal') or a fixed point is used.
-
-The calculated route is published on '/carla/<ROLE NAME>/waypoints'
-
-Additionally, services are provided to interface CARLA waypoints.
-"""
 import math
-from os import path
-import nav_msgs.msg
-import rospy
-import sys
-import threading
-import geometry_msgs.msg
 import rospy
 import actionlib
 
 from geometry_msgs.msg import PoseStamped, Point
 import carla_common.transforms as trans
 from carla_msgs.msg import CarlaWorldInfo
-import carla_nav_msgs.msg
 from nav_msgs.msg import Path
 from carla_nav_msgs.msg import Path as PathArray
 from carla_nav_msgs.msg import PathPlannerAction, PathPlannerResult, PathPlannerFeedback
@@ -43,7 +19,6 @@ from agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
 
 from rospy import ROSException
 
-from sys import path
 import numpy as np
 from collections import namedtuple
 from scipy.spatial.transform import Rotation as rot
@@ -670,7 +645,7 @@ class CarlaToRosWaypointConverter:
         self.ego_vehicle_location = None
         self.on_tick = None
         self.role_name = rospy.get_param("role_name", 'ego_vehicle')
-        self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), nav_msgs.msg.Path, latch=True,
+        self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), Path, latch=True,
                                                   queue_size=1)
         
         self.path_markers_publisher = rospy.Publisher('/carla/{}/path_markers'.format(self.role_name), MarkerArray, latch=True,
@@ -696,13 +671,13 @@ class CarlaToRosWaypointConverter:
 
         # use callback to wait for ego vehicle
 
-        rospy.loginfo("Waiting for ego vehicle...")
+        rospy.loginfo("GlobalPlanner: Waiting for ego vehicle...")
         self.on_tick = self.world.on_tick(self.find_ego_vehicle_actor)
 
     def execute_cb(self, goal_msg):
 
-        rospy.loginfo("Received goal, trigger rerouting...")
-        rospy.loginfo("Planner id: {}".format(goal_msg.planner_id))
+        rospy.loginfo("GlobalPlanner: Received goal, trigger rerouting...")
+        rospy.loginfo("GlobalPlanner: Planner id: {}".format(goal_msg.planner_id))
 
         carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
         self.goal = carla_goal
@@ -710,7 +685,7 @@ class CarlaToRosWaypointConverter:
         if goal_msg.planner_id == "reeds_shepp":
             self.pose_list.clear()
             if self.ego_vehicle is None or self.goal is None:
-                rospy.logerr("Error: ego_vehicle not valid now!")
+                rospy.logerr("GlobalPlanner: ego_vehicle not valid now!")
                 self.route_polanner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
             elif self.is_goal_reached(self.goal):
                 self.route_polanner_server.set_aborted(text="Already reached goal!")
@@ -728,7 +703,7 @@ class CarlaToRosWaypointConverter:
             self._result.path = PathArray()
             self._result.path.header.frame_id = "map"
             self._result.path.header.stamp = rospy.Time.now()
-            path = nav_msgs.msg.Path()
+            path = Path()
             self._result.path.paths.append(path)
             self._result.path.paths[0].header.frame_id = "map"
             self._result.path.paths[0].header.stamp = rospy.Time.now()
@@ -746,7 +721,7 @@ class CarlaToRosWaypointConverter:
                         self._result.path.paths[0].poses.append(pose)
 
                 waypoint_num = len(self._result.path.paths[0].poses)
-                result_info = "Got path {} waypoints.".format(waypoint_num)
+                result_info = "GlobalPlanner: Got path {} waypoints.".format(waypoint_num)
                 rospy.loginfo(result_info)
                 if waypoint_num <= 1:
                     self.route_polanner_server.set_aborted(self._result, result_info)
@@ -856,10 +831,10 @@ class CarlaToRosWaypointConverter:
         """
         Calculate a route from the current location to 'goal'
         """
-        rospy.loginfo("Calculating route to x={}, y={}, z={}".format(
-            goal.location.x,
-            goal.location.y,
-            goal.location.z))
+        # rospy.loginfo("Calculating route to x={}, y={}, z={}".format(
+        #     goal.location.x,
+        #     goal.location.y,
+        #     goal.location.z))
 
         dao = GlobalRoutePlannerDAO(self.world.get_map(), sampling_resolution=1)
         grp = GlobalRoutePlanner(dao)
@@ -875,7 +850,7 @@ class CarlaToRosWaypointConverter:
         """
         Publish the ROS message containing the waypoints
         """
-        msg = nav_msgs.msg.Path()
+        msg = Path()
         msg.header.frame_id = "map"
         msg.header.stamp = rospy.Time.now()
         if self.current_route is not None:

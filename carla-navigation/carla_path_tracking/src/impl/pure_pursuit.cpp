@@ -51,17 +51,17 @@ int PurePursuit::CalculateSteering(const Pose2d &vehicle_pose, double &steering)
     }
     if(current_waypoint_it_ == path_.end()){
       steering = 0.0;
-      std::cerr << "No more valid waypoints, need replan!" << std::endl;
+//      std::cerr << "No more valid waypoints, need replan!" << std::endl;
       return -1;
     }
   } else{
-    std::cout << "Pure pursuit: Reached Goal!" << std::endl;
+//    std::cout << "Pure pursuit: Reached Goal!" << std::endl;
     valid_waypoint = goal_;
     found_valid_waypoint_ = false;
     steering = 0.0;
     return 0;
   }
-  std::cout << "Pure pursuit: Found valid waypoint!" << std::endl;
+//  std::cout << "Pure pursuit: Found valid waypoint!" << std::endl;
   auto forward_point_in_vehicle_frame = ToVehicleFrame(valid_waypoint, vehicle_pose);
   if(GetDrivingDirection() == DrivingDirection::FORWARD){
     float eta = std::atan2(forward_point_in_vehicle_frame.y, forward_point_in_vehicle_frame.x);
