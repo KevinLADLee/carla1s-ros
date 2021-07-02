@@ -37,7 +37,7 @@ RUN apt-get update && \
     ninja-build \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 --no-cache-dir install --upgrade \
-        networkx distro pygame simple-pid numpy==1.18.4 transforms3d
+        networkx distro pygame simple-pid numpy==1.18.4 transforms3d scipy
 ARG CARLA_VERSION
 
 COPY --from=carla --chown=root /home/carla/PythonAPI /opt/carla/PythonAPI

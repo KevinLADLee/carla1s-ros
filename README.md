@@ -6,7 +6,8 @@
 
 * Intel i7-9700k及更高单核性能CPU 
 * 32G+ RAM
-* Nvidia 2060及更高级别GPU
+* Nvidia Geforce RTX2070及更高级别GPU
+* 开发者测试环境： intel i7-10700k / 32G DDR4 RAM / RTX3070
 
 ## 环境需求
 
@@ -65,10 +66,11 @@ sudo apt install -y \
     ninja-build
     
 pip3 --no-cache-dir install --upgrade \
-        networkx distro pygame simple-pid numpy==1.18.4 transforms3d \ pep8 autopep8 cmake_format==0.6.11 pylint pexpect   
+        networkx distro pygame simple-pid numpy==1.18.4 transforms3d \ 
+        pep8 autopep8 cmake_format==0.6.11 pylint pexpect scipy  
 ```
 
-### 安装GTSAM (optional)
+### 安装GTSAM (可选)
 此依赖为`carla-sc-lego-loam`使用，如不需要，请在`carla-sc-lego-loam`文件夹下添加`CATKIN_IGNORE`文件。
 
 ```bash
@@ -85,6 +87,12 @@ sudo make install
 ### 下载源码编译并测试
 
 ```bash
+# 需添加以下环境变量至bashrc或zshrc中
+# 其中[PATH_TO_CARLA]代表carla服务端（CarlaUE4.sh）所在目录
+# [CARLA_PYTHON_EGG_FILENAME]是egg文件的文件名，如carla-0.9.11-py3.7-linux-x86_64.egg
+export CARLA_ROOT=[PATH_TO_CARLA]
+export PYTHONPATH=$PYTHONPATH:$CARLA_ROOT/PythonAPI/carla/dist/[CARLA_PYTHON_EGG_FILENAME]:$CARLA_ROOT/PythonAPI/carla/
+
 mkdir -p carla_ws/src
 cd carla_ws/src
 git clone --recurse-submodules https://gitlab.isus.tech/carla1s/carla1s-ros.git
