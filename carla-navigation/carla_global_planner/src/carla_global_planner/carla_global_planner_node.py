@@ -18,7 +18,7 @@ from agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
 
 from rospy import ROSException
 
-from carla_global_planner.reeds_shepp_ros import ReedsSheppROS
+from carla_global_planner.reeds_shepp_ros.reeds_ros import reeds_ros_inter as ReedsSheppROS
 
 class CarlaGlobalPlanner:
     WAYPOINT_DISTANCE = 2.0
@@ -43,7 +43,7 @@ class CarlaGlobalPlanner:
 
         self.current_route = None
 
-        self.rs_curve =  ReedsSheppROS(min_radius=1)
+        self.rs_curve =  ReedsSheppROS(min_radius=3)
         self.pose_list = []
 
 
