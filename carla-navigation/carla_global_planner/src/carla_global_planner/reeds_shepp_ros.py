@@ -4,6 +4,11 @@ from nav_msgs.msg import Path
 from carla_nav_msgs.msg import Path as PathArray
 from geometry_msgs.msg import PoseStamped
 
+import numpy as np
+from collections import namedtuple
+from scipy.spatial.transform import Rotation as rot
+from math import sqrt, atan2, sin, cos, pi, inf, asin, acos
+
 from carla_global_planner.reeds_shepp import ReedsShepp
 
 class ReedsSheppROS(ReedsShepp):

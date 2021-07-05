@@ -46,6 +46,7 @@ class CarlaGlobalPlanner:
         self.rs_curve =  ReedsSheppROS(min_radius=1)
         self.pose_list = []
 
+
         self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal",
                                                                   PathPlannerAction,
                                                                   execute_cb=self.execute_cb,

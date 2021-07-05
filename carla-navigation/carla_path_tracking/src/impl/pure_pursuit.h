@@ -40,8 +40,8 @@ class PurePursuit : public LateralController{
   float wheel_base = 0; // Wheelbase (L, distance between front and back wheel)
   float L_fw = 3.0; // Forward look-ahead distance (L_fw)
   float l_anchor_fw = 1.5; // Forward anchor distance (L_fw)
-  float L_rv = 2.0; // Reverse look-ahead distance (L_rv)
-  float l_anchor_rv = 1.0; // Reverse anchor distance (l_rv)
+  float L_rv = 0.5; // Reverse look-ahead distance (L_rv)
+  float l_anchor_rv = 0.0; // Reverse anchor distance (l_rv)
 
   float goal_radius_;
 

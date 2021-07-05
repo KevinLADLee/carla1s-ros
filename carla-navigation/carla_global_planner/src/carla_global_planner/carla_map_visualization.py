@@ -8,6 +8,7 @@
 """
 handle a opendrive sensor
 """
+import xml.etree.ElementTree as ET
 
 import carla
 import rospy
@@ -36,6 +37,8 @@ class CarlaMapVisualization:
         self.world = None
         self.connect_to_carla()
         self.map = self.world.get_map()
+        self.map_name = self.map.name
+        rospy.loginfo("Map Visualization Node: Loading {} map!".format(self.map_name))
         self.map_viz_publisher = rospy.Publisher('/carla/map_visualization', MarkerArray, latch=True, queue_size=1)
 
         self.id = 0
@@ -43,17 +46,17 @@ class CarlaMapVisualization:
 
     def connect_to_carla(self):
 
-        rospy.loginfo("Waiting for CARLA world (topic: /carla/world_info)...")
+        rospy.loginfo("Map Visualization Node: Waiting for CARLA world (topic: /carla/world_info)...")
         try:
             rospy.wait_for_message("/carla/world_info", CarlaWorldInfo, timeout=rospy.Duration(secs=15))
         except ROSException as e:
-            rospy.logerr("Error while waiting for world info: {}".format(e))
+            rospy.logerr("Map Visualization Node: Error while waiting for world info: {}".format(e))
             raise e
 
         host = rospy.get_param("host", "127.0.0.1")
         port = rospy.get_param("port", 2000)
         timeout = rospy.get_param("timeout", 10)
-        rospy.loginfo("CARLA world available. Trying to connect to {host}:{port}".format(
+        rospy.loginfo("Map Visualization Node: CARLA world available. Trying to connect to {host}:{port}".format(
             host=host, port=port))
 
         carla_client = carla.Client(host=host, port=port)
@@ -72,7 +75,11 @@ class CarlaMapVisualization:
         Function (override) to update this object.
         """
         self.draw_map()
-        rospy.loginfo("Got {} markers for carla map visualization".format(len(self.marker_array.markers)))
+        if self.map_name == "ParkingLot":
+            self.draw_parking_spot()
+        
+        rospy.loginfo("Map Visualization Node: Got {} markers for carla map visualization".format(len(self.marker_array.markers)))
+
         r = rospy.Rate(1)
         while not rospy.is_shutdown():
             self.map_viz_publisher.publish(self.marker_array)
@@ -93,6 +100,7 @@ class CarlaMapVisualization:
         arrow_marker.type = Marker.LINE_LIST
         arrow_marker.header.frame_id = "map"
         arrow_marker.id = self.set_marker_id()
+        arrow_marker.ns = "map_visulization"
         arrow_marker.color = ColorRGBA(0.8, 0.8, 0.8, 1)
         arrow_marker.scale.x = 0.2
         arrow_marker.pose.orientation.w = 1
@@ -120,6 +128,7 @@ class CarlaMapVisualization:
         marker.type = Marker.LINE_STRIP
         marker.header.stamp = rospy.Time.now()
         marker.header.frame_id = "map"
+        marker.ns = "map_visulization"
 
         if color is None:
             marker.color = ColorRGBA(1, 1, 1, 1)
@@ -166,6 +175,7 @@ class CarlaMapVisualization:
             road_right_side = [self.lateral_shift(w.transform, w.lane_width * 0.5) for w in waypoints]
             # road_points = road_left_side + [x for x in reversed(road_right_side)]
             # self.add_line_strip_marker(points=road_points)
+            
             if len(road_left_side) > 2:
                 self.add_line_strip_marker(points=road_left_side)
             if len(road_right_side) > 2:
@@ -177,6 +187,41 @@ class CarlaMapVisualization:
                         self.add_arrow_line_marker(wp.transform)
 
 
+    def draw_parking_spot(self):
+        rospy.loginfo("Map Visualization Node: Drawing parking spot")
+
+        # Parking spot No.372
+        # TODO: Parse from oxdr file
+        self.opendrive_xml_root = ET.fromstring(self.map.to_opendrive().encode())
+        # print(etree.tostring(self.opendrive_xml_root))
+        waypoints = []
+        lane_id = 0
+        t = -3.97
+        for road_child in self.opendrive_xml_root:
+            if road_child.tag=='road':
+                for objects in road_child:
+                    if(objects.tag == 'objects'):
+                        for object in objects:
+                            if object.attrib['type'] == 'parking':
+                                road_id = (int)(road_child.attrib['id'])
+                                lane_id = -1
+                                s = (float)(object.attrib['s'])
+                                print("road_id: {}, lane_id: {}, s: {}".format(road_id, lane_id, s))
+                                waypoints.append(self.map.get_waypoint_xodr(road_id, lane_id, s))
+
+        parking_points = [carla.Location(19.71+t, -29.583344,0),carla.Location(19.71+t,-27.25,0)]
+        self.add_line_strip_marker(color=COLOR_SCARLET_RED_0, points=parking_points)
+
+        center = carla.Location(14.527, -11.228, -0.008)
+        x_offset = 2.7
+        y_offset = 1.16
+        point_1 = carla.Location(center.x+2.7,center.y+1.16,center.z)
+        point_2 = carla.Location(center.x-2.7,center.y+1.16,center.z)
+        point_3 = carla.Location(center.x-2.7,center.y-1.16,center.z)
+        point_4 = carla.Location(center.x+2.7,center.y-1.16,center.z)
+        points = [point_1, point_2, point_3, point_4]
+        self.add_line_strip_marker(color=COLOR_SCARLET_RED_0, points=points)
+
 def main(args=None):
     """
     main function
@@ -187,6 +232,7 @@ def main(args=None):
     try:
         carla_map_visualization = CarlaMapVisualization()
         carla_map_visualization.publish_msgs()
+
         rospy.spin()
     except (RuntimeError, ROSException):
         pass
