@@ -161,9 +161,7 @@ class CarlaGrid(object):
         # init = self.world_to_pixel(0,0)
         # cv.circle(img, (init[0],init[1]), 5, (100), -1) 
 
-        cv.imwrite("%s.png" % self.args.map, img) 
-        # gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        # cv.imwrite("%s_gray.png" % self.args.map, gray) 
+        cv.imwrite("{}.png".format(self.args.map), img) 
 
     def generate_yaml(self):
 
@@ -171,14 +169,14 @@ class CarlaGrid(object):
         print(origin)
 
         dict_file = {
-                     'image' : '%s.png' % self.args.map,
+                     'image' : '{}.png'.format(self.args.map),
                      'resolution' : 1.0 / PIXELS_PER_METER,
                      'origin' : [origin[0], -origin[1],0],
                      'negate': 0,
                      'occupied_thresh': 0.65,
                      'free_thresh': 0.2
                     }          
-        with open('%s.yaml' % self.args.map, 'w') as file:
+        with open('{}.yaml'.format(self.args.map), 'w') as file:
             yaml.dump(dict_file, file)
             # For python yaml 5.0 and later
             # documents = yaml.dump(dict_file, file, sort_keys=False)

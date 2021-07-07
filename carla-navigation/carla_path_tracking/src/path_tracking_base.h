@@ -19,10 +19,10 @@ class LateralController{
     return steering;
   };
 
-  virtual int SetPath(const Path2dPtr &path){
-    path_ = *path;
-    return 0;
-  };
+//  virtual int SetPath(const Path2dPtr &path){
+//    path_ = *path;
+//    return 0;
+//  };
 
   virtual int SetPlan(const Path2d &path, const DrivingDirection &driving_direction){
     return -1;
@@ -39,7 +39,7 @@ class LateralController{
 
  protected:
   double max_steering_angle_ = 0.0;
-  Path2d path_;
+  Path2dPtr waypoints_ptr_;
   DrivingDirection driving_direction_ = DrivingDirection::FORWARD;
 };
 

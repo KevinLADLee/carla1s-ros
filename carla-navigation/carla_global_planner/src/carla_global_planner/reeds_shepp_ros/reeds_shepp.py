@@ -1,14 +1,13 @@
-
-import numpy as np
-from collections import namedtuple
-from scipy.spatial.transform import Rotation as rot
-from math import sqrt, atan2, sin, cos, pi, inf, asin, acos
-
 """
 Author: Han Ruihua
 Reference: paper 'Optimal paths for a car that goes both forwards and backwards', github: https://github.com/nathanlct/reeds-shepp-curves/tree/master
 """
-class ReedsShepp:
+
+import numpy as np
+from collections import namedtuple
+from math import sqrt, atan2, sin, cos, pi, inf, asin, acos
+
+class reeds_shepp:
 
     def __init__(self, min_radius=1):
 
@@ -34,8 +33,14 @@ class ReedsShepp:
         return new_x, new_y, new_phi
 
     # shortest path
-    def shortest_path(self, start_point=np.zeros((3, 1)), goal_point=np.ones((3, 1)), step_size=0.01):
+    def shortest_path(self, start_point=np.zeros((3, 1)), goal_point=np.ones((3, 1)), step_size=0.01, include_gear=False):
         
+        if isinstance(start_point, tuple):
+            start_point = np.array([start_point]).T
+
+        if isinstance(goal_point, tuple):
+            goal_point = np.array([goal_point]).T
+
         x, y, phi = self.preprocess(start_point, goal_point)
 
         path_list1, List1 = self.symmetry_curve1(x, y, phi)
@@ -47,9 +52,22 @@ class ReedsShepp:
         L_min = min(total_L_list) 
         path_min = total_path_list[total_L_list.index(L_min)]
 
-        path_point_list = self.reeds_path_generate(start_point, path_min, step_size)
+        path_point_list = self.reeds_path_generate(start_point, path_min, step_size, include_gear)
 
         return path_point_list
+
+    def shortest_length(self, start_point=np.zeros((3, 1)), goal_point=np.ones((3, 1))):
+        
+        x, y, phi = self.preprocess(start_point, goal_point)
+
+        path_list1, List1 = self.symmetry_curve1(x, y, phi)
+        path_list2, List2 = self.symmetry_curve2(x, y, phi)
+
+        total_L_list = List1 + List2
+
+        L_min = round(min(total_L_list), 3)
+        
+        return L_min
 
     # calculate curves
     def symmetry_curve1(self, x, y, phi):
@@ -93,10 +111,9 @@ class ReedsShepp:
         return path_list, L_list
 
     # path generate
-    def reeds_path_generate(self, start_point, path, step_size):
+    def reeds_path_generate(self, start_point, path, step_size, include_gear=False):
 
-        path_point_list = []
-        start_point = start_point
+        path_point_list = [start_point]
         end_point = None
 
         if len(path) == 0:
@@ -105,67 +122,74 @@ class ReedsShepp:
 
         for i in range(len(path)):
             
-            path_list, end_point = self.element_sample(element=path[i], start_point=start_point, step_size=step_size)
+            path_list, end_point = self.element_sample(element=path[i], start_point=start_point, step_size=step_size, include_gear=include_gear)
 
             path_point_list = path_point_list + path_list
             start_point = end_point
 
         return path_point_list
 
-    def element_sample(self, element, start_point, step_size):
+    def element_sample(self, element, start_point, step_size, include_gear=False):
 
+        length = element.len * self.min_r
+        
+        if include_gear:
+            if start_point.shape[0] < 4:
+                add_row = np.array([[element.gear]])
+                start_point = np.vstack((start_point, add_row))
+            else:
+                start_point[3, 0] = element.gear
+
+        path_list = []
+        cur_length = 0
+
+        while cur_length < length:   
+            
+            pre_length = cur_length + step_size
+
+            if cur_length <= length and pre_length > length:
+                step_size = length - cur_length
+
+            new_point = self.motion_acker_step(start_point, element.gear, element.steer, step_size, include_gear)
+
+            cur_length = cur_length + step_size
+            path_list.append(new_point)
+            start_point = new_point
+
+        return path_list, new_point
+    
+
+    def motion_acker_step(self, start_point, gear, steer, step_size, include_gear=False):
+    
         cur_x = start_point[0, 0]
         cur_y = start_point[1, 0]
         cur_theta = start_point[2, 0]
 
-        steer = element.steer
-        gear = element.gear
-        length = element.len * self.min_r
-
-        # calculate end point
-        endpoint = np.zeros((3, 1))
-        path_list = [start_point]
-
         curvature = steer * 1/self.min_r
+        
+        rot_theta = abs(steer) * step_size * curvature * gear
+        trans_len = (1 - abs(steer)) * step_size * gear
+
+        rot_matrix = np.array([[cos(rot_theta), -sin(rot_theta)], [sin(rot_theta), cos(rot_theta)]])
+        trans_matrix = trans_len * np.array([[cos(cur_theta)], [sin(cur_theta)]]) 
+
         center_x = cur_x + cos(cur_theta + steer * pi/2) * self.min_r
         center_y = cur_y + sin(cur_theta + steer * pi/2) * self.min_r
-        rot_len = abs(steer) * length 
-        trans_len = (1 - abs(steer)) * length
-
-        rot_theta = rot_len * curvature * gear
-        rot_matrix = np.array([[cos(rot_theta), -sin(rot_theta)], [sin(rot_theta), cos(rot_theta)]])
-        trans_matrix = trans_len * np.array([[cos(cur_theta)], [sin(cur_theta)]])
         center = np.array([[center_x], [center_y]])
 
-        endpoint[0:2] = rot_matrix @ (start_point[0:2] - center) + center + gear * trans_matrix
-        endpoint[2, 0] = self.M(cur_theta + rot_theta)
+        if include_gear:
+            new_state = np.zeros((4, 1))
+            new_state[0:2] = rot_matrix @ (start_point[0:2] - center) + center + trans_matrix
+            new_state[2, 0] = self.M(cur_theta + rot_theta)
+            new_state[3, 0] = gear
+        else:
+            new_state = np.zeros((3, 1))
+            new_state[0:2] = rot_matrix @ (start_point[0:2] - center) + center + trans_matrix
+            new_state[2, 0] = self.M(cur_theta + rot_theta)
+        
+        return new_state
 
-        cur_length = 0
 
-        if length < 0:
-            length = 2 * pi * self.min_r + length
-
-        while cur_length < length:
-
-            next_x = cur_x + gear * cos(cur_theta) * step_size
-            next_y = cur_y + gear * sin(cur_theta) * step_size
-            next_theta = cur_theta + gear * curvature * step_size
-
-            d_length = np.sqrt( (next_x - cur_x) **2 + (next_y - cur_y) ** 2 )
-            cur_length = cur_length + d_length
-
-            next_point = np.array([[next_x], [next_y], [next_theta]])
-
-            path_list.append(next_point)
-
-            cur_x = next_x
-            cur_y = next_y
-            cur_theta = next_theta
-
-        path_list.append(endpoint)
-
-        return path_list, endpoint
-    
     # transform
     # mode 2pi
     def M(self, theta):
@@ -197,13 +221,16 @@ class ReedsShepp:
         u, t = self.R(x - sin(phi), y-1+cos(phi))
         v = (phi - t) % (2*pi)
 
+        # if t < 0 or t > pi or v < 0 or v> pi:
+        #     return path, inf
+
+        if t<0 or u<0 or v<0:
+            return path, inf
+
         path.append(self.element(t, steer_flag, gear_flag)) 
         path.append(self.element(u, 0, gear_flag)) 
         path.append(self.element(v, steer_flag, gear_flag))
 
-        if t < 0 or t > pi or v < 0 or v> pi:
-            return path, inf
-        
         L = abs(t) + abs(u) + abs(v)
 
         return path, L
@@ -227,6 +254,9 @@ class ReedsShepp:
             v = self.M(t-phi)
             L = abs(t) + abs(u) + abs(v)
 
+            if t<0 or u<0 or v<0:
+                return path, inf
+
             path.append(self.element(t, steer_flag*1, gear_flag)) 
             path.append(self.element(u, 0, gear_flag)) 
             path.append(self.element(v, steer_flag*-1, gear_flag))   
@@ -244,7 +274,9 @@ class ReedsShepp:
         eta = y - 1 + cos(phi)
         u1, theta = self.R(xi, eta)
 
-        if u1 ** 2 > 4:
+        # if u1 ** 2 > 4:
+        #     return path, inf
+        if u1 > 4:
             return path, inf
         
         A = acos(u1/4)
@@ -253,6 +285,9 @@ class ReedsShepp:
         v = self.M(phi-t-u)
         
         L = abs(t) + abs(u) + abs(v)
+
+        if t<0 or u<0 or v<0:
+            return path, inf
 
         path.append(self.element(t, steer_flag*1, gear_flag*1)) 
         path.append(self.element(u, steer_flag*-1, gear_flag*-1)) 
@@ -271,7 +306,7 @@ class ReedsShepp:
         eta = y - 1 + cos(phi)
         u1, theta = self.R(xi, eta)
 
-        if u1 ** 2 > 4:
+        if u1  > 4:
             return path, inf
         
         A = acos(u1/4)
@@ -279,8 +314,11 @@ class ReedsShepp:
         u = self.M(pi - 2*A)
         v = self.M(t+u-phi)
         
+        if t<0 or u<0 or v<0:
+            return path, inf
+        
         L = abs(t) + abs(u) + abs(v)
-
+    
         if backward:
             path.append(self.element(v, steer_flag*1, gear_flag*-1))
             path.append(self.element(u, steer_flag*-1, gear_flag*-1))
@@ -317,6 +355,9 @@ class ReedsShepp:
             u = self.M(pi-A)
             v = self.M(phi-t+2*u)
         
+        if t<0 or u<0 or v<0:
+            return path, inf
+
         L = abs(t) + 2*abs(u) + abs(v)
 
         path.append(self.element(t, steer_flag*1, gear_flag*1)) 
@@ -338,12 +379,15 @@ class ReedsShepp:
         u1, theta = self.R(xi, eta)
         rho = (20 - u1**2) / 16
 
-        if rho >= 0 and rho <= 1:
+        if rho >= 0 and rho <= 1 and u1<=6:
             u = acos(rho)
             A = asin(2*sin(u)/u1)
             t = self.M(theta+pi/2+A)
             v = self.M(t-phi)
 
+            if t<0 or u<0 or v<0:
+                return path, inf
+            
             L = abs(t) + 2*abs(u) + abs(v)
 
             path.append(self.element(t, steer_flag*1, gear_flag*1)) 
@@ -375,6 +419,9 @@ class ReedsShepp:
         t = self.M(theta+pi/2+A)
         v = self.M(t-phi+pi/2)
 
+        if t<0 or u<0 or v<0:
+            return path, inf
+        
         L = abs(t) + pi/2 + abs(u) + abs(v)
 
         if backward:
@@ -407,6 +454,9 @@ class ReedsShepp:
         t = self.M(theta+pi/2)
         u = rho-2
         v = self.M(phi - t -pi/2)
+
+        if t<0 or u<0 or v<0:
+            return path, inf
 
         L = abs(t) + pi/2 + abs(u) + abs(v)
         
@@ -441,6 +491,9 @@ class ReedsShepp:
         A = atan2(2, u+4)
         t = self.M(theta+pi/2+A)
         v = self.M(t-phi)
+
+        if t<0 or u<0 or v<0:
+            return path, inf
 
         L = abs(t) + pi/2 + abs(u) + pi/2 + abs(v)
 
