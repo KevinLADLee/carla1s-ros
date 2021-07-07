@@ -12,6 +12,7 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
 
   UpdateParam();
 
+  path_tracking_timer_ = std::make_unique<carla1s::Timer>(controller_freq);
   lateral_controller_ptr_ = std::make_unique<LateralControllerT>();
   lateral_controller_ptr_->Initialize(vehicle_wheelbase, goal_radius);
   longitudinal_controller_ptr = std::make_unique<LongitudinalControllerT>();
@@ -53,6 +54,9 @@ bool PathTracking::UpdateParam() {
 }
 
 void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goal_msg) {
+
+
+
   bool preempted = false;
   auto current_path_it = action_goal_msg->path.paths.begin();
   auto current_direction_it = action_goal_msg->path.driving_direction.begin();
@@ -75,20 +79,14 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
 
     // TODO: Refactor set plan method
     if (path_mutex_.try_lock()) {
-      auto driving_direction = DrivingDirection::FORWARD;
-      target_speed_ = max_forward_velocity;
-      vehicle_control_msg_.reverse = false;
       if (*current_direction_it == carla_nav_msgs::Path::BACKWARDS) {
-        driving_direction = DrivingDirection::BACKWARDS;
-        vehicle_control_msg_.reverse = true;
-        target_speed_ = max_backwards_velocity;
+        current_driving_direction_ = DrivingDirection::BACKWARDS;
+      }else{
+        current_driving_direction_ = DrivingDirection::FORWARD;
       }
-      longitudinal_controller_ptr->SetDrivingDirection(driving_direction);
-      lateral_controller_ptr_->SetPlan(RosPathToPath2d(*current_path_it),
-                                 driving_direction);
-      InitMarkers((*current_path_it).poses.back());
+      current_goal_ = current_path_it->poses.back();
+      current_path_ptr_ = std::make_shared<Path2d>(RosPathToPath2d(*current_path_it));
       path_mutex_.unlock();
-//      plan_condition_.notify_one();
     }
 
     ROS_INFO("PathTracking: Start tracking this path!");
@@ -229,45 +227,52 @@ void PathTracking::StopPathTracking() {
 
 void PathTracking::PathTrackingLoop() {
   auto sleep_time = std::chrono::milliseconds(0);
+  longitudinal_controller_ptr->SetDrivingDirection(current_driving_direction_);
+  lateral_controller_ptr_->SetDrivingDirection(current_driving_direction_);
+  InitMarkers(current_goal_);
 
   while (GetNodeState() == NodeState::RUNNING){
-    auto begin_time = std::chrono::steady_clock::now();
-    Pose2dPtr vehicle_pose;
+    path_tracking_timer_->TimerStart();
+    Pose2dPtr vehicle_pose_ptr;
     double vehicle_speed;
     {
       std::lock_guard<std::mutex> guard(odom_mutex_);
-      // get vehicle_pose in map frame
-      vehicle_pose = std::make_shared<Pose2d>(vehicle_pose_);
+      vehicle_pose_ptr = std::make_shared<Pose2d>(vehicle_pose_);
       vehicle_speed = vehicle_speed_;
     }
 
+    PublishMarkers(*vehicle_pose_ptr, lateral_controller_ptr_->GetCurrentTrackPoint());
+
     // TODO: Refactor control step
     std::unique_lock<std::mutex> path_lock(path_mutex_);
-    vehicle_control_msg_.steer = static_cast<float>(lateral_controller_ptr_->RunStep(vehicle_pose));
+    vehicle_control_msg_.steer = static_cast<float>(lateral_controller_ptr_->RunStep(vehicle_pose_ptr, current_path_ptr_));
     path_lock.unlock();
 
     vehicle_control_msg_.throttle = static_cast<float>(longitudinal_controller_ptr->RunStep(target_speed_, vehicle_speed));
     vehicle_control_msg_.brake = 0.0;
     control_cmd_pub_.publish(vehicle_control_msg_);
-    //std::cout << "target: " << target_speed_ << " current: " << vehicle_speed << std::endl;
-    //std::cout << "steering: " << vehicle_control_msg_.steer << std::endl;
 
-    PublishMarkers(*vehicle_pose, lateral_controller_ptr_->GetCurrentTrackPoint());
-    if(lateral_controller_ptr_->IsGoalReached()){
+
+    if(IsGoalReached(*vehicle_pose_ptr)){
       ROS_INFO("PathTracking: Reached goal!");
       SetNodeState(NodeState::SUCCESS);
       StopVehicle();
     }
-    auto cost_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin_time);
-    int need_time = 1000 / controller_freq;
-    sleep_time = std::chrono::milliseconds(need_time) - cost_time;
-    if (sleep_time <= std::chrono::milliseconds(0)) {
-      sleep_time = std::chrono::milliseconds(0);
-    }
-    std::this_thread::sleep_for(sleep_time);
+
+    std::this_thread::sleep_for(path_tracking_timer_->TimerEnd());
   }
   ROS_INFO("PathTracking: Stop path tracking loop succeed! ");
   StopVehicle();
+}
+
+bool PathTracking::IsGoalReached(const Pose2d &vehicle_pose) {
+  auto dist = std::hypot(current_goal_.pose.position.x - vehicle_pose.x,
+                    current_goal_.pose.position.y - vehicle_pose.y);
+  if(dist <= goal_radius){
+    return true;
+  } else{
+    return false;
+  }
 }
 
 bool PathTracking::StopVehicle() {
@@ -280,14 +285,6 @@ bool PathTracking::StopVehicle() {
   return true;
 }
 
-Path2d PathTracking::RosPathToPath2d(const nav_msgs::Path &ros_path) {
-  Path2d path2d;
-  path2d.reserve(ros_path.poses.size());
-  for(const auto& pose_ros_it : ros_path.poses){
-    auto yaw = tf2::getYaw(pose_ros_it.pose.orientation);
-    path2d.emplace_back(pose_ros_it.pose.position.x, pose_ros_it.pose.position.y, yaw);
-  }
-  return path2d;
-}
+
 
 
