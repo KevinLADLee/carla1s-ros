@@ -33,24 +33,23 @@ class CarlaGlobalPlanner:
         self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), Path, latch=True,
                                                   queue_size=1)
         
-        self.path_markers_publisher = rospy.Publisher('/carla/{}/path_markers'.format(self.role_name), MarkerArray, latch=True,
-                                                  queue_size=1)
+        self.path_markers_publisher = rospy.Publisher('/carla/{}/path_markers'.format(self.role_name), MarkerArray,
+                                                      latch=True, queue_size=1)
         self.markers = MarkerArray()                                          
-                                                
 
         # set initial goal
         self.goal = None
 
         self.current_route = None
 
-        self.rs_curve =  ReedsSheppROS(min_radius=1)
+        self.rs_curve = ReedsSheppROS(min_radius=1)
         self.pose_list = []
 
-        self.route_polanner_server = actionlib.SimpleActionServer("compute_path_to_goal",
+        self.global_planner_server = actionlib.SimpleActionServer("compute_path_to_goal",
                                                                   PathPlannerAction,
                                                                   execute_cb=self.execute_cb,
                                                                   auto_start=False)
-        self.route_polanner_server.start()
+        self.global_planner_server.start()
         self._feedback = PathPlannerFeedback()
         self._result = PathPlannerResult()
 
@@ -71,16 +70,16 @@ class CarlaGlobalPlanner:
             self.pose_list.clear()
             if self.ego_vehicle is None or self.goal is None:
                 rospy.logerr("GlobalPlanner: ego_vehicle not valid now!")
-                self.route_polanner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
+                self.global_planner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
             elif self.is_goal_reached(self.goal):
-                self.route_polanner_server.set_aborted(text="Already reached goal!")
+                self.global_planner_server.set_aborted(text="Already reached goal!")
             else:       
                 vehicle_pose = trans.carla_transform_to_ros_pose(self.ego_vehicle.get_transform())     
                 self.pose_list.append(vehicle_pose)
                 self.pose_list.append(goal_msg.goal.pose)
                 self._result.path = self.rs_curve.shortest_path(self.pose_list)
                 self.publish_path_array_markers(self._result.path)
-                self.route_polanner_server.set_succeeded(self._result, "success")
+                self.global_planner_server.set_succeeded(self._result, "success")
             # TODO: Action server send result.
         else:
             carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
@@ -94,9 +93,9 @@ class CarlaGlobalPlanner:
             self._result.path.paths[0].header.stamp = rospy.Time.now()
             self._result.path.driving_direction.append(0)
             if self.ego_vehicle is None or self.goal is None:
-                self.route_polanner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
+                self.global_planner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
             elif self.is_goal_reached(self.goal):
-                self.route_polanner_server.set_aborted(text="Already reached goal!")
+                self.global_planner_server.set_aborted(text="Already reached goal!")
             else:
                 self.current_route = self.calculate_route(self.goal)
                 if self.current_route is not None:
@@ -109,10 +108,10 @@ class CarlaGlobalPlanner:
                 result_info = "GlobalPlanner: Got path {} waypoints.".format(waypoint_num)
                 rospy.loginfo(result_info)
                 if waypoint_num <= 1:
-                    self.route_polanner_server.set_aborted(self._result, result_info)
+                    self.global_planner_server.set_aborted(self._result, result_info)
                 else:
                     self.waypoint_publisher.publish(self._result.path.paths[0])
-                    self.route_polanner_server.set_succeeded(self._result, result_info)
+                    self.global_planner_server.set_succeeded(self._result, result_info)
         
     def publish_path_array_markers(self, path_array):
         self.markers = MarkerArray()
