@@ -97,9 +97,8 @@ Pose2d PurePursuit::GetCurrentTrackPoint() {
 }
 
 int PurePursuit::Initialize(float wheelbase, float goal_radius, float look_ahead_dist_fwd, float anchor_dist_fwd) {
-  std::cout << "wheel_base: " << wheelbase << "\n" << "goal_radius: " << goal_radius << std::endl;
+  std::cout << "wheel_base: " << wheelbase << "\n" << std::endl;
   wheel_base = wheelbase;
-//  goal_radius_ = goal_radius;
   L_fw = look_ahead_dist_fwd;
   l_anchor_fw = anchor_dist_fwd;
   return 0;

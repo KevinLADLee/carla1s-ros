@@ -9,8 +9,12 @@
 handle a opendrive sensor
 """
 import xml.etree.ElementTree as ET
+import numpy as np
+
 
 import carla
+
+
 import rospy
 from rospy import ROSException
 
@@ -77,8 +81,9 @@ class CarlaMapVisualization:
         self.draw_map()
         if self.map_name == "ParkingLot":
             self.draw_parking_spot()
-        
-        rospy.loginfo("Map Visualization Node: Got {} markers for carla map visualization".format(len(self.marker_array.markers)))
+
+        rospy.loginfo(
+            "Map Visualization Node: Got {} markers for carla map visualization".format(len(self.marker_array.markers)))
 
         r = rospy.Rate(1)
         while not rospy.is_shutdown():
@@ -175,7 +180,7 @@ class CarlaMapVisualization:
             road_right_side = [self.lateral_shift(w.transform, w.lane_width * 0.5) for w in waypoints]
             # road_points = road_left_side + [x for x in reversed(road_right_side)]
             # self.add_line_strip_marker(points=road_points)
-            
+
             if len(road_left_side) > 2:
                 self.add_line_strip_marker(points=road_left_side)
             if len(road_right_side) > 2:
@@ -185,7 +190,6 @@ class CarlaMapVisualization:
                 for n, wp in enumerate(waypoints):
                     if ((n + 1) % 400) == 0:
                         self.add_arrow_line_marker(wp.transform)
-
 
     def draw_parking_spot(self):
         rospy.loginfo("Map Visualization Node: Drawing parking spot")
@@ -197,30 +201,35 @@ class CarlaMapVisualization:
         waypoints = []
         lane_id = 0
         t = -3.97
-        for road_child in self.opendrive_xml_root:
-            if road_child.tag=='road':
-                for objects in road_child:
-                    if(objects.tag == 'objects'):
-                        for object in objects:
-                            if object.attrib['type'] == 'parking':
-                                road_id = (int)(road_child.attrib['id'])
-                                lane_id = -1
-                                s = (float)(object.attrib['s'])
-                                print("road_id: {}, lane_id: {}, s: {}".format(road_id, lane_id, s))
-                                waypoints.append(self.map.get_waypoint_xodr(road_id, lane_id, s))
+        for road_element in self.opendrive_xml_root.findall('road'):
+            for objects_element in road_element.findall('objects'):
+                for plan_view_element in road_element.findall('planView'):
+                    for geometry_element in plan_view_element:
+                        if(len(geometry_element.findall('line'))>0):
+                            x = geometry_element.attrib['x']
+                            y = geometry_element.attrib['y']
+                            yaw = geometry_element.attrib['hdg']      
+                for object_element in objects_element:
+                    if object_element.attrib['type'] == 'parking':
+                        road_id = int(road_element.attrib['id'])
+                        lane_id = -1
+                        s = float(object_element.attrib['s'])
+                        print("road_id: {}, lane_id: {}, s: {}".format(road_id, lane_id, s))
+                        waypoints.append(self.map.get_waypoint_xodr(road_id, lane_id, s))
 
-        parking_points = [carla.Location(19.71+t, -29.583344,0),carla.Location(19.71+t,-27.25,0)]
+        parking_points = [carla.Location(19.71 + t, -29.583344, 0), carla.Location(19.71 + t, -27.25, 0)]
         self.add_line_strip_marker(color=COLOR_SCARLET_RED_0, points=parking_points)
 
         center = carla.Location(14.527, -11.228, -0.008)
         x_offset = 2.7
         y_offset = 1.16
-        point_1 = carla.Location(center.x+2.7,center.y+1.16,center.z)
-        point_2 = carla.Location(center.x-2.7,center.y+1.16,center.z)
-        point_3 = carla.Location(center.x-2.7,center.y-1.16,center.z)
-        point_4 = carla.Location(center.x+2.7,center.y-1.16,center.z)
+        point_1 = carla.Location(center.x + 2.7, center.y + 1.16, center.z)
+        point_2 = carla.Location(center.x - 2.7, center.y + 1.16, center.z)
+        point_3 = carla.Location(center.x - 2.7, center.y - 1.16, center.z)
+        point_4 = carla.Location(center.x + 2.7, center.y - 1.16, center.z)
         points = [point_1, point_2, point_3, point_4]
         self.add_line_strip_marker(color=COLOR_SCARLET_RED_0, points=points)
+
 
 def main(args=None):
     """
@@ -240,6 +249,7 @@ def main(args=None):
         print("User requested shut down.")
     finally:
         print("Shutting down.")
+
 
 if __name__ == "__main__":
     main()

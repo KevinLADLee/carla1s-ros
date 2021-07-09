@@ -1,6 +1,6 @@
 
-#ifndef SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_BASE_H_
-#define SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_BASE_H_
+#ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_BASE_H_
+#define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_BASE_H_
 
 #include "planner_common.h"
 
@@ -19,15 +19,11 @@ class LateralController{
     return steering;
   };
 
-//  virtual int SetPath(const Path2dPtr &path){
-//    path_ = *path;
-//    return 0;
-//  };
-
-  virtual int SetPlan(const Path2d &path, const DrivingDirection &driving_direction){
-    return -1;
-  };
-
+  /**
+   *
+   * @param driving_direction
+   * @return
+   */
   virtual int SetDrivingDirection(const DrivingDirection &driving_direction){
     driving_direction_ = driving_direction;
     return -1;
@@ -79,4 +75,4 @@ class LongitudinalController{
 
 };
 
-#endif //SRC_CARLA_ROS_BRIDGE_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_BASE_H_
+#endif //CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_BASE_H_
