@@ -1,10 +1,7 @@
-float32 road_width
-float32 parking_spot_length
-# Corner Points Definition (2 points / 4 points)
-#  1---0
-#  |   |
-#  2---3
-geometry_msgs/Point[] parking_spot_corners
+# Parking spot describe as center pose, width, and length
+geometry_msgs/Pose parking_spot_pose
+float64 parking_spot_width
+float64 parking_spot_length
 ---
 bool success
 ---

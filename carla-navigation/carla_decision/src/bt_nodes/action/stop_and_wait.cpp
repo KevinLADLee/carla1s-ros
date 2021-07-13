@@ -10,7 +10,7 @@ StopAndWait::StopAndWait(const std::string &name, const BT::NodeConfiguration &c
 BT::NodeStatus StopAndWait::tick() {
   ROS_INFO("BT Node: StopAndWait");
   setStatus(BT::NodeStatus::RUNNING);
-  ros::Rate r(50);
+  ros::Rate r(20);
   while (status() == BT::NodeStatus::RUNNING) {
     carla_msgs::CarlaEgoVehicleControl control_msg;
     control_msg.steer = 0.0;

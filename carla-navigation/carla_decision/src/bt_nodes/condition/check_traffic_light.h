@@ -2,7 +2,7 @@
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_CONDITION_CHECK_TRAFFIC_LIGHT_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_CONDITION_CHECK_TRAFFIC_LIGHT_H_
 
-#include "common.h"
+#include "carla_decision_common.h"
 
 
 class CheckTrafficLight : public BT::ConditionNode{

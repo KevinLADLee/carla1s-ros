@@ -6,7 +6,7 @@
 #include <behaviortree_cpp_v3/bt_factory.h>
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
-#include "common.h"
+#include "carla_decision_common.h"
 
 namespace BT {
 
@@ -177,7 +177,6 @@ class RosPlanningActionNode : public BT::ActionNodeBase {
 
  protected:
   ros::NodeHandlePtr nh_;
-
   std::string global_action_client_name_;
   std::string local_action_client_name_;
   std::shared_ptr<GlobalPlannerActionClientT> global_planner_action_client_;

@@ -1,7 +1,7 @@
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_CARLA_DECISION_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_CARLA_DECISION_H_
 
-#include "common.h"
+#include "carla_decision_common.h"
 #include "blackboard_handler.h"
 
 class CarlaDecision{
@@ -34,6 +34,7 @@ class CarlaDecision{
       "bt_action_tracking_path",
       "bt_action_move_to_goal",
       "bt_action_cruise",
+      "bt_action_vertical_parking",
       "bt_condition_goal_updated",
       "bt_condition_check_traffic_light",
       "bt_control_pipeline_sequence"

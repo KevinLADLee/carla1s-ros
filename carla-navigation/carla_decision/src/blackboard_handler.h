@@ -1,8 +1,7 @@
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_BLACKBOARD_HANDLER_H_
-#define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_BLACKBOARD_HAND LER_H_
+#define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_BLACKBOARD_HANDLER_H_
 
-#include "common.h"
-#include "types.h"
+#include "carla_decision_common.h"
 #include <carla_msgs/CarlaTrafficLightInfoList.h>
 #include <carla_msgs/CarlaTrafficLightStatusList.h>
 

@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   ackermann_msgs
   visualization_msgs
   carla_msgs
+        carla_nav_common
 )
 
 find_package(Eigen3 REQUIRED)

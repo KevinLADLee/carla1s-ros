@@ -2,7 +2,7 @@
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_ACTION_COMPUTE_PATH_TO_GOAL_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_ACTION_COMPUTE_PATH_TO_GOAL_H_
 
-#include "common.h"
+#include "carla_decision_common.h"
 #include <carla_nav_msgs/Path.h>
 #include <carla_nav_msgs/PathPlannerAction.h>
 #include <actionlib/client/simple_action_client.h>
@@ -20,7 +20,7 @@ class ComputePathToGoal : public BT::RosActionNode<carla_nav_msgs::PathPlannerAc
   static BT::PortsList providedPorts()
   {
     return {
-        BT::InputPort<std::string>("planner_id")
+        BT::InputPort<std::string>("path_planner_id")
     };
   };
 };

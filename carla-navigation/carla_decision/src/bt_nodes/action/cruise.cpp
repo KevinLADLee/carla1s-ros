@@ -1,6 +1,3 @@
-//
-// Created by kevinlad on 2021/6/10.
-//
 
 #include "cruise.h"
 
@@ -13,11 +10,10 @@ Cruise::Cruise(const std::string &bt_node_name,
                                                                           conf) {}
 
 void Cruise::GlobalPlannerFeedbackCallback(const GlobalPlannerActionFeedbackT::ConstPtr &global_planner_feedback) {
-  if(!global_planner_feedback->path.poses.empty())
-  {
-//    local_goal_.path = global_planner_feedback->path;
-    local_planner_action_client_->sendGoal(local_goal_);
-  }
+//  if(!global_planner_feedback->path.poses.empty())
+//  {
+//    local_planner_action_client_->sendGoal(local_goal_);
+//  }
 }
 
 #include "behaviortree_cpp_v3/bt_factory.h"

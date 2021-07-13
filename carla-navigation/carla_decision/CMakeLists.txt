@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
         geometry_msgs
         carla_msgs
         carla_nav_msgs
+        carla_nav_common
         behaviortree_cpp_v3
 )
 
@@ -24,7 +25,10 @@ catkin_package(
 #        LIBRARIES ${PROJECT_NAME}
 )
 
-include_directories(src ${catkin_INCLUDE_DIRS})
+include_directories(
+        src
+        ${catkin_INCLUDE_DIRS}
+)
 
 # Build BT Nodes to shared library
 file(GLOB_RECURSE nodes_src "src/bt_nodes/*/*.cpp")
@@ -37,13 +41,6 @@ foreach(node_src ${nodes_src})
     target_link_libraries(${target_name} BT::behaviortree_cpp_v3 ${catkin_LIBRARIES})
     target_compile_definitions(${target_name} PRIVATE BT_PLUGIN_EXPORT)
     add_dependencies(${target_name} carla_msgs_generate_messages carla_nav_msgs_generate_messages )
-#    if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
-#    set_target_properties(${target_name} PROPERTIES
-#                          LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION})
-#    else()
-#        set_target_properties(${target_name} PROPERTIES
-#                LIBRARY_OUTPUT_DIRECTORY ${CATKIN_PACKAGE_LIB_DESTINATION})
-#    endif()
     list(APPEND node_libs ${target_name})
 endforeach()
 

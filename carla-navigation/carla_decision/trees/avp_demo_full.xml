@@ -9,6 +9,7 @@
                     <Action ID="ComputePathToGoal" path_planner_id="waypoints"/>
                     <Action ID="TrackingPath"/>
                 </Control>
+                <Action ID="VerticalParking" parking_spot_length="1.5" parking_spot_pose="15.0;15.0;1.57" parking_spot_width="5.7"/>
             </ReactiveFallback>
             <ReactiveFallback>
                 <Condition ID="GoalUpdated"/>
@@ -25,6 +26,11 @@
         <Control ID="PipelineSequence"/>
         <Action ID="StopAndWait"/>
         <Action ID="TrackingPath"/>
+        <Action ID="VerticalParking">
+            <input_port default="1.5" name="parking_spot_length"/>
+            <input_port default="15.0;15.0;1.57" name="parking_spot_pose"/>
+            <input_port default="5.7" name="parking_spot_width"/>
+        </Action>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>

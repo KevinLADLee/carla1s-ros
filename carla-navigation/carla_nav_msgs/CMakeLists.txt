@@ -7,7 +7,6 @@ set(ROS_VERSION $ENV{ROS_VERSION})
 
 set(ACTION_FILES
         PathTracking.action
-        GlobalPlanner.action
         PathPlanner.action
         ParkingPlanner.action
         )

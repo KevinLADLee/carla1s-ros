@@ -2,7 +2,7 @@
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_BT_NODES_ACTION_TRACKING_PATH_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_BT_NODES_ACTION_TRACKING_PATH_H_
 
-#include "common.h"
+#include "carla_decision_common.h"
 
 #include <carla_nav_msgs/PathTrackingAction.h>
 

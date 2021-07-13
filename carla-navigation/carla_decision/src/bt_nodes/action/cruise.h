@@ -1,16 +1,13 @@
-//
-// Created by kevinlad on 2021/6/10.
-//
 
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_BT_NODES_ACTION_CRUISE_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_BT_NODES_ACTION_CRUISE_H_
 
-#include "common.h"
+#include "carla_decision_common.h"
 
 #include <carla_nav_msgs/PathTrackingAction.h>
-#include <carla_nav_msgs/GlobalPlannerAction.h>
+#include <carla_nav_msgs/PathPlannerAction.h>
 
- class Cruise : public BT::RosPlanningActionNode<carla_nav_msgs::GlobalPlannerAction, carla_nav_msgs::PathTrackingAction> {
+ class Cruise : public BT::RosPlanningActionNode<carla_nav_msgs::PathPlannerAction, carla_nav_msgs::PathTrackingAction> {
 
   protected:
    void GlobalPlannerFeedbackCallback(const GlobalPlannerActionFeedbackT::ConstPtr &global_planner_feedback) override;

@@ -22,6 +22,8 @@
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseStamped.h>
 
+#include <carla_nav_types/common_types.h>
+
 namespace BT
 {
 
@@ -108,6 +110,22 @@ template<>
 inline std::chrono::milliseconds convertFromString<std::chrono::milliseconds>(const StringView key)
 {
   return std::chrono::milliseconds(std::stoul(key.data()));
+}
+
+template<>
+inline Pose2d convertFromString(const StringView key)
+{
+  // three real numbers separated by semicolons
+  auto parts = BT::splitString(key, ';');
+  if (parts.size() != 3) {
+    throw std::runtime_error("invalid number of fields for point attribute)");
+  } else {
+    Pose2d pose;
+    pose.x = BT::convertFromString<double>(parts[0]);
+    pose.y = BT::convertFromString<double>(parts[1]);
+    pose.yaw = BT::convertFromString<double>(parts[2]);
+    return pose;
+  }
 }
 
 }  // namespace BT

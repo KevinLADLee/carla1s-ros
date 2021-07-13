@@ -5,7 +5,7 @@
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_ACTION_MOVE_TO_GOAL_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_ACTION_MOVE_TO_GOAL_H_
 
-#include "common.h"
+#include "carla_decision_common.h"
 
 class MoveToGoal : public BT::AsyncActionNode
 {

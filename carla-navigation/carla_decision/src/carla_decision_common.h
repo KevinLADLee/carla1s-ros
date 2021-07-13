@@ -1,13 +1,8 @@
-//
-// Created by kevinlad on 2021/4/22.
-//
-
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_COMMON_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_COMMON_H_
 
 #include <iostream>
 #include <fstream>
-
 
 #include <behaviortree_cpp_v3/behavior_tree.h>
 #include <behaviortree_cpp_v3/bt_factory.h>
@@ -26,6 +21,8 @@
 #include "bt_node_base/bt_planner_node.h"
 #include "util/log.h"
 #include "util/bt_conversions.h"
+
+#include "carla_nav_types/conversions.h"
 
 #ifndef NDEBUG
 #define DLOG_INFO(INFO) std::cout <<  "[Debug]: " << INFO << std::endl;

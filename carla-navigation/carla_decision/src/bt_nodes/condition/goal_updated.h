@@ -2,7 +2,7 @@
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_CONDITION_GOAL_UPDATED_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_CONDITION_GOAL_UPDATED_H_
 
-#include "common.h"
+#include "carla_decision_common.h"
 
 class GoalUpdated : public BT::ConditionNode
 {

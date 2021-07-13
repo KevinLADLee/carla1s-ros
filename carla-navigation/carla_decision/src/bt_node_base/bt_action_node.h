@@ -1,7 +1,3 @@
-//
-// Created by kevinlad on 2021/4/21.
-//
-
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_NODE_BASE_BT_ACTION_NODE_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_NODE_BASE_BT_ACTION_NODE_H_
 
@@ -20,14 +16,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_TREE_BT_ACTION_NODE_HPP_
-#define BEHAVIOR_TREE_BT_ACTION_NODE_HPP_
-
 #include <behaviortree_cpp_v3/action_node.h>
 #include <behaviortree_cpp_v3/bt_factory.h>
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
-#include "common.h"
+#include "carla_decision_common.h"
 
 namespace BT
 {
@@ -216,7 +209,5 @@ class RosActionNode : public BT::ActionNodeBase
 };
 
 }  // namespace BT
-
-#endif  // BEHAVIOR_TREE_BT_ACTION_NODE_HPP_
 
 #endif //CARLA1S_ROS_CARLA_NAVIGATION_CARLA_DECISION_SRC_NODE_BASE_BT_ACTION_NODE_H_
