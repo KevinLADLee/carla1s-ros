@@ -19,6 +19,10 @@ BT::NodeStatus StopAndWait::tick() {
     control_msg.hand_brake = 0;
     control_msg.manual_gear_shift = 0;
     cmd_pub_.publish(control_msg);
+    auto odom = ros::topic::waitForMessage<nav_msgs::Odometry>("/carla/"+role_name_+"/odometry");
+    if(odom->twist.twist.linear.x == 0.0){
+      break;
+    }
     r.sleep();
   }
   return BT::NodeStatus::SUCCESS;

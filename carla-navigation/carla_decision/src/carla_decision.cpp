@@ -52,7 +52,7 @@ bool CarlaDecision::LoadBehaviorTree(const std::string &xml_base_path) {
 }
 
 void CarlaDecision::Tick() {
-  ros::Rate rate(100);
+  ros::Rate rate(20);
   ros::AsyncSpinner spinner(6);
   spinner.start();
   while (ros::ok()){

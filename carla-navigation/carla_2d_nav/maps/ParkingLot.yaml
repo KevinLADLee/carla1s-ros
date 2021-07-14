@@ -3,7 +3,7 @@ image: ParkingLot.png
 negate: 0
 occupied_thresh: 0.65
 origin:
-- -139.3499984741211
-- -95.25
+- -139.81999969482422
+- -95.70000076293945
 - 0
 resolution: 0.05

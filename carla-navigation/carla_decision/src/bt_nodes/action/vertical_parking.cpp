@@ -21,3 +21,17 @@ void VerticalParking::on_tick() {
 BT::NodeStatus VerticalParking::on_result(const ResultType &res) {
   return BT::NodeStatus::SUCCESS;
 }
+
+#include "behaviortree_cpp_v3/bt_factory.h"
+BT_REGISTER_NODES(factory)
+{
+  BT::NodeBuilder builder =
+      [](const std::string & name, const BT::NodeConfiguration & config)
+      {
+        return std::make_unique<VerticalParking>(
+            name, "vertical_parking", config);
+      };
+
+  factory.registerBuilder<VerticalParking>(
+      "VerticalParking", builder);
+}

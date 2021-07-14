@@ -22,7 +22,7 @@
             "id": "map"
         },
         {
-            "type": "vehicle.audi.a2",
+            "type": "vehicle.lincoln2020.mkz2020",
             "id": "ego_vehicle",
             "sensors":
             [
