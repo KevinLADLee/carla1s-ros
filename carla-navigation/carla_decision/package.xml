@@ -24,6 +24,7 @@
   <exec_depend condition="$ROS_VERSION == 1">rospy</exec_depend>
   <depend>behaviortree_cpp_v3</depend>
   <depend>carla_nav_msgs</depend>
+  <depend>carla_nav_common</depend>
 
   <!-- ROS 2 DEPENDENCIES-->
   <depend condition="$ROS_VERSION == 2">rclpy</depend>

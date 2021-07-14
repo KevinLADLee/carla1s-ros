@@ -7,11 +7,12 @@ FROM harbor.isus.tech/carla-ros/gtsam-builder:latest as gtsam_builder
 FROM harbor.isus.tech/osrf/ros:$ROS_VERSION-desktop
 
 ARG ROS_VERSION
-ARG MIRROR='http://mirrors.cra.moe'
-ARG ROS_MIRROR='http://mirrors.cra.moe'
+ARG MIRROR='https://mirrors.sustech.edu.cn'
+ARG ROS_MIRROR='https://mirrors.sustech.edu.cn'
 RUN sed -i "s@http://.*archive.ubuntu.com@$MIRROR@g" /etc/apt/sources.list && \
     sed -i "s@http://.*security.ubuntu.com@$MIRROR@g" /etc/apt/sources.list && \
     sed -i "s@http://packages.ros.org@$ROS_MIRROR@g" /etc/apt/sources.list.d/ros1-latest.list && \   
+    curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add - && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         python3-pip  && \
@@ -23,6 +24,7 @@ RUN apt-get update && \
     if [ "$ROS_VERSION" = "noetic" ] ; then export PYTHON_SUFFIX=3 ; else export PYTHON_SUFFIX="" ; fi && \
     apt-get install -y --no-install-recommends \
     libpng16-16 \
+    libpugixml-dev \
     ros-$ROS_VERSION-tf \
     ros-$ROS_VERSION-derived-object-msgs \
     ros-$ROS_VERSION-cv-bridge \
