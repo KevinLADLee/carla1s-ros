@@ -54,9 +54,6 @@ bool PathTracking::UpdateParam() {
 }
 
 void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goal_msg) {
-
-
-
   bool preempted = false;
   auto current_path_it = action_goal_msg->path.paths.begin();
   auto current_direction_it = action_goal_msg->path.driving_direction.begin();
@@ -249,6 +246,11 @@ void PathTracking::PathTrackingLoop() {
 
     vehicle_control_msg_.throttle = static_cast<float>(longitudinal_controller_ptr->RunStep(target_speed_, vehicle_speed));
     vehicle_control_msg_.brake = 0.0;
+    if(longitudinal_controller_ptr->GetDrivingDirection() == DrivingDirection::BACKWARDS){
+      vehicle_control_msg_.reverse = 1;
+    } else{
+      vehicle_control_msg_.reverse = 0;
+    }
     control_cmd_pub_.publish(vehicle_control_msg_);
 
     if(IsGoalReached(*vehicle_pose_ptr)){

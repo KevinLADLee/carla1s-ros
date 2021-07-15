@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 
 import math
+
+from networkx.generators.classic import wheel_graph
 import rospy
+from rospy import ROSException
 import actionlib
 
-from geometry_msgs.msg import PoseStamped, Point
-import carla_common.transforms as trans
-from carla_msgs.msg import CarlaWorldInfo
-from nav_msgs.msg import Path
+from carla_msgs.msg import CarlaWorldInfo, CarlaEgoVehicleInfo
 from carla_nav_msgs.msg import Path as PathArray
 from carla_nav_msgs.msg import PathPlannerAction, PathPlannerResult, PathPlannerFeedback
+from geometry_msgs.msg import PoseStamped, Point
+from nav_msgs.msg import Path
 from visualization_msgs.msg import Marker, MarkerArray
 
 import carla
+import carla_common.transforms as trans
 from agents.navigation.global_route_planner import GlobalRoutePlanner
 from agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
-
-from rospy import ROSException
 
 from carla_global_planner.reeds_shepp_ros.reeds_ros import reeds_ros_inter as ReedsSheppROS
 
@@ -30,11 +31,9 @@ class CarlaGlobalPlanner:
         self.ego_vehicle_location = None
         self.on_tick = None
         self.role_name = rospy.get_param("role_name", 'ego_vehicle')
-        self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), Path, latch=True,
-                                                  queue_size=1)
-        
-        self.path_markers_publisher = rospy.Publisher('/carla/{}/path_markers'.format(self.role_name), MarkerArray,
-                                                      latch=True, queue_size=1)
+        self.vehicle_info_subscriber = rospy.Subscriber('/carla/{}/vehicle_info'.format(self.role_name), CarlaEgoVehicleInfo, self.vehicle_info_cb)
+        self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), Path, latch=True, queue_size=1)
+        self.path_markers_publisher = rospy.Publisher('/carla/{}/path_markers'.format(self.role_name), MarkerArray, latch=True, queue_size=1)
         self.markers = MarkerArray()                                          
 
         # set initial goal
@@ -45,7 +44,8 @@ class CarlaGlobalPlanner:
                                                                   PathPlannerAction,
                                                                   execute_cb=self.execute_cb,
                                                                   auto_start=False)
-        self.rs_curve = ReedsSheppROS(min_radius=3)
+        
+        self.min_radius = 3
         self.pose_list = []
 
         self.global_planner_server.start()
@@ -56,6 +56,13 @@ class CarlaGlobalPlanner:
 
         rospy.loginfo("GlobalPlanner: Waiting for ego vehicle...")
         self.on_tick = self.world.on_tick(self.find_ego_vehicle_actor)
+
+    def compute_min_radius_from_vehicle_info(self, vehicle_info_msg: CarlaEgoVehicleInfo):
+        max_steering_angle = vehicle_info_msg.wheels[0].max_steer_angle
+        wheelbase = abs(vehicle_info_msg.wheels[0].position.x - vehicle_info_msg.wheels[2].position.x)
+        if max_steering_angle > 0:
+            self.min_radius = wheelbase / math.sin(max_steering_angle)
+        return
 
     def execute_cb(self, goal_msg):
 
@@ -76,6 +83,7 @@ class CarlaGlobalPlanner:
                 vehicle_pose = trans.carla_transform_to_ros_pose(self.ego_vehicle.get_transform())     
                 self.pose_list.append(vehicle_pose)
                 self.pose_list.append(goal_msg.goal.pose)
+                self.rs_curve = ReedsSheppROS(min_radius=self.min_radius)
                 self._result.path = self.rs_curve.shortest_path(self.pose_list)
                 self.publish_path_array_markers(self._result.path)
                 self.global_planner_server.set_succeeded(self._result, "success")
@@ -114,9 +122,9 @@ class CarlaGlobalPlanner:
         
     def publish_path_array_markers(self, path_array):
         self.markers = MarkerArray()
-        for i in range (len(path_array.paths)):
+        for i in range(len(path_array.paths)):
             path_marker = Marker()
-            path_marker.header.frame_id = path_array.header.frame_id
+            path_marker.header.frame_id = "map"
             path_marker.header.stamp = path_array.header.stamp
             path_marker.ns = "path"
             path_marker.id = 100+i
