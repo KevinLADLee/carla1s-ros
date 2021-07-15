@@ -1,0 +1,2 @@
+Header header
+carla_nav_msgs/ParkingSpot[] parking_spot_array

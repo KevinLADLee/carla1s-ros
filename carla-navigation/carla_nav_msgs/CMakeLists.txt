@@ -12,6 +12,8 @@ set(ACTION_FILES
         )
 
 set(MESSAGE_FILES
+        ParkingSpotArray.msg
+        ParkingSpot.msg
         Path.msg
         )
 

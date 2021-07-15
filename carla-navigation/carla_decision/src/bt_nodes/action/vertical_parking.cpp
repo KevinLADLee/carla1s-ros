@@ -13,9 +13,10 @@ void VerticalParking::on_tick() {
   if(!spot_pose || !spot_width || !spot_width){
     throw BT::RuntimeError("VerticalParking: error reading port");
   }
-  goal_.parking_spot_pose = Pose2dToRosMsg(spot_pose.value());
-  goal_.parking_spot_width = spot_width.value();
-  goal_.parking_spot_length = spot_length.value();
+  goal_.parking_spot.header.frame_id = "map";
+  goal_.parking_spot.center_pose = Pose2dToRosMsg(spot_pose.value());
+  goal_.parking_spot.width = spot_width.value();
+  goal_.parking_spot.length = spot_length.value();
 }
 
 BT::NodeStatus VerticalParking::on_result(const ResultType &res) {
