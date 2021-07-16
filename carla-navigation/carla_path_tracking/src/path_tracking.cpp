@@ -27,22 +27,22 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
 }
 
 bool PathTracking::UpdateParam() {
-  nh_.param<std::string>("role_name", role_name, "ego_vehicle");
-  nh_.param<int>("controller_frequency", controller_freq, 20);
-  nh_.param<float>("goal_tolerance_xy", goal_radius,0.5);
-  nh_.param<float>("goal_tolerance_yaw", 0.2);
-  nh_.param<bool>("use_vehicle_info", use_vehicle_info,true);
-  nh_.param<float>("base_angle", base_angle, 0.0);
-  nh_.param<float>("max_forward_velocity", max_forward_velocity, 15.0);
-  nh_.param<float>("max_backwards_velocity", max_backwards_velocity, 5.0);
-
+  auto ph = ros::NodeHandle("~");
+  ph.param<std::string>("role_name", role_name, "ego_vehicle");
+  ph.param<int>("controller_frequency", controller_freq, 20);
+  ph.param<float>("goal_tolerance_xy", goal_radius,0.5);
+  ph.param<float>("goal_tolerance_yaw", 0.2);
+  ph.param<bool>("use_vehicle_info", use_vehicle_info,true);
+  ph.param<float>("base_angle", base_angle, 0.0);
+  ph.param<float>("max_forward_velocity", max_forward_velocity, 15.0);
+  ph.param<float>("max_backwards_velocity", max_backwards_velocity, 5.0);
   // 1.0, 0.5, 0.0, 0.206, 0.0206, 0.515
-  nh_.param<double>("pid_Kp", pid_Kp, 0.2);
-  nh_.param<double>("pid_Ki", pid_Ki, 0.02);
-  nh_.param<double>("pid_Kd", pid_Kd, 0.5);
-  nh_.param<double>("pid_dt", pid_dt, 1.0);
-  nh_.param<double>("pid_max", pid_max_value, 1.0);
-  nh_.param<double>("pid_min", pid_min_value, 0.0);
+  ph.param<double>("pid_Kp", pid_Kp, 0.2);
+  ph.param<double>("pid_Ki", pid_Ki, 0.02);
+  ph.param<double>("pid_Kd", pid_Kd, 0.5);
+  ph.param<double>("pid_dt", pid_dt, 1.0);
+  ph.param<double>("pid_max", pid_max_value, 1.0);
+  ph.param<double>("pid_min", pid_min_value, 0.0);
 
   if(use_vehicle_info) {
     auto vehicle_info_msg = ros::topic::waitForMessage<carla_msgs::CarlaEgoVehicleInfo>("/carla/"+role_name+"/vehicle_info", nh_, ros::Duration(120));
@@ -244,13 +244,15 @@ void PathTracking::PathTrackingLoop() {
     PublishMarkers(*vehicle_pose_ptr, lateral_controller_ptr_->GetCurrentTrackPoint());
     path_lock.unlock();
 
-    vehicle_control_msg_.throttle = static_cast<float>(longitudinal_controller_ptr->RunStep(target_speed_, vehicle_speed));
-    vehicle_control_msg_.brake = 0.0;
     if(longitudinal_controller_ptr->GetDrivingDirection() == DrivingDirection::BACKWARDS){
       vehicle_control_msg_.reverse = 1;
+      target_speed_ = max_backwards_velocity;
     } else{
       vehicle_control_msg_.reverse = 0;
+      target_speed_ = max_forward_velocity;
     }
+    vehicle_control_msg_.throttle = static_cast<float>(longitudinal_controller_ptr->RunStep(target_speed_, vehicle_speed));
+    vehicle_control_msg_.brake = 0.0;
     control_cmd_pub_.publish(vehicle_control_msg_);
 
     if(IsGoalReached(*vehicle_pose_ptr)){

@@ -72,7 +72,6 @@ class LongitudinalController{
  protected:
   double max_throttle_ = 1.0;
   DrivingDirection driving_direction_ = DrivingDirection::FORWARD;
-
 };
 
 #endif //CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_BASE_H_
