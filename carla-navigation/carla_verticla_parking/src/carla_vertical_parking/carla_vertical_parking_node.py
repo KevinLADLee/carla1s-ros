@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import math
+from enum import Enum
 
 import rospy
 import actionlib
@@ -9,9 +10,15 @@ from nav_msgs.msg import Path, Odometry
 from carla_nav_msgs.msg import Path as PathArray
 from carla_nav_msgs.msg import ParkingSpot
 from carla_nav_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
-    ParkingPlannerActionFeedback, ParkingPlannerActionResult
+    ParkingPlannerFeedback, ParkingPlannerActionResult, ParkingPlannerResult
 from visualization_msgs.msg import Marker, MarkerArray
 
+class NodeState(Enum):
+    IDLE = 0,
+    RUNNING = 1,
+    PAUSE = 2,
+    SUCCESS = 3,
+    FAILURE = 4
 
 class CarlaVerticalParkingNode:
     def __init__(self):
@@ -32,14 +39,20 @@ class CarlaVerticalParkingNode:
         self.vertical_parking_server.start()
         self.path_array = PathArray()
 
-        self.action_goal = ParkingPlannerActionGoal()
-        self.action_feedback = ParkingPlannerActionFeedback()
-        self.action_result = ParkingPlannerActionResult()
+        rospy.loginfo("VerticlaParking: Waiting for vehicle info message...")
+        self.vehicle_info = rospy.wait_for_message("/carla/{}/vehicle_info".format(self.role_name))
+        self.node_state = NodeState.IDLE
+
+        self.action_goal =  ParkingPlannerActionGoal()
+        self.action_feedback = ParkingPlannerFeedback()
+        self.action_result = ParkingPlannerResult()
 
     def compute_best_preparking_position(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PoseStamped:
         return PoseStamped()
 
     def compute_parking_path(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PathArray:
+        # self.node_state = NodeState.FAILURE
+        self.node_state = NodeState.SUCCESS
         return PathArray()
 
     def odom_cb(self, odom_msg):
@@ -49,6 +62,12 @@ class CarlaVerticalParkingNode:
         rospy.loginfo("VerticalParking: Received goal, start parking...")
         vehicle_pose = self.vehicle_pose
         self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.goal.parking_spot)
+        self.action_result.path_array = self.path_array
+        
+        if self.node_state == NodeState.FAILURE:
+            self.vertical_parking_server.set_aborted(text="VerticleParking planning failed...")
+        elif self.node_state == NodeState.SUCCESS:
+            self.vertical_parking_server.set_succeeded(self.action_result, "Vertical parking planning succeed!")
 
     def publish_path_array_markers(self, path_array: PathArray):
         self.markers = MarkerArray()

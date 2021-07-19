@@ -2,5 +2,6 @@
 carla_nav_msgs/ParkingSpot parking_spot
 ---
 bool success
+carla_nav_msgs/Path path_array
 ---
-nav_msgs/Path path
+carla_nav_msgs/Path path_array
