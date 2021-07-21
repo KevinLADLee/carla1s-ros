@@ -12,6 +12,8 @@ from carla_nav_msgs.msg import ParkingSpot
 from carla_nav_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
     ParkingPlannerFeedback, ParkingPlannerActionResult, ParkingPlannerResult
 from visualization_msgs.msg import Marker, MarkerArray
+from carla_msgs.msg import CarlaEgoVehicleInfo
+
 
 class NodeState(Enum):
     IDLE = 0,
@@ -40,7 +42,7 @@ class CarlaVerticalParkingNode:
         self.path_array = PathArray()
 
         rospy.loginfo("VerticlaParking: Waiting for vehicle info message...")
-        self.vehicle_info = rospy.wait_for_message("/carla/{}/vehicle_info".format(self.role_name))
+        self.vehicle_info = rospy.wait_for_message("/carla/{}/vehicle_info".format(self.role_name),CarlaEgoVehicleInfo,10)
         self.node_state = NodeState.IDLE
 
         self.action_goal =  ParkingPlannerActionGoal()
