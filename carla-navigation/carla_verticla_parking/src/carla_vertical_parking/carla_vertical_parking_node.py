@@ -10,7 +10,7 @@ from nav_msgs.msg import Path, Odometry
 from carla_nav_msgs.msg import Path as PathArray
 from carla_nav_msgs.msg import ParkingSpot
 from carla_nav_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
-    ParkingPlannerFeedback, ParkingPlannerActionResult, ParkingPlannerResult
+    ParkingPlannerFeedback, ParkingPlannerActionResult, ParkingPlannerResult, ParkingPlannerGoal
 from visualization_msgs.msg import Marker, MarkerArray
 from carla_msgs.msg import CarlaEgoVehicleInfo
 
@@ -50,20 +50,27 @@ class CarlaVerticalParkingNode:
         self.action_result = ParkingPlannerResult()
 
     def compute_best_preparking_position(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PoseStamped:
+        print("计算最佳停车点")
+        print(vehicle_pose,parking_spot)
         return PoseStamped()
 
     def compute_parking_path(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PathArray:
         # self.node_state = NodeState.FAILURE
         self.node_state = NodeState.SUCCESS
-        return PathArray()
+        # return PathArray()
+
 
     def odom_cb(self, odom_msg):
         self.vehicle_pose = odom_msg.pose.pose
 
-    def execute_cb(self, goal_msg: ParkingPlannerActionGoal):
+    def execute_cb(self, goal_msg: ParkingPlannerGoal):
         rospy.loginfo("VerticalParking: Received goal, start parking...")
+
+        #测试
+        self.compute_best_preparking_position(self.vehicle_pose,goal_msg.parking_spot)
+
         vehicle_pose = self.vehicle_pose
-        self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.goal.parking_spot)
+        self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
         self.action_result.path_array = self.path_array
         
         if self.node_state == NodeState.FAILURE:
