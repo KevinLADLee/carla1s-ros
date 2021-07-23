@@ -32,10 +32,9 @@ class NodeState(Enum):
     FAILURE = 4
 
 class EnvInfoMessage(float):
-    road_w = 2.86 * 1.6  # 2.86*3 #尽量在4.09以上，小于的话腾挪次数要爆炸
+    road_w = 5 # 2.86*3 #尽量在4.09以上，小于的话腾挪次数要爆炸
     min_turning_radiu = 10
     car_l = 4
-
     hou_xuan = 1
     # real_parking_left_head = [16.6 ,28.4]
     # real_parking_right_head = [16.6,26.1]
@@ -71,11 +70,10 @@ class CarlaVerticalParkingNode:
 
     def compute_best_preparking_position(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PoseStamped:
 
-        # print(self.vehicle_info)
 
         msg=parking_spot.center_pose
         (r, p, theta) = tf.transformations.euler_from_quaternion(
-            [msg.orientation.w,msg.orientation.x, msg.orientation.y, msg.orientation.z])
+            [msg.orientation.x,msg.orientation.y, msg.orientation.z, msg.orientation.w])
         center_pose=msg.position
 
         # 无法从carla中获取的信息
@@ -102,8 +100,20 @@ class CarlaVerticalParkingNode:
         # 获取理论最优点
         # 这个理论最优点不考虑车辆当前位置，得出的是车辆一次转弯能转到的理论极限的最优位置
         real_position_x, real_position_y, real_position_theta =get_park.get_best_place()
-        print(real_position_x, real_position_y, real_position_theta )
-        return PoseStamped()
+
+        best_position=PoseStamped()
+        best_position.pose.position.x=real_position_x
+        best_position.pose.position.y=real_position_y
+        # 停车位的角度
+        q = tf.transformations.quaternion_from_euler(0, 0, real_position_theta)
+
+        best_position.pose.orientation.x=q[0]
+        best_position.pose.orientation.y=q[1]
+        best_position.pose.orientation.z=q[2]
+        best_position.pose.orientation.w=q[3]
+        # print(real_position_x, real_position_y, real_position_theta*180/math.pi)
+
+        return best_position
 
     def compute_parking_path(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PathArray:
         # self.node_state = NodeState.FAILURE
