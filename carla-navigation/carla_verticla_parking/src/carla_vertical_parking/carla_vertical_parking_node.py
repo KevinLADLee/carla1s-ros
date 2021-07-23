@@ -14,6 +14,15 @@ from carla_nav_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
 from visualization_msgs.msg import Marker, MarkerArray
 from carla_msgs.msg import CarlaEgoVehicleInfo
 
+import os
+import sys
+
+# path1 =
+sys.path.append(os.path.split(os.path.abspath(__file__))[0])
+# print('path1 ',path1)
+
+# from carla_verticla_parking.src.carla_vertical_parking.find_best_parking_place import GetParkingEndPosition
+from car_parking.find_best_parking_place import GetParkingEndPosition
 
 class NodeState(Enum):
     IDLE = 0,
@@ -21,6 +30,20 @@ class NodeState(Enum):
     PAUSE = 2,
     SUCCESS = 3,
     FAILURE = 4
+
+class EnvInfoMessage(Enum):
+    parking_l = 5.3
+    road_w = 2.86 * 1.6  # 2.86*3 #尽量在4.09以上，小于的话腾挪次数要爆炸
+    car_l = 4.7
+    car_w = 1.7
+    min_turning_radiu = 10
+    wheel_dis = 2.6
+    step = 0.1
+    hou_xuan = (car_l - wheel_dis) / 2
+    # real_parking_left_head = [16.6 ,28.4]
+    # real_parking_right_head = [16.6,26.1]
+    real_parking_left_head = [3, 0]
+    real_parking_right_head = [6, 0]
 
 class CarlaVerticalParkingNode:
     def __init__(self):
@@ -50,14 +73,33 @@ class CarlaVerticalParkingNode:
         self.action_result = ParkingPlannerResult()
 
     def compute_best_preparking_position(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PoseStamped:
-        print("计算最佳停车点")
-        print(vehicle_pose,parking_spot)
+        # print("计算最佳停车点")
+        # print(vehicle_pose,parking_spot)
+
+        # 能够从carla中获取的信息
+        print(self.vehicle_info)
+
+
+        # 无法从carla中获取的信息
+        nessesary_msg=EnvInfoMessage
+
+
+
+        # 初始化寻找最优停车位方法
+        # get_park = GetParkingEndPosition(car_l, car_w, min_turning_radiu, wheel_dis, hou_xuan, road_w,
+        #                                  real_parking_left_head, real_parking_right_head)
+
+        # 获取理论最优点
+        # 这个理论最优点不考虑车辆当前位置，得出的是车辆一次转弯能转到的理论极限的最优位置
+        # real_position_x, real_position_y, real_position_theta =get_park.get_best_place()
+
         return PoseStamped()
 
     def compute_parking_path(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PathArray:
         # self.node_state = NodeState.FAILURE
         self.node_state = NodeState.SUCCESS
         # return PathArray()
+
 
 
     def odom_cb(self, odom_msg):
@@ -69,14 +111,14 @@ class CarlaVerticalParkingNode:
         #测试
         self.compute_best_preparking_position(self.vehicle_pose,goal_msg.parking_spot)
 
-        vehicle_pose = self.vehicle_pose
-        self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
-        self.action_result.path_array = self.path_array
-        
-        if self.node_state == NodeState.FAILURE:
-            self.vertical_parking_server.set_aborted(text="VerticleParking planning failed...")
-        elif self.node_state == NodeState.SUCCESS:
-            self.vertical_parking_server.set_succeeded(self.action_result, "Vertical parking planning succeed!")
+        # vehicle_pose = self.vehicle_pose
+        # self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
+        # self.action_result.path_array = self.path_array
+        #
+        # if self.node_state == NodeState.FAILURE:
+        #     self.vertical_parking_server.set_aborted(text="VerticleParking planning failed...")
+        # elif self.node_state == NodeState.SUCCESS:
+        #     self.vertical_parking_server.set_succeeded(self.action_result, "Vertical parking planning succeed!")
 
     def publish_path_array_markers(self, path_array: PathArray):
         self.markers = MarkerArray()
