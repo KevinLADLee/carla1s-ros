@@ -16,7 +16,7 @@ from carla_msgs.msg import CarlaEgoVehicleInfo
 
 import os
 import sys
-
+import tf
 # path1 =
 sys.path.append(os.path.split(os.path.abspath(__file__))[0])
 # print('path1 ',path1)
@@ -31,15 +31,12 @@ class NodeState(Enum):
     SUCCESS = 3,
     FAILURE = 4
 
-class EnvInfoMessage(Enum):
-    parking_l = 5.3
+class EnvInfoMessage(float):
     road_w = 2.86 * 1.6  # 2.86*3 #尽量在4.09以上，小于的话腾挪次数要爆炸
-    car_l = 4.7
-    car_w = 1.7
     min_turning_radiu = 10
-    wheel_dis = 2.6
-    step = 0.1
-    hou_xuan = (car_l - wheel_dis) / 2
+    car_l = 4
+
+    hou_xuan = 1
     # real_parking_left_head = [16.6 ,28.4]
     # real_parking_right_head = [16.6,26.1]
     real_parking_left_head = [3, 0]
@@ -73,26 +70,39 @@ class CarlaVerticalParkingNode:
         self.action_result = ParkingPlannerResult()
 
     def compute_best_preparking_position(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PoseStamped:
-        # print("计算最佳停车点")
-        # print(vehicle_pose,parking_spot)
 
-        # 能够从carla中获取的信息
-        print(self.vehicle_info)
+        # print(self.vehicle_info)
 
+        msg=parking_spot.center_pose
+        (r, p, theta) = tf.transformations.euler_from_quaternion(
+            [msg.orientation.w,msg.orientation.x, msg.orientation.y, msg.orientation.z])
+        center_pose=msg.position
 
         # 无法从carla中获取的信息
-        nessesary_msg=EnvInfoMessage
+        hou_xuan=EnvInfoMessage.hou_xuan
+        road_w=EnvInfoMessage.road_w
+        car_l=EnvInfoMessage.car_l
+
+
+        # 能够从carla中获取的信息
+        car_w =abs(self.vehicle_info.wheels[0].position.y)+abs(self.vehicle_info.wheels[1].position.y)
+        wheel_dis = abs(self.vehicle_info.wheels[0].position.x)+abs(self.vehicle_info.wheels[2].position.x)
+        min_turning_radiu=2.4*car_l
+        real_parking_left_head=[center_pose.x+math.cos(theta)*parking_spot.length/2-math.sin(theta)*parking_spot.width/2,
+                                center_pose.y+math.sin(theta)*parking_spot.length/2+math.cos(theta)*parking_spot.width/2]
+        real_parking_right_head=[center_pose.x+math.cos(theta)*parking_spot.length/2+math.sin(theta)*parking_spot.width/2,
+                                center_pose.y+math.sin(theta)*parking_spot.length/2-math.cos(theta)*parking_spot.width/2]
 
 
 
         # 初始化寻找最优停车位方法
-        # get_park = GetParkingEndPosition(car_l, car_w, min_turning_radiu, wheel_dis, hou_xuan, road_w,
-        #                                  real_parking_left_head, real_parking_right_head)
+        get_park = GetParkingEndPosition(car_l, car_w, min_turning_radiu, wheel_dis, hou_xuan, road_w,
+                                         real_parking_left_head, real_parking_right_head)
 
         # 获取理论最优点
         # 这个理论最优点不考虑车辆当前位置，得出的是车辆一次转弯能转到的理论极限的最优位置
-        # real_position_x, real_position_y, real_position_theta =get_park.get_best_place()
-
+        real_position_x, real_position_y, real_position_theta =get_park.get_best_place()
+        print(real_position_x, real_position_y, real_position_theta )
         return PoseStamped()
 
     def compute_parking_path(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PathArray:
