@@ -11,7 +11,7 @@ path = os.path.abspath(__file__)
 path1 = os.path.split(path)[0]
 add_path=path1
 sys.path.append(add_path)
-print("添加工作目录　",add_path)
+# print("添加工作目录　",add_path)
 # from gitlab_folder.car_parking.car_parking.search_planning import cz_move_in
 # from gitlab_folder.car_parking.car_parking.unsort import Env
 # from gitlab_folder.car_parking.car_parking.unsort import space_change
@@ -41,7 +41,7 @@ class Planning():
         self.sim_env.set_env_info(self.env.parking_l, self.env.parking_w, self.env.road_w, self.env.road_l, [self.env.parking_w, 0], [self.env.parking_w * 2, 0])
 
         #设置垂直停车算法
-        self.__parking_algorithm=VerticalParking(self.sim_env)
+        self.__parking_algorithm=VerticalParking(env=self.sim_env)
 
     # ==================================================================
     # 函数名：reset_env
@@ -86,7 +86,7 @@ class Planning():
         sim_car_x, sim_car_y, sim_car_theta = self.space_change.real_to_sim(real_car_position_x, real_car_position_y, real_car_position_theta)
 
         # 计算路径
-        route_x, route_y, route_theta_r =self.__parking_algorithm.planning(sim_car_x, sim_car_y, sim_car_theta)
+        route_x, route_y, route_theta_r,dir_info =self.__parking_algorithm.planning(sim_car_x, sim_car_y, sim_car_theta)
 
         #将算法路径转换成实际路径
         real_route_x=[]
@@ -99,7 +99,8 @@ class Planning():
             real_route_theta_r.append(r)
 
 
-        return real_route_x, real_route_y, real_route_theta_r
+
+        return real_route_x, real_route_y, real_route_theta_r,dir_info
 
 
 

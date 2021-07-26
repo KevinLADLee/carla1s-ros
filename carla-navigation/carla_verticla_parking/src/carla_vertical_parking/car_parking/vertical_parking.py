@@ -12,15 +12,16 @@ add_path=""
 for i in range(1,len(path1)-2):
    add_path+="/"+path1[i]
 sys.path.append(add_path)
-print("vertical parking.py 添加工作目录　",add_path)
+# print("vertical parking.py 添加工作目录　",add_path)
 
+sys.path.append(os.path.split(os.path.abspath(__file__))[0])
 
 path1 = os.path.split(os.path.abspath(__file__))[0].split("/")
 add_path=""
 for i in range(1,len(path1)-1):
    add_path+="/"+path1[i]
 sys.path.append(add_path)
-print("vertical parking.py 添加工作目录　",add_path)
+# print("vertical parking.py 添加工作目录　",add_path)
 from env import Env
 
 
@@ -621,12 +622,14 @@ class VerticalParking():
         route_y = []
         route_theta = []
 
+        #前进的方向信息
+        dir_info=[]
+
         switch_times=0
 
         now_position_x = car_position_x
         now_position_y = car_position_y
         now_position_theta = car_position_theta
-
 
 
         while 1 :
@@ -642,6 +645,8 @@ class VerticalParking():
 
             # print('直线倒车至',now_position_x, now_position_y, now_position_theta)
 
+            for i in range(len(route_x)-len(dir_info)):
+                dir_info.append(1)
 
 
 
@@ -654,6 +659,8 @@ class VerticalParking():
             # print('右后移动',now_position_x, now_position_y, now_position_theta)
 
 
+            for i in range(len(route_x)-len(dir_info)):
+                dir_info.append(1)
 
 
             if (now_position_theta == math.pi / 2):
@@ -668,6 +675,8 @@ class VerticalParking():
 
             # print('左前移动',now_position_x, now_position_y, now_position_theta)
 
+            for i in range(len(route_x)-len(dir_info)):
+                dir_info.append(0)
 
 
 
@@ -676,7 +685,7 @@ class VerticalParking():
             switch_times += 1
 
 
-        return route_x, route_y, route_theta
+        return route_x, route_y, route_theta,dir_info
 
     # ==================================================================
     # 函数名：__planning_move_left_front_first
@@ -694,6 +703,10 @@ class VerticalParking():
         route_y = []
         route_theta = []
 
+        #前进的方向信息
+        #1 倒车 0 前进
+        dir_info=[]
+
         now_position_x = car_position_x
         now_position_y = car_position_y
         now_position_theta = car_position_theta
@@ -701,16 +714,19 @@ class VerticalParking():
         now_position_x, now_position_y, now_position_theta, route_x, route_y, route_theta = self.__add_left_up_route(
             now_position_x, now_position_y, now_position_theta, route_x, route_y, route_theta)
 
+        for i in range(len(route_x) - len(dir_info)):
+            dir_info.append(0)
+
         # 右后方移动的路线
-        rx, ry, rtheta = self.__planning_move_right_back_first(now_position_x, now_position_y, now_position_theta)
+        rx, ry, rtheta,tmp_dir_info = self.__planning_move_right_back_first(now_position_x, now_position_y, now_position_theta)
         if rx == None:
             return None,None,None
 
         route_x = route_x + rx
         route_y = route_y + ry
         route_theta = route_theta + rtheta
-
-        return route_x, route_y, route_theta
+        dir_info = dir_info+tmp_dir_info
+        return route_x, route_y, route_theta,dir_info
 
 
     # ==================================================================
@@ -735,7 +751,7 @@ class VerticalParking():
             # 如果车辆无法一次性入库，那么就进入来回腾挪入库模式
 
             # 车先向右后方移动的路线
-            route_right_back_x, route_right_back_y, route_right_back_theta = self.__planning_move_right_back_first(
+            route_right_back_x, route_right_back_y, route_right_back_theta,route_right_back_dir_info = self.__planning_move_right_back_first(
                 car_position_x, car_position_y, car_position_theta)
 
             # print("right back")
@@ -745,18 +761,24 @@ class VerticalParking():
 
 
             # 车先向左前方方移动的路线
-            route_left_front_x, route_left_front_y, route_left_front_theta = self.__planning_move_left_front_first(car_position_x, car_position_y, car_position_theta)
+            route_left_front_x, route_left_front_y, route_left_front_theta,route_left_front_dir_info = self.__planning_move_left_front_first(car_position_x, car_position_y, car_position_theta)
 
             # print(route_left_front_x)
 
             # 比较路径，选择最优的路径
             route_x, route_y, route_theta = self.__compare_route(route_right_back_x, route_right_back_y, route_right_back_theta, route_left_front_x, route_left_front_y, route_left_front_theta)
 
+            if route_x==route_left_front_x:
+                dir_info=route_left_front_dir_info
+            else:
+                dir_info = route_right_back_dir_info
 
             if route_x == None:
                 if self.log:
                     print('规划失败,当前位置不存在简单入库的路径')
-                return route_x, route_y, route_theta
+                return route_x, route_y, route_theta,None
+
+
 
             end_position_x = route_x[-1]
             end_position_y = route_y[-1]
@@ -770,8 +792,10 @@ class VerticalParking():
                 route_theta += rtheta
 
 
+            for i in range(len(route_x) - len(dir_info)):
+                dir_info.append(1)
 
-        return route_x, route_y, route_theta
+        return route_x, route_y, route_theta,dir_info
 
 if __name__ == "__main__":
     start_time=time.time()

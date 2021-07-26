@@ -17,12 +17,14 @@ from carla_msgs.msg import CarlaEgoVehicleInfo
 import os
 import sys
 import tf
-# path1 =
-sys.path.append(os.path.split(os.path.abspath(__file__))[0])
-# print('path1 ',path1)
 
-# from carla_verticla_parking.src.carla_vertical_parking.find_best_parking_place import GetParkingEndPosition
+sys.path.append(os.path.split(os.path.abspath(__file__))[0])
+
+
 from car_parking.find_best_parking_place import GetParkingEndPosition
+from car_parking.vertical_parking import VerticalParking
+from car_parking.env import Env
+from car_parking.parking_planning import Planning
 
 class NodeState(Enum):
     IDLE = 0,
@@ -36,6 +38,8 @@ class EnvInfoMessage(float):
     road_w = 5 # 2.86*3 #尽量在4.09以上，小于的话腾挪次数要爆炸
     car_l = 4
     hou_xuan = 1
+    step=0.1
+    road_l=10
 
 class CarlaVerticalParkingNode:
     def __init__(self):
@@ -137,9 +141,85 @@ class CarlaVerticalParkingNode:
         return best_position
 
     def compute_parking_path(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PathArray:
-        # self.node_state = NodeState.FAILURE
-        self.node_state = NodeState.SUCCESS
-        return PathArray()
+        msg = parking_spot.center_pose
+        (_, _, parking_theta) = tf.transformations.euler_from_quaternion(
+            [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w])
+        center_pose = msg.position
+
+
+        # 无法从carla中获取的信息
+        hou_xuan = EnvInfoMessage.hou_xuan
+        road_w = EnvInfoMessage.road_w
+        car_l = EnvInfoMessage.car_l
+        step=EnvInfoMessage.step
+        road_l=EnvInfoMessage.road_l
+
+
+        # 能够从carla中获取的信息
+        parking_l=parking_spot.length
+        parking_w=parking_spot.width
+        car_w = abs(self.vehicle_info.wheels[0].position.y) + abs(self.vehicle_info.wheels[1].position.y)
+        wheel_dis = abs(self.vehicle_info.wheels[0].position.x) + abs(self.vehicle_info.wheels[2].position.x)
+        # 最小转弯半价的经验计算方法
+        min_turning_radiu = 2.4 * car_l
+        real_parking_left_head = [center_pose.x + math.cos(parking_theta) * parking_spot.length / 2 - math.sin(
+            parking_theta) * parking_spot.width / 2,
+                                  center_pose.y + math.sin(parking_theta) * parking_spot.length / 2 + math.cos(
+                                      parking_theta) * parking_spot.width / 2]
+        real_parking_right_head = [center_pose.x + math.cos(parking_theta) * parking_spot.length / 2 + math.sin(
+            parking_theta) * parking_spot.width / 2,
+                                   center_pose.y + math.sin(parking_theta) * parking_spot.length / 2 - math.cos(
+                                       parking_theta) * parking_spot.width / 2]
+
+        parking_left_point=real_parking_left_head
+        parking_right_point=real_parking_right_head
+
+        # 获取车辆位置
+        car_position_x=vehicle_pose.position.x
+        car_position_y=vehicle_pose.position.y
+        (_, _, car_position_theta) = tf.transformations.euler_from_quaternion(
+            [vehicle_pose.orientation.x,vehicle_pose.orientation.y,
+             vehicle_pose.orientation.z, vehicle_pose.orientation.w])
+
+        # print('input 1 ',car_l, car_w, min_turning_radiu, wheel_dis, hou_xuan, step)
+        # print('input 2 ',parking_l, parking_w, road_w, road_l, parking_left_point, parking_right_point)
+        #开始计算整合env类用作planning输入
+        env0 = Env()
+        env0.set_car_info(car_l, car_w, min_turning_radiu, wheel_dis, hou_xuan, step)
+        env0.set_env_info(parking_l, parking_w, road_w, road_l, parking_left_point, parking_right_point)
+
+        # 设置当前车位的泊车路径规划类
+        plan = Planning(env0)
+        route=[]
+
+        path_array=PathArray()
+        # print(path_array)
+        # path_array.header=0
+
+
+        try:
+            # print()
+            route_x, route_y, route_theta_r,dir_info = plan.planning(car_position_x, car_position_y, car_position_theta)
+
+            # for i in range(len(route_x)):
+            #     print(route_x[i],route_y[i],route_theta_r[i],dir_info[i])
+
+            print('len ',len(route_x))
+            for i in range(len(route_x)):
+                route.append([route_x[i],route_y[i],route_theta_r[i]])
+
+            path_array.paths=route
+            path_array.driving_direction=dir_info
+
+            if route_x!=None:
+                self.node_state = NodeState.SUCCESS
+            else:
+                self.node_state = NodeState.FAILURE
+        except:
+            print("planning fail")
+            self.node_state = NodeState.FAILURE
+
+        return path_array
 
 
 
@@ -153,8 +233,10 @@ class CarlaVerticalParkingNode:
 
         vehicle_pose = self.vehicle_pose
         self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
+        # print('type',type(self.path_array),type(self.action_result.path_array),self.node_state)
+        # print(self.path_array)
         self.action_result.path_array = self.path_array
-
+        # print('action',self.action_result.path_array)
         if self.node_state == NodeState.FAILURE:
             self.vertical_parking_server.set_aborted(text="VerticleParking planning failed...")
         elif self.node_state == NodeState.SUCCESS:
