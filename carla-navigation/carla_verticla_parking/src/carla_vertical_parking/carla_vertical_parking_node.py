@@ -181,9 +181,7 @@ class CarlaVerticalParkingNode:
             [vehicle_pose.orientation.x,vehicle_pose.orientation.y,
              vehicle_pose.orientation.z, vehicle_pose.orientation.w])
 
-        # print('input 1 ',car_l, car_w, min_turning_radiu, wheel_dis, hou_xuan, step)
-        # print('input 2 ',parking_l, parking_w, road_w, road_l, parking_left_point, parking_right_point)
-        #开始计算整合env类用作planning输入
+        #整合env类用作planning输入
         env0 = Env()
         env0.set_car_info(car_l, car_w, min_turning_radiu, wheel_dis, hou_xuan, step)
         env0.set_env_info(parking_l, parking_w, road_w, road_l, parking_left_point, parking_right_point)
@@ -193,18 +191,11 @@ class CarlaVerticalParkingNode:
         route=[]
 
         path_array=PathArray()
-        # print(path_array)
-        # path_array.header=0
 
 
         try:
-            # print()
             route_x, route_y, route_theta_r,dir_info = plan.planning(car_position_x, car_position_y, car_position_theta)
 
-            # for i in range(len(route_x)):
-            #     print(route_x[i],route_y[i],route_theta_r[i],dir_info[i])
-
-            print('len ',len(route_x))
             for i in range(len(route_x)):
                 route.append([route_x[i],route_y[i],route_theta_r[i]])
 
@@ -228,15 +219,13 @@ class CarlaVerticalParkingNode:
 
     def execute_cb(self, goal_msg):
         rospy.loginfo("VerticalParking: Received goal, start parking...")
-        # print(goal_msg)
-        # self.compute_best_preparking_position(self.vehicle_pose,goal_msg.parking_spot)
 
         vehicle_pose = self.vehicle_pose
+        #计算泊车路径
         self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
-        # print('type',type(self.path_array),type(self.action_result.path_array),self.node_state)
-        # print(self.path_array)
+
         self.action_result.path_array = self.path_array
-        # print('action',self.action_result.path_array)
+
         if self.node_state == NodeState.FAILURE:
             self.vertical_parking_server.set_aborted(text="VerticleParking planning failed...")
         elif self.node_state == NodeState.SUCCESS:
