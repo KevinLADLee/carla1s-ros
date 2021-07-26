@@ -68,7 +68,7 @@ class GetParkingEndPosition():
             x3 = x2 + 2 * self.__min_turning_radiu * math.sin(theta_r2)
             y3 = y2 - 2 * self.__min_turning_radiu * math.cos(theta_r2)
             dis = self.__distance(self.__lp[0], self.__lp[1], x3, y3)
-            if dis < min_turning_radiu-car_w/2:
+            if dis < self.__min_turning_radiu-self.__car_w/2:
                 l=t
         # if l==0:
         #     print("初始化有问题！！！！！！！！！！！！！！！")
@@ -89,11 +89,11 @@ class GetParkingEndPosition():
             y3 = y2 - 2 * self.__min_turning_radiu * math.cos(theta_r2)
             dis = self.__distance(self.__lp[0], self.__lp[1], x3, y3)
             # print(t,dis, min_turning_radiu-car_w/2)
-            if dis < min_turning_radiu-car_w/2:
+            if dis < self.__min_turning_radiu-self.__car_w/2:
                 l=t
-            if dis > min_turning_radiu-car_w/2:
+            if dis > self.__min_turning_radiu-self.__car_w/2:
                 r=t
-            if dis== min_turning_radiu-car_w/2:
+            if dis== self.__min_turning_radiu-self.__car_w/2:
                 l=t
                 r=t
 
@@ -108,6 +108,7 @@ class GetParkingEndPosition():
         cos_theta_r2p = (y2 - self.__road_w + self.__r_add_front) / (2 * self.__min_turning_radiu)
         theta_r2p = math.acos(cos_theta_r2p)
         return theta_r2p
+
 
     #寻找当前车辆位置相对车位的局部最优停车点
     def get_better_place(self,x,y,theta,show=False):

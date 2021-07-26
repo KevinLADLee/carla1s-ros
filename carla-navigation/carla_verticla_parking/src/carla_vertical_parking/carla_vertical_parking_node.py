@@ -31,15 +31,11 @@ class NodeState(Enum):
     SUCCESS = 3,
     FAILURE = 4
 
+#这里面的信息都是无法从carla的vertical info中获取的参数
 class EnvInfoMessage(float):
     road_w = 5 # 2.86*3 #尽量在4.09以上，小于的话腾挪次数要爆炸
-    min_turning_radiu = 10
     car_l = 4
     hou_xuan = 1
-    # real_parking_left_head = [16.6 ,28.4]
-    # real_parking_right_head = [16.6,26.1]
-    real_parking_left_head = [3, 0]
-    real_parking_right_head = [6, 0]
 
 class CarlaVerticalParkingNode:
     def __init__(self):
@@ -72,9 +68,12 @@ class CarlaVerticalParkingNode:
 
 
         msg=parking_spot.center_pose
-        (r, p, theta) = tf.transformations.euler_from_quaternion(
+        (_, _, parking_theta) = tf.transformations.euler_from_quaternion(
             [msg.orientation.x,msg.orientation.y, msg.orientation.z, msg.orientation.w])
         center_pose=msg.position
+
+
+
 
         # 无法从carla中获取的信息
         hou_xuan=EnvInfoMessage.hou_xuan
@@ -85,11 +84,12 @@ class CarlaVerticalParkingNode:
         # 能够从carla中获取的信息
         car_w =abs(self.vehicle_info.wheels[0].position.y)+abs(self.vehicle_info.wheels[1].position.y)
         wheel_dis = abs(self.vehicle_info.wheels[0].position.x)+abs(self.vehicle_info.wheels[2].position.x)
+        #最小转弯半价的经验计算方法
         min_turning_radiu=2.4*car_l
-        real_parking_left_head=[center_pose.x+math.cos(theta)*parking_spot.length/2-math.sin(theta)*parking_spot.width/2,
-                                center_pose.y+math.sin(theta)*parking_spot.length/2+math.cos(theta)*parking_spot.width/2]
-        real_parking_right_head=[center_pose.x+math.cos(theta)*parking_spot.length/2+math.sin(theta)*parking_spot.width/2,
-                                center_pose.y+math.sin(theta)*parking_spot.length/2-math.cos(theta)*parking_spot.width/2]
+        real_parking_left_head=[center_pose.x+math.cos(parking_theta)*parking_spot.length/2-math.sin(parking_theta)*parking_spot.width/2,
+                                center_pose.y+math.sin(parking_theta)*parking_spot.length/2+math.cos(parking_theta)*parking_spot.width/2]
+        real_parking_right_head=[center_pose.x+math.cos(parking_theta)*parking_spot.length/2+math.sin(parking_theta)*parking_spot.width/2,
+                                center_pose.y+math.sin(parking_theta)*parking_spot.length/2-math.cos(parking_theta)*parking_spot.width/2]
 
 
 
@@ -101,9 +101,31 @@ class CarlaVerticalParkingNode:
         # 这个理论最优点不考虑车辆当前位置，得出的是车辆一次转弯能转到的理论极限的最优位置
         real_position_x, real_position_y, real_position_theta =get_park.get_best_place()
 
+        print('best ',real_position_x, real_position_y, real_position_theta)
+        if 0:
+            # 获取当前位置的局部最优点
+            # 获取车辆当前位置
+            car_position_x=vehicle_pose.position.x
+            car_position_y=vehicle_pose.position.y
+            (_, _, car_position_theta) = tf.transformations.euler_from_quaternion(
+                [vehicle_pose.orientation.x,vehicle_pose.orientation.y,
+                 vehicle_pose.orientation.z, vehicle_pose.orientation.w])
+
+            real_x,real_y,real_theta=get_park.space_change.real_to_sim(car_position_x, car_position_y, car_position_theta)
+
+            #计算局部最优点
+            sim_position_x, sim_position_y, sim_position_theta = get_park.get_better_place(
+                real_x,real_y,real_theta, show=False)
+
+            real_position_x, real_position_y, real_position_theta=get_park.space_change.sim_to_real(sim_position_x, sim_position_y, sim_position_theta)
+
+            print('better ',real_position_x, real_position_y, real_position_theta)
+
+
         best_position=PoseStamped()
         best_position.pose.position.x=real_position_x
         best_position.pose.position.y=real_position_y
+
         # 停车位的角度
         q = tf.transformations.quaternion_from_euler(0, 0, real_position_theta)
 
@@ -111,34 +133,32 @@ class CarlaVerticalParkingNode:
         best_position.pose.orientation.y=q[1]
         best_position.pose.orientation.z=q[2]
         best_position.pose.orientation.w=q[3]
-        # print(real_position_x, real_position_y, real_position_theta*180/math.pi)
 
         return best_position
 
     def compute_parking_path(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PathArray:
         # self.node_state = NodeState.FAILURE
         self.node_state = NodeState.SUCCESS
-        # return PathArray()
+        return PathArray()
 
 
 
     def odom_cb(self, odom_msg):
         self.vehicle_pose = odom_msg.pose.pose
 
-    def execute_cb(self, goal_msg: ParkingPlannerGoal):
+    def execute_cb(self, goal_msg):
         rospy.loginfo("VerticalParking: Received goal, start parking...")
+        # print(goal_msg)
+        # self.compute_best_preparking_position(self.vehicle_pose,goal_msg.parking_spot)
 
-        #测试
-        self.compute_best_preparking_position(self.vehicle_pose,goal_msg.parking_spot)
+        vehicle_pose = self.vehicle_pose
+        self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
+        self.action_result.path_array = self.path_array
 
-        # vehicle_pose = self.vehicle_pose
-        # self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
-        # self.action_result.path_array = self.path_array
-        #
-        # if self.node_state == NodeState.FAILURE:
-        #     self.vertical_parking_server.set_aborted(text="VerticleParking planning failed...")
-        # elif self.node_state == NodeState.SUCCESS:
-        #     self.vertical_parking_server.set_succeeded(self.action_result, "Vertical parking planning succeed!")
+        if self.node_state == NodeState.FAILURE:
+            self.vertical_parking_server.set_aborted(text="VerticleParking planning failed...")
+        elif self.node_state == NodeState.SUCCESS:
+            self.vertical_parking_server.set_succeeded(self.action_result, "Vertical parking planning succeed!")
 
     def publish_path_array_markers(self, path_array: PathArray):
         self.markers = MarkerArray()
