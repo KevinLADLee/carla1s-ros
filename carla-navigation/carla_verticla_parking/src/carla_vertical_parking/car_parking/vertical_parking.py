@@ -747,6 +747,11 @@ class VerticalParking():
                 and car_position_theta == math.pi / 2:
 
             route_x, route_y, route_theta = self.__into_parking(car_position_x, car_position_y, car_position_theta)
+
+            dir_info=[]
+            for i in range(len(route_x) - len(dir_info)):
+                dir_info.append(1)
+
         else:
             # 如果车辆无法一次性入库，那么就进入来回腾挪入库模式
 
@@ -756,7 +761,7 @@ class VerticalParking():
 
             # print("right back")
             # print(route_right_back_x)
-            print("============================================================================")
+            # print("============================================================================")
             # print("left front")
 
 

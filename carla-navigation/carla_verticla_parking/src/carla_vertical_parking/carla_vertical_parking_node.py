@@ -199,6 +199,28 @@ class CarlaVerticalParkingNode:
             for i in range(len(route_x)):
                 route.append([route_x[i],route_y[i],route_theta_r[i]])
 
+
+            now_path_dir=dir_info[0]
+            now_route=[[route_x[0],route_y[0],route_theta_r[0]]]
+            routes_dir=[]
+            routes=[]
+            for i in range(1,len(dir_info)):
+                if dir_info[i]==now_path_dir:
+                    now_route.append([route_x[i],route_y[i],route_theta_r[i]])
+                else:
+                    routes.append(now_route)
+                    routes_dir.append(now_path_dir)
+                    now_route=[[route_x[i],route_y[i],route_theta_r[i]]]
+                    now_path_dir = dir_info[i]
+            routes.append(now_route)
+            routes_dir.append(now_path_dir)
+            for i in range(len(routes)):
+                print("===========================")
+                print('dir = ',routes_dir[i])
+                print('path = ',routes[i])
+
+
+
             path_array.paths=route
             path_array.driving_direction=dir_info
 
