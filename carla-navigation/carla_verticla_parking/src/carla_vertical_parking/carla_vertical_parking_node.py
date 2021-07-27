@@ -216,8 +216,12 @@ class CarlaVerticalParkingNode:
             routes_dir.append(now_path_dir)
             for i in range(len(routes)):
                 print("===========================")
-                print('dir = ',routes_dir[i])
+                print('dir = ',routes_dir[i]
+                      ,' len = ',len(routes[i])
+                      )
                 print('path = ',routes[i])
+            print("===========================")
+            print(len(routes),len(routes_dir),len(route_x))
 
 
 
