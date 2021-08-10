@@ -21,6 +21,7 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <tf2/utils.h>
 
 #include <carla_nav_types/common_types.h>
 
@@ -84,9 +85,8 @@ inline geometry_msgs::PoseStamped convertFromString(const StringView key)
 {
   // 7 real numbers separated by semicolons
   auto parts = BT::splitString(key, ';');
-  if (parts.size() != 9) {
-    throw std::runtime_error("invalid number of fields for PoseStamped attribute)");
-  } else {
+
+  if(parts.size() == 9){
     geometry_msgs::PoseStamped pose_stamped;
     pose_stamped.header.stamp = ros::Time(BT::convertFromString<int64_t>(parts[0]));
     pose_stamped.header.frame_id = BT::convertFromString<std::string>(parts[1]);
@@ -98,6 +98,20 @@ inline geometry_msgs::PoseStamped convertFromString(const StringView key)
     pose_stamped.pose.orientation.z = BT::convertFromString<double>(parts[7]);
     pose_stamped.pose.orientation.w = BT::convertFromString<double>(parts[8]);
     return pose_stamped;
+  }else if(parts.size() == 3){
+    geometry_msgs::PoseStamped pose_stamped;
+    pose_stamped.header.stamp = ros::Time::now();
+    pose_stamped.header.frame_id = "map";
+    pose_stamped.pose.position.x = BT::convertFromString<double>(parts[0]);
+    pose_stamped.pose.position.y = BT::convertFromString<double>(parts[1]);
+    auto yaw = BT::convertFromString<double>(parts[2]);
+    tf2::Quaternion q;
+    q.setRPY(0,0,yaw);
+    tf2::convert(q, pose_stamped.pose.orientation);
+    return pose_stamped;
+  }
+  else {
+    throw std::runtime_error("invalid number of fields for PoseStamped attribute)");
   }
 }
 
