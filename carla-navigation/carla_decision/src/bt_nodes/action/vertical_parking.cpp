@@ -17,6 +17,10 @@ void VerticalParking::on_tick() {
   goal_.parking_spot.center_pose = Pose2dToRosMsg(spot_pose.value());
   goal_.parking_spot.width = spot_width.value();
   goal_.parking_spot.length = spot_length.value();
+  ros::Rate r(0.01);
+  while (ros::ok()){
+    r.sleep();
+  }
 }
 
 BT::NodeStatus VerticalParking::on_result(const ResultType &res) {

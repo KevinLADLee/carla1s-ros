@@ -3,6 +3,14 @@
 
 #include <vector>
 
+enum NodeState{
+  IDLE = 0,
+  RUNNING = 1,
+  PAUSE = 2,
+  SUCCESS = 3,
+  FAILURE = 4
+};
+
 struct Pose2d{
   using Ptr = std::shared_ptr<Pose2d>;
   Pose2d() = default;

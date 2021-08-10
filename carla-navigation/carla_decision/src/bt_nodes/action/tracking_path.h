@@ -13,7 +13,11 @@ class TrackingPath : public BT::RosActionNode<carla_nav_msgs::PathTrackingAction
 
   void on_tick() override;
 
-  static BT::PortsList providedPorts(){return {};};
+  static BT::PortsList providedPorts(){
+    return {
+        BT::InputPort<carla_nav_msgs::Path>("path")
+    };
+  };
 
   BT::NodeStatus on_result(const ResultType &res) override;
 };
