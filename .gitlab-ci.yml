@@ -4,7 +4,13 @@ before_script:
   - docker pull harbor.isus.tech/carlasim/carla:0.9.11
   - docker pull harbor.isus.tech/osrf/ros:noetic-desktop
 
+
+
 build_image:
+  only:
+    - tags
+    - api
+    - web
   script:
      - cd docker
      - docker build -t $CI_REGISTRY/carla-ros/carla-ros:$CI_COMMIT_BRANCH -f Dockerfile ./..

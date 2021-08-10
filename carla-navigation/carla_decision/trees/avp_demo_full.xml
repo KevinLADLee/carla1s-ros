@@ -8,7 +8,11 @@
                 <Sequence>
                     <Action ID="ComputePathToGoal" goal="18.394;3.674;-1.57" path="{path}" path_planner_id="waypoint"/>
                     <Action ID="TrackingPath" path="{path}"/>
-                    <Action ID="VerticalParking" parking_spot_length="1.5" parking_spot_pose="15.0;15.0;1.57" parking_spot_width="5.7"/>
+                    <RetryUntilSuccesful num_attempts="3">
+                        <Sequence>
+                            <Action ID="VerticalParking" parking_spot_length="1.5" parking_spot_pose="15.0;15.0;1.57" parking_spot_width="5.7"/>
+                        </Sequence>
+                    </RetryUntilSuccesful>
                 </Sequence>
             </ReactiveFallback>
             <ReactiveFallback>
@@ -35,6 +39,7 @@
             <input_port default="15.0;15.0;1.57" name="parking_spot_pose"/>
             <input_port default="5.7" name="parking_spot_width"/>
         </Action>
+        <Action ID="VerticalParkingTracking"/>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
