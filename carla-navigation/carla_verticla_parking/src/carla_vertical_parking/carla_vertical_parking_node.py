@@ -3,6 +3,7 @@
 import math
 from enum import Enum
 
+import tf
 import rospy
 import actionlib
 from geometry_msgs.msg import Pose, PoseStamped, Point
@@ -13,19 +14,13 @@ from carla_nav_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
     ParkingPlannerFeedback, ParkingPlannerActionResult, ParkingPlannerResult, ParkingPlannerGoal
 from visualization_msgs.msg import Marker, MarkerArray
 from carla_msgs.msg import CarlaEgoVehicleInfo
+from carla_vertical_parking.get_best_parking_position import GetBestParkingPosition
 
 
-import os
-import sys
-import tf
-
-sys.path.append(os.path.split(os.path.abspath(__file__))[0])
 
 
-from car_parking.find_best_parking_place import GetParkingEndPosition
-from car_parking.vertical_parking import VerticalParking
-from car_parking.env import Env
-from car_parking.parking_planning import Planning
+from carla_vertical_parking.car_parking.env import Env
+from carla_vertical_parking.car_parking.parking_planning import Planning
 
 class NodeState(Enum):
     IDLE = 0,
@@ -71,75 +66,8 @@ class CarlaVerticalParkingNode:
 
     def compute_best_preparking_position(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PoseStamped:
 
+        return GetBestParkingPosition(self.vehicle_info).get_best_parking_position(vehicle_pose, parking_spot)
 
-        msg=parking_spot.center_pose
-        (_, _, parking_theta) = tf.transformations.euler_from_quaternion(
-            [msg.orientation.x,msg.orientation.y, msg.orientation.z, msg.orientation.w])
-        center_pose=msg.position
-
-
-
-
-        # 无法从carla中获取的信息
-        hou_xuan=EnvInfoMessage.hou_xuan
-        road_w=EnvInfoMessage.road_w
-        car_l=EnvInfoMessage.car_l
-
-
-        # 能够从carla中获取的信息
-        car_w =abs(self.vehicle_info.wheels[0].position.y)+abs(self.vehicle_info.wheels[1].position.y)
-        wheel_dis = abs(self.vehicle_info.wheels[0].position.x)+abs(self.vehicle_info.wheels[2].position.x)
-        #最小转弯半价的经验计算方法
-        min_turning_radiu=2.4*car_l
-        real_parking_left_head=[center_pose.x+math.cos(parking_theta)*parking_spot.length/2-math.sin(parking_theta)*parking_spot.width/2,
-                                center_pose.y+math.sin(parking_theta)*parking_spot.length/2+math.cos(parking_theta)*parking_spot.width/2]
-        real_parking_right_head=[center_pose.x+math.cos(parking_theta)*parking_spot.length/2+math.sin(parking_theta)*parking_spot.width/2,
-                                center_pose.y+math.sin(parking_theta)*parking_spot.length/2-math.cos(parking_theta)*parking_spot.width/2]
-
-
-
-        # 初始化寻找最优停车位方法
-        get_park = GetParkingEndPosition(car_l, car_w, min_turning_radiu, wheel_dis, hou_xuan, road_w,
-                                         real_parking_left_head, real_parking_right_head)
-
-        # 获取理论最优点
-        # 这个理论最优点不考虑车辆当前位置，得出的是车辆一次转弯能转到的理论极限的最优位置
-        real_position_x, real_position_y, real_position_theta =get_park.get_best_place()
-
-        print('best ',real_position_x, real_position_y, real_position_theta)
-        if 0:
-            # 获取当前位置的局部最优点
-            # 获取车辆当前位置
-            car_position_x=vehicle_pose.position.x
-            car_position_y=vehicle_pose.position.y
-            (_, _, car_position_theta) = tf.transformations.euler_from_quaternion(
-                [vehicle_pose.orientation.x,vehicle_pose.orientation.y,
-                 vehicle_pose.orientation.z, vehicle_pose.orientation.w])
-
-            real_x,real_y,real_theta=get_park.space_change.real_to_sim(car_position_x, car_position_y, car_position_theta)
-
-            #计算局部最优点
-            sim_position_x, sim_position_y, sim_position_theta = get_park.get_better_place(
-                real_x,real_y,real_theta, show=False)
-
-            real_position_x, real_position_y, real_position_theta=get_park.space_change.sim_to_real(sim_position_x, sim_position_y, sim_position_theta)
-
-            print('better ',real_position_x, real_position_y, real_position_theta)
-
-
-        best_position=PoseStamped()
-        best_position.pose.position.x=real_position_x
-        best_position.pose.position.y=real_position_y
-
-        # 停车位的角度
-        q = tf.transformations.quaternion_from_euler(0, 0, real_position_theta)
-
-        best_position.pose.orientation.x=q[0]
-        best_position.pose.orientation.y=q[1]
-        best_position.pose.orientation.z=q[2]
-        best_position.pose.orientation.w=q[3]
-
-        return best_position
 
     def compute_parking_path(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PathArray:
         msg = parking_spot.center_pose
@@ -279,6 +207,7 @@ class CarlaVerticalParkingNode:
         rospy.loginfo("VerticalParking: Received goal, start parking...")
 
         vehicle_pose = self.vehicle_pose
+        self.compute_best_preparking_position(vehicle_pose, goal_msg.parking_spot)
         #计算泊车路径
         self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
 
