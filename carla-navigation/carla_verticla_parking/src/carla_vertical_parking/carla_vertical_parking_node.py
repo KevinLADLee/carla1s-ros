@@ -14,6 +14,7 @@ from carla_nav_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
 from visualization_msgs.msg import Marker, MarkerArray
 from carla_msgs.msg import CarlaEgoVehicleInfo
 
+
 import os
 import sys
 import tf
@@ -154,12 +155,14 @@ class CarlaVerticalParkingNode:
         step=EnvInfoMessage.step
         road_l=EnvInfoMessage.road_l
 
+        # print(self.vehicle_info)
 
         # 能够从carla中获取的信息
         parking_l=parking_spot.length
         parking_w=parking_spot.width
         car_w = abs(self.vehicle_info.wheels[0].position.y) + abs(self.vehicle_info.wheels[1].position.y)
         wheel_dis = abs(self.vehicle_info.wheels[0].position.x) + abs(self.vehicle_info.wheels[2].position.x)
+
         # 最小转弯半价的经验计算方法
         min_turning_radiu = 2.4 * car_l
         real_parking_left_head = [center_pose.x + math.cos(parking_theta) * parking_spot.length / 2 - math.sin(
@@ -204,29 +207,58 @@ class CarlaVerticalParkingNode:
             now_route=[[route_x[0],route_y[0],route_theta_r[0]]]
             routes_dir=[]
             routes=[]
+            type_route=Path()
+            path_array.driving_direction.append(dir_info[0])
             for i in range(1,len(dir_info)):
+                tmp_pose=PoseStamped()
+                tmp_pose.pose.position.x=route_x[i]
+                tmp_pose.pose.position.y=route_y[i]
+
+                q = tf.transformations.quaternion_from_euler(0, 0, route_theta_r[i])
+                tmp_pose.pose.orientation.x = q[0]
+                tmp_pose.pose.orientation.y = q[1]
+                tmp_pose.pose.orientation.z = q[2]
+                tmp_pose.pose.orientation.w = q[3]
+                # type_route.append(tmp_pose)
+
                 if dir_info[i]==now_path_dir:
                     now_route.append([route_x[i],route_y[i],route_theta_r[i]])
+                    type_route.poses.append(tmp_pose)
                 else:
                     routes.append(now_route)
                     routes_dir.append(now_path_dir)
                     now_route=[[route_x[i],route_y[i],route_theta_r[i]]]
                     now_path_dir = dir_info[i]
+
+                    path_array.paths.append(type_route)
+                    path_array.driving_direction.append(now_path_dir)
+                    type_route=Path()
+                    type_route.poses.append(tmp_pose)
+
+            path_array.paths.append(type_route)
+
+
             routes.append(now_route)
             routes_dir.append(now_path_dir)
-            for i in range(len(routes)):
-                print("===========================")
-                print('dir = ',routes_dir[i]
-                      ,' len = ',len(routes[i])
-                      )
-                print('path = ',routes[i])
-            print("===========================")
-            print(len(routes),len(routes_dir),len(route_x))
 
-
-
-            path_array.paths=route
-            path_array.driving_direction=dir_info
+            # path_array=PathArray()
+            # print(PathArray())
+            # print(Path())
+            # for i in range(len(routes)):
+            #     print("===========================")
+            #     print('dir = ',routes_dir[i]
+            #           ,' len = ',len(routes[i])
+            #           )
+            #     print('path = ',routes[i])
+            # print("===========================")
+            # print(len(routes),len(routes_dir),len(route_x))
+            #
+            # print(len(path_array.paths),len(path_array.driving_direction),len(routes))
+            # print(len(path_array.paths[0].poses))
+            # for i in range(len(routes)):
+            #     print(len(path_array.paths[i].poses),len(routes[i]))
+            # path_array.paths=route
+            # path_array.driving_direction=dir_info
 
             if route_x!=None:
                 self.node_state = NodeState.SUCCESS
