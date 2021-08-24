@@ -1,8 +1,3 @@
-//
-// Created by kevinlad on 2021/4/14.
-//
-
-
 #include "carla_decision.h"
 
 CarlaDecision::CarlaDecision() {

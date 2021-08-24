@@ -14,17 +14,20 @@ void ComputePathToGoal::on_tick() {
     throw BT::RuntimeError("missing required input [planner_id]: ", path_planner_id.error());
   }
   goal_.planner_id = path_planner_id.value();
-  config().blackboard->get<bool>("first_goal_received", first_goal_received_);
-  config().blackboard->get<geometry_msgs::PoseStamped>("goal", goal_.goal);
-  goal_.role_name = "ego_vehicle";
-  if(!first_goal_received_){
+
+  BT::Optional<geometry_msgs::PoseStamped> goal_pose = getInput<geometry_msgs::PoseStamped>("goal");
+  if (!goal_pose)
+  {
     setStatus(BT::NodeStatus::FAILURE);
+    throw BT::RuntimeError("missing required input [goal]: ", goal_pose.error());
   }
+  goal_.goal = goal_pose.value();
+  goal_.role_name = "ego_vehicle";
 }
 
 BT::NodeStatus ComputePathToGoal::on_result(const carla_nav_msgs::PathPlannerResult &res) {
   goal_result_.path = res.path;
-  config().blackboard->set<carla_nav_msgs::Path>("path", goal_result_.path);
+  setOutput("path", goal_result_.path);
   return BT::NodeStatus::SUCCESS;
 }
 
