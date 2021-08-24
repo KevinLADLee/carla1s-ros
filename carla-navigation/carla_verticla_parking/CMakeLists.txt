@@ -19,6 +19,7 @@ include_directories(${catkin_INCLUDE_DIRS})
 
 catkin_install_python(PROGRAMS
         src/carla_vertical_parking/carla_vertical_parking_node.py
+        src/carla_vertical_parking/carla_verticle_parking_tracking_node.py
         DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch/
