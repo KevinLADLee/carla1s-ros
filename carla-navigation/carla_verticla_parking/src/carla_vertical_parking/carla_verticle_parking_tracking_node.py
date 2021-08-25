@@ -36,7 +36,7 @@ class VerticalParkingTrackingNode:
                                                                     PathTrackingAction,
                                                                     execute_cb=self.execute_cb,
                                                                     auto_start=False)
-
+        self.parking_tracking_server.start()
         #self.steer_controller = 
         #self.velocity_controller = 
         self.path_array = None
@@ -78,7 +78,7 @@ class VerticalParkingTrackingNode:
     def execute_cb(self, action_goal):
         rospy.loginfo("VerticalParkingTracking: Path received, start tracking...")
         r = rospy.Rate(20)
-        self.path_array = action_goal.goal.path
+        self.path_array = action_goal.path
 
         while not rospy.is_shutdown:
             if self.parking_tracking_server.is_preempt_requested():
@@ -87,7 +87,7 @@ class VerticalParkingTrackingNode:
                 break
 
             if self.is_tracking_failed():
-                self.action_result.result.error_code = NodeState.FAILURE
+                self.action_result.error_code = NodeState.FAILURE.value[0]
                 self.parking_tracking_server.set_aborted(result=self.action_result)
 
             # self.compute_and_publish_vehicle_cmd(action_goal.goal.path)
@@ -95,9 +95,8 @@ class VerticalParkingTrackingNode:
                 break      
             r.sleep()
             break
-
         self.stop_vehicle()    
-        self.action_result.result.error_code = NodeState.SUCCESS
+        self.action_result.error_code = NodeState.SUCCESS.value[0]
         self.parking_tracking_server.set_succeeded(result=self.action_result)
 
 
