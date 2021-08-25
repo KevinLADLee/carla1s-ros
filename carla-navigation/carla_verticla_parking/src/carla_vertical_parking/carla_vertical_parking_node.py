@@ -91,6 +91,7 @@ class CarlaVerticalParkingNode:
 
     def execute_cb(self, goal_msg):
         rospy.loginfo("VerticalParking: Received goal, start parking...")
+        print(type(goal_msg))
 
         vehicle_pose = self.vehicle_pose
         self.compute_best_preparking_position(vehicle_pose, goal_msg.parking_spot)

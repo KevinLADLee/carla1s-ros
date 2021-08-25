@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 import math
 from enum import Enum
@@ -8,7 +7,7 @@ import rospy
 import actionlib
 from geometry_msgs.msg import Pose, PoseStamped, Point
 from nav_msgs.msg import Path, Odometry
-from carla_nav_msgs.msg import PathTrackingAction, PathTrackingActionGoal, PathTrackingActionResult
+from carla_nav_msgs.msg import PathTrackingAction, PathTrackingActionGoal, PathTrackingActionResult,PathTrackingResult,PathTrackingGoal
 
 from carla_msgs.msg import CarlaEgoVehicleControl
 
@@ -42,7 +41,8 @@ class VerticalParkingTrackingNode:
         #self.velocity_controller = 
         self.path_array = None
 
-        self.action_result = PathTrackingActionResult
+        self.action_result = PathTrackingResult()
+        print("init success")
 
 
     def odom_cb(self, odom_msg : Odometry):
@@ -51,6 +51,11 @@ class VerticalParkingTrackingNode:
 
     def compute_and_publish_vehicle_cmd(self, path):
         control_cmd = CarlaEgoVehicleControl()
+
+
+
+
+
         control_cmd.steer = self.steer_controller.run_step(self.vehicle_pose, path)
         control_cmd.throttle, control_cmd.reverse = self.velocity_controller.run_step(self.vehicle_speed)
         self.control_cmd_pub.publish(control_cmd)
@@ -63,12 +68,14 @@ class VerticalParkingTrackingNode:
         self.control_cmd_pub.publish(control_cmd)
 
     def is_goal_reached(self) -> bool:
+
         return False
+
 
     def is_tracking_failed(self) -> bool:
         return False    
     
-    def execute_cb(self, action_goal : PathTrackingActionGoal):
+    def execute_cb(self, action_goal):
         rospy.loginfo("VerticalParkingTracking: Path received, start tracking...")
         r = rospy.Rate(20)
         self.path_array = action_goal.goal.path
@@ -83,15 +90,36 @@ class VerticalParkingTrackingNode:
                 self.action_result.result.error_code = NodeState.FAILURE
                 self.parking_tracking_server.set_aborted(result=self.action_result)
 
-            self.compute_and_publish_vehicle_cmd(action_goal.goal.path)
+            # self.compute_and_publish_vehicle_cmd(action_goal.goal.path)
             if self.is_goal_reached():
                 break      
             r.sleep()
+            break
 
         self.stop_vehicle()    
         self.action_result.result.error_code = NodeState.SUCCESS
         self.parking_tracking_server.set_succeeded(result=self.action_result)
 
 
+def main(args=None):
+    """
+    main function
+    """
+    rospy.init_node("carla_vertical_tracking0", args)
 
-            
+    carla_vertical_parking = None
+    try:
+        carla_vertical_parking = VerticalParkingTrackingNode()
+        rospy.spin()
+    except (RuntimeError, rospy.ROSException):
+        rospy.logerr("CarlaVerticalParkingTracking: Error occurs!")
+        pass
+    except KeyboardInterrupt:
+        rospy.loginfo("CarlaVerticalParkingTracking: User requested shut down.")
+    finally:
+        rospy.loginfo("CarlaVerticalParkingTracking: Shut down now...")
+
+
+if __name__ == "__main__":
+    main()
+
