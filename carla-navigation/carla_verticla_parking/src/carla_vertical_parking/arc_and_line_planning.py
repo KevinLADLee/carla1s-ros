@@ -21,7 +21,7 @@ class EnvInfoMessage(float):
     step=0.1
     road_l=10
 
-class YuanhuParking():
+class ArcLinePlanning():
     def __init__(self,vehicle_info):
         self.vehicle_info=vehicle_info
 

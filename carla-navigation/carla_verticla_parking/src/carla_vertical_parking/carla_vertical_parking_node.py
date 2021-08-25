@@ -18,7 +18,7 @@ from carla_vertical_parking.get_best_parking_position import GetBestParkingPosit
 
 
 
-from carla_vertical_parking.yuanhu_parking_planning import  YuanhuParking
+from carla_vertical_parking.arc_and_line_planning import  ArcLinePlanning
 from carla_vertical_parking.car_parking.env import Env
 from carla_vertical_parking.car_parking.parking_planning import Planning
 
@@ -73,7 +73,7 @@ class CarlaVerticalParkingNode:
 
         path_array = PathArray()
         try:
-            path_array=YuanhuParking(self.vehicle_info).planning(vehicle_pose, parking_spot)
+            path_array=ArcLinePlanning(self.vehicle_info).planning(vehicle_pose, parking_spot)
 
             if path_array!=PathArray():
                 self.node_state = NodeState.SUCCESS
@@ -91,13 +91,12 @@ class CarlaVerticalParkingNode:
 
     def execute_cb(self, goal_msg):
         rospy.loginfo("VerticalParking: Received goal, start parking...")
-        print(type(goal_msg))
+        # print(type(goal_msg))
 
         vehicle_pose = self.vehicle_pose
         self.compute_best_preparking_position(vehicle_pose, goal_msg.parking_spot)
         #计算泊车路径
         self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
-
         self.action_result.path_array = self.path_array
 
         if self.node_state == NodeState.FAILURE:
