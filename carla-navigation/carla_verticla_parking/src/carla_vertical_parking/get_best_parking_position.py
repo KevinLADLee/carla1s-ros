@@ -19,7 +19,7 @@ class GetBestParkingPosition():
     def __init__(self,vehicle_info):
         self.vehicle_info=vehicle_info
 
-    def get_best_parking_position(self, vehicle_pose: Pose, parking_spot: ParkingSpot,):
+    def get_best_parking_position(self, vehicle_pose: Pose, parking_spot: ParkingSpot):
         msg = parking_spot.center_pose
         (_, _, parking_theta) = tf.transformations.euler_from_quaternion(
             [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w])
