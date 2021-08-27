@@ -16,13 +16,15 @@ void ComputePathToGoal::on_tick() {
   goal_.planner_id = path_planner_id.value();
 
   BT::Optional<geometry_msgs::PoseStamped> goal_pose = getInput<geometry_msgs::PoseStamped>("goal");
-  if (!goal_pose)
+  if (!goal_pose.has_value())
   {
     setStatus(BT::NodeStatus::FAILURE);
-    throw BT::RuntimeError("missing required input [goal]: ", goal_pose.error());
+    ROS_WARN("ComputePath: missing required input [goal]");
+    return;
+  }else{
+    goal_.goal = goal_pose.value();
+    goal_.role_name = "ego_vehicle";
   }
-  goal_.goal = goal_pose.value();
-  goal_.role_name = "ego_vehicle";
 }
 
 BT::NodeStatus ComputePathToGoal::on_result(const carla_nav_msgs::PathPlannerResult &res) {

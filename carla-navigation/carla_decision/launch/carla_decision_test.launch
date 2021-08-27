@@ -1,8 +1,8 @@
 <launch>
 
     <arg name='role_name' default='ego_vehicle' />
-<!--     <arg name='bt_tree_filename' default='avp_demo.xml' /> -->
- <arg name='bt_tree_filename' default='avp_demo_full.xml' />
+    <arg name='bt_tree_filename' default='avp_demo.xml' />
+<!--  <arg name='bt_tree_filename' default='avp_demo_full.xml' /> -->
     <!-- <arg name='bt_tree_filename' default='avp_demo_reeds_shepp.xml' /> -->
 
     <node name="carla_decision_node" pkg="carla_decision" type="carla_decision_node" output="screen" >

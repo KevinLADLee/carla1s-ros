@@ -22,7 +22,7 @@
 <!--     <arg name="town" default='Town03'/> -->
 <!--     <arg name="spawn_point" default="-87.967, -91.033, 0.6, 0, 0, -90"/> -->
 
-<arg name="town" default='ParkingLot'/>
+<!-- <arg name="town" default='ParkingLot'/> -->
 <!-- <arg name="spawn_point" default="18.394, 3.674, 0.1, 0, 0, -90" /> -->
 
   <!-- Enable/disable passive mode -->

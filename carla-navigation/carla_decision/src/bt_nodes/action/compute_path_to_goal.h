@@ -20,7 +20,7 @@ class ComputePathToGoal : public BT::RosActionNode<carla_nav_msgs::PathPlannerAc
   static BT::PortsList providedPorts()
   {
     return {
-        BT::InputPort<geometry_msgs::PoseStamped>("goal"),
+//        BT::InputPort<geometry_msgs::PoseStamped>("goal"),
         BT::InputPort<std::string>("path_planner_id"),
         BT::OutputPort<carla_nav_msgs::Path>("path")
     };

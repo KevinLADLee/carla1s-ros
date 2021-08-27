@@ -25,7 +25,10 @@ double PurePursuit::RunStep(const Pose2dPtr &vehicle_pose,
 int PurePursuit::FindValidWaypoint(const Pose2dPtr &vehicle_pose_ptr, Pose2dPtr &valid_waypoint_ptr){
   found_valid_waypoint_ = false;
   // make sure vehicle_pose is in map frame
-  for (auto &wp_index = current_waypoint_index_; wp_index < waypoints_ptr_->size(); wp_index++) {
+
+  auto nearest_waypoint_inx =  FindNearestWaypointIndex(vehicle_pose_ptr, waypoints_ptr_);
+
+  for (auto &wp_index = nearest_waypoint_inx; wp_index < waypoints_ptr_->size(); wp_index++) {
     auto waypoint_in_map = waypoints_ptr_->at(wp_index);
     if(IsValidWaypoint(waypoint_in_map, *vehicle_pose_ptr)){
       current_waypoint = waypoint_in_map;
@@ -63,7 +66,7 @@ double PurePursuit::ComputeSteering(const Pose2dPtr &vehicle_pose, const Pose2dP
 
 bool PurePursuit::IsValidWaypoint(const Pose2d &waypoint_pose, const Pose2d &vehicle_pose) {
   auto waypoint_pose_in_vehicle_frame = ToVehicleFrame(waypoint_pose, vehicle_pose);
-  float dist = std::hypot(waypoint_pose.x - vehicle_pose.x,
+  auto dist = std::hypot(waypoint_pose.x - vehicle_pose.x,
                           waypoint_pose.y - vehicle_pose.y);
   if(waypoint_pose_in_vehicle_frame.x > 0
       && GetDrivingDirection() == DrivingDirection::FORWARD

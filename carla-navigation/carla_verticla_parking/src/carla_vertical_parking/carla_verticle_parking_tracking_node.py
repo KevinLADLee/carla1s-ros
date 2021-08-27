@@ -51,11 +51,6 @@ class VerticalParkingTrackingNode:
 
     def compute_and_publish_vehicle_cmd(self, path):
         control_cmd = CarlaEgoVehicleControl()
-
-
-
-
-
         control_cmd.steer = self.steer_controller.run_step(self.vehicle_pose, path)
         control_cmd.throttle, control_cmd.reverse = self.velocity_controller.run_step(self.vehicle_speed)
         self.control_cmd_pub.publish(control_cmd)

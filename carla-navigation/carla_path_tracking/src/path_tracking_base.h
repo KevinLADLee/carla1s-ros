@@ -19,6 +19,22 @@ class LateralController{
     return steering;
   };
 
+  virtual int FindNearestWaypointIndex(const Pose2dPtr &vehicle_pose,
+                                     const Path2dPtr &path){
+    double min_dist = std::numeric_limits<double>::max();
+    int index = 0;
+    for(int i = 0; i < path->size(); i++){
+      auto dist = std::hypot(vehicle_pose->x - path->at(i).x, vehicle_pose->y - path->at(i).y);
+      if(dist < min_dist){
+        min_dist = dist;
+        index = i;
+      }else{
+        return index;
+      }
+    }
+    return index;
+  };
+
   /**
    *
    * @param driving_direction

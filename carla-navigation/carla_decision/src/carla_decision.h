@@ -32,7 +32,6 @@ class CarlaDecision{
       "bt_action_stop_and_wait",
       "bt_action_compute_path_to_goal",
       "bt_action_tracking_path",
-      "bt_action_move_to_goal",
       "bt_action_cruise",
       "bt_action_vertical_parking",
       "bt_condition_goal_updated",

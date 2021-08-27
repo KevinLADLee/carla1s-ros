@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Fallback>
+            <ReactiveFallback>
+                <Condition ID="GoalReached"/>
+                <IfThenElse>
+                    <Condition ID="PathNotExist" path="{path}"/>
+                    <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
+                    <Sequence>
+                        <Condition ID="CheckTrafficLight"/>
+                        <Action ID="CheckCollision" target_speed="15.0"/>
+                        <Action ID="TrackingPath" path="{path}" target_speed="15.0"/>
+                    </Sequence>
+                </IfThenElse>
+            </ReactiveFallback>
+            <ReactiveFallback>
+                <Condition ID="GoalUpdated"/>
+                <Action ID="StopAndWait"/>
+            </ReactiveFallback>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="CheckCollision">
+            <output_port default="15.0" name="target_speed"/>
+        </Action>
+        <Condition ID="CheckTrafficLight"/>
+        <Action ID="ComputePathToGoal">
+            <input_port default="{goal}" name="goal"/>
+            <output_port default="{path}" name="path"/>
+            <input_port default="waypoint" name="path_planner_id"/>
+        </Action>
+        <Condition ID="GoalReached"/>
+        <Condition ID="GoalUpdated"/>
+        <Condition ID="PathNotExist">
+            <input_port default="{path}" name="path"/>
+        </Condition>
+        <Control ID="PipelineSequence"/>
+        <Action ID="StopAndWait"/>
+        <Action ID="TrackingPath">
+            <input_port default="{path}" name="path"/>
+            <input_port default="15.0" name="target_speed"/>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+
