@@ -155,10 +155,10 @@ class RosActionNode : public BT::ActionNodeBase
       // setting the status to RUNNING to notify the BT Loggers (if any)
       setStatus(BT::NodeStatus::RUNNING);
       on_tick();
-      ROS_INFO("BT Action Node: %s send goal", action_client_name_.c_str());
       if (status() == BT::NodeStatus::FAILURE) {
         return BT::NodeStatus::FAILURE;
       } else{
+        ROS_INFO("BT Action Node: %s send goal", action_client_name_.c_str());
         action_client_->sendGoal(goal_);
       }
     }
@@ -204,7 +204,7 @@ class RosActionNode : public BT::ActionNodeBase
   GoalType goal_;
   ResultType goal_result_;
   bool goal_result_available_ = false;
-  bool first_goal_received_ = false;
+  bool goal_received_ = false;
 
 };
 

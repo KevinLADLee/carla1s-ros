@@ -6,7 +6,7 @@
             <ReactiveFallback>
                 <Condition ID="GoalUpdated"/>
                 <Control ID="PipelineSequence">
-                    <Action ID="ComputePathToGoal" path="{path}" path_planner_id="waypoint"/>
+                    <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
                     <Action ID="TrackingPath" path="{path}"/>
                 </Control>
             </ReactiveFallback>
@@ -19,6 +19,7 @@
     <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="ComputePathToGoal">
+            <input_port name="goal"/>
             <output_port default="{path}" name="path"/>
             <input_port name="path_planner_id"/>
         </Action>

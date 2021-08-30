@@ -1,7 +1,3 @@
-//
-// Created by kevinlad on 2021/4/27.
-//
-
 #include "blackboard_handler.h"
 
 namespace carla_decision{
@@ -12,7 +8,7 @@ BlackboardHandler::BlackboardHandler(BT::Blackboard::Ptr bb_ptr,
     : bb_ptr_(bb_ptr), nh_ptr_(nh_ptr), role_name_(role_name) {
 
 
-  bb_ptr_->set<bool>("first_goal_received", false);
+  bb_ptr_->set<bool>("goal_received", false);
 
   odom_sub_ = nh_ptr_->subscribe<nav_msgs::Odometry>("/carla/" + role_name_ + "/odometry",
                                                      10,
@@ -34,7 +30,7 @@ void BlackboardHandler::TrafficLightCallback(const std_msgs::BoolConstPtr& msg) 
 
 void BlackboardHandler::GoalCallback(const geometry_msgs::PoseStampedConstPtr &goal) {
   bb_ptr_->set<geometry_msgs::PoseStamped>("goal", *goal);
-  bb_ptr_->set<bool>("first_goal_received", true);
+  bb_ptr_->set<bool>("goal_received", true);
   ROS_INFO( "BT Blackboard: Received new goal: (%f,%f)", goal->pose.position.x, goal->pose.position.y);
 }
 

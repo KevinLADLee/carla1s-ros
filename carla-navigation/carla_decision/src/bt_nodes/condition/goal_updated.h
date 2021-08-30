@@ -20,6 +20,7 @@ class GoalUpdated : public BT::ConditionNode
 
  private:
   geometry_msgs::PoseStamped goal_;
+  bool goal_received_;
 
 };
 

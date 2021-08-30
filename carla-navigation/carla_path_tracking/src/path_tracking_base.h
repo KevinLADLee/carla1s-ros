@@ -19,17 +19,21 @@ class LateralController{
     return steering;
   };
 
+  static double PointDistanceSquare(const Pose2d &pose_1, const Pose2d &pose_2){
+    const double dx = pose_1.x - pose_2.x;
+    const double dy = pose_1.y - pose_2.y;
+    return (dx * dx + dy * dy);
+  }
+
   virtual int FindNearestWaypointIndex(const Pose2dPtr &vehicle_pose,
                                      const Path2dPtr &path){
     double min_dist = std::numeric_limits<double>::max();
-    int index = 0;
+    int index = path->size() - 1;
     for(int i = 0; i < path->size(); i++){
-      auto dist = std::hypot(vehicle_pose->x - path->at(i).x, vehicle_pose->y - path->at(i).y);
+      auto dist = PointDistanceSquare(*vehicle_pose, path->at(i));
       if(dist < min_dist){
         min_dist = dist;
         index = i;
-      }else{
-        return index;
       }
     }
     return index;
