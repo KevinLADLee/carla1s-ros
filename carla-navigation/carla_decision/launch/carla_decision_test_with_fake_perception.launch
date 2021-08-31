@@ -3,7 +3,7 @@
     <node name="carla_decision_node" pkg="carla_decision" type="carla_decision_node" output="screen" >
         <rosparam>
           role_name: "ego_vehicle"
-          bt_tree_filename: "goal_behavior.xml"
+          bt_tree_filename: "avp_demo.xml"
         </rosparam>
     </node>
 

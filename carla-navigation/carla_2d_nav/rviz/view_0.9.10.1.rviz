@@ -75,7 +75,6 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Birdview: true
         CarlaDebugMarkers: true
         Depth Camera: true
@@ -108,9 +107,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0.9855115413665771
+      Max Intensity: 0.9933886528015137
       Min Color: 0; 0; 0
-      Min Intensity: 0.8874660730361938
+      Min Intensity: 0.8883363604545593
       Name: Lidar
       Position Transformer: XYZ
       Queue Size: 10
@@ -188,6 +187,8 @@ Visualization Manager:
           Value: true
         ego_vehicle/rgb_birdview:
           Value: true
+        ego_vehicle/rgb_front:
+          Value: true
         ego_vehicle/rgb_view:
           Value: false
         map:
@@ -205,6 +206,8 @@ Visualization Manager:
           ego_vehicle/lidar:
             {}
           ego_vehicle/rgb_birdview:
+            {}
+          ego_vehicle/rgb_front:
             {}
           ego_vehicle/rgb_view:
             {}
@@ -253,7 +256,7 @@ Visualization Manager:
       Marker Topic: /carla/map_visualization
       Name: OpenDrive_Map
       Namespaces:
-        {}
+        map_visulization: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -317,7 +320,7 @@ Visualization Manager:
       Marker Topic: /carla/ego_vehicle/path_tracking/markers
       Name: MarkerArray
       Namespaces:
-        {}
+        path_tracking: true
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -427,10 +430,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 4.85789155960083
+      Scale: 16.65508270263672
       Target Frame: map
-      X: 121.91468048095703
-      Y: -162.59703063964844
+      X: 23.44318199157715
+      Y: 16.54789161682129
     Saved: ~
 Window Geometry:
   BehaviorTreePanel:

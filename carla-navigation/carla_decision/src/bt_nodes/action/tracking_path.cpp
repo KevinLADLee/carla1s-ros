@@ -25,6 +25,7 @@ BT::NodeStatus TrackingPath::on_result(const ResultType &res) {
     case NodeState::IDLE:
       return BT::NodeStatus::IDLE;
     case NodeState::SUCCESS:
+      config().blackboard->set<bool>("goal_received", false);
       return BT::NodeStatus::SUCCESS;
     case NodeState::FAILURE:
       return BT::NodeStatus::FAILURE;

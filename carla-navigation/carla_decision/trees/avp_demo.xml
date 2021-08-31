@@ -4,31 +4,28 @@
     <BehaviorTree ID="BehaviorTree">
         <Fallback>
             <ReactiveFallback>
-                <Condition ID="GoalUpdated"/>
-                <Control ID="PipelineSequence">
-                    <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
-                    <Action ID="TrackingPath" path="{path}"/>
-                </Control>
+                <Condition ID="CheckTrafficLight"/>
+                <ReactiveFallback>
+                    <Condition ID="GoalUpdated"/>
+                    <Control ID="PipelineSequence">
+                        <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
+                        <Action ID="TrackingPath" path="{path}"/>
+                    </Control>
+                </ReactiveFallback>
             </ReactiveFallback>
-            <ReactiveFallback>
-                <Condition ID="GoalUpdated"/>
-                <Action ID="StopAndWait"/>
-            </ReactiveFallback>
+            <Action ID="StopAndWait"/>
         </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
+        <Condition ID="CheckTrafficLight"/>
         <Action ID="ComputePathToGoal">
-            <input_port name="goal"/>
-            <output_port default="{path}" name="path"/>
-            <input_port name="path_planner_id"/>
+            <input_port default="waypoint" name="path_planner_id"/>
         </Action>
         <Condition ID="GoalUpdated"/>
         <Control ID="PipelineSequence"/>
         <Action ID="StopAndWait"/>
-        <Action ID="TrackingPath">
-            <input_port default="{path}" name="path"/>
-        </Action>
+        <Action ID="TrackingPath"/>
         <Action ID="VerticalParking">
             <input_port default="1.5" name="parking_spot_length"/>
             <input_port default="15.0;15.0;1.57" name="parking_spot_pose"/>

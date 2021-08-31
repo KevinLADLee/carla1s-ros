@@ -6,7 +6,7 @@ CheckTrafficLight::CheckTrafficLight(const std::string &condition_name,
 BT::NodeStatus CheckTrafficLight::tick()
 {
   config().blackboard->get<bool>("traffic_light_passable", traffic_light_passable_);
-  if(!traffic_light_passable_){
+  if(traffic_light_passable_){
     return BT::NodeStatus::FAILURE;
   } else{
     return BT::NodeStatus::SUCCESS;
