@@ -1,6 +1,3 @@
-//
-// Created by kevinlad on 2021/6/7.
-//
 
 #include "pure_pursuit.h"
 
@@ -60,7 +57,7 @@ double PurePursuit::ComputeSteering(const Pose2dPtr &vehicle_pose, const Pose2dP
     steering = 0.0;
   }
 
-  steering = -clip(steering, -max_steering_angle_, max_steering_angle_);
+  steering = -carla1s::math::Clip(steering, -max_steering_angle_, max_steering_angle_);
   return steering;
 }
 

@@ -6,35 +6,24 @@
 
 class VehicleController{
  public:
-  virtual int SetDrivingDirection(const DrivingDirection &driving_direction){
-    driving_direction_ = driving_direction;
-    return -1;
-  };
+  virtual int SetDrivingDirection(const DrivingDirection &driving_direction);
 
-  virtual DrivingDirection GetDrivingDirection(){
-    return driving_direction_;
-  }
+  virtual DrivingDirection GetDrivingDirection();
+
+  /**
+   * Reference: Apollo 5.5 -> trajectory_analyzer::ToTrajectoryFrame
+   * @param waypoint
+   * @param vehicle_pose
+   */
+  virtual void ComputeLonErrors(const Pose2dPtr &waypoint, const Pose2dPtr &vehicle_pose, const double &vehicle_linear_vel);
+
+  virtual void ComputeLatErrors(const Pose2dPtr &waypoint, const Pose2dPtr &vehicle_pose);
 
  protected:
-  static double PointDistanceSquare(const Pose2d &pose_1, const Pose2d &pose_2){
-    const double dx = pose_1.x - pose_2.x;
-    const double dy = pose_1.y - pose_2.y;
-    return (dx * dx + dy * dy);
-  }
+  static double PointDistanceSquare(const Pose2d &pose_1, const Pose2d &pose_2);
 
   virtual int FindNearestWaypointIndex(const Pose2dPtr &vehicle_pose,
-                                       const Path2dPtr &path){
-    double min_dist = std::numeric_limits<double>::max();
-    int index = path->size() - 1;
-    for(int i = 0; i < path->size(); i++){
-      auto dist = PointDistanceSquare(*vehicle_pose, path->at(i));
-      if(dist < min_dist){
-        min_dist = dist;
-        index = i;
-      }
-    }
-    return index;
-  };
+                                       const Path2dPtr &path);
 
  protected:
   Path2dPtr waypoints_ptr_;
@@ -55,20 +44,6 @@ class LateralController : public VehicleController{
     double steering = 0.0;
     return steering;
   };
-
-  /**
-   *
-   * @param driving_direction
-   * @return
-   */
-  virtual int SetDrivingDirection(const DrivingDirection &driving_direction){
-    driving_direction_ = driving_direction;
-    return -1;
-  };
-
-  virtual DrivingDirection GetDrivingDirection(){
-    return driving_direction_;
-  }
 
  protected:
   double max_steering_angle_ = 0.0;

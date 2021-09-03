@@ -1,5 +1,7 @@
 <launch>
 
+    <arg name='host' default='localhost'/>
+    <arg name='port' default='2000'/>
     <arg name='role_name' default='ego_vehicle' />
     <arg name='bt_tree_filename' default='avp_demo.xml' />
 <!--  <arg name='bt_tree_filename' default='avp_demo_full.xml' /> -->
@@ -11,6 +13,8 @@
     </node>
 
     <include file="$(find carla_global_planner)/launch/carla_global_planner.launch" >
+        <arg name='host' value='$(arg host)'/>
+        <arg name='port' value='$(arg port)'/>
         <arg name='role_name' value='$(arg role_name)' />
     </include>
     <include file="$(find carla_path_tracking)/launch/tracking.launch" >

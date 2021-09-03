@@ -17,7 +17,6 @@ from visualization_msgs.msg import Marker, MarkerArray
 import carla
 import carla_common.transforms as trans
 from agents.navigation.global_route_planner import GlobalRoutePlanner
-from agents.navigation.global_route_planner_dao import GlobalRoutePlannerDAO
 
 from carla_global_planner.reeds_shepp_ros.reeds_ros import reeds_ros_inter as ReedsSheppROS
 
@@ -224,9 +223,9 @@ class CarlaGlobalPlanner:
         #     goal.location.y,
         #     goal.location.z))
 
-        dao = GlobalRoutePlannerDAO(self.world.get_map(), sampling_resolution=1)
-        grp = GlobalRoutePlanner(dao)
-        grp.setup()
+        # dao = GlobalRoutePlannerDAO(self.world.get_map(), sampling_resolution=1)
+        grp = GlobalRoutePlanner(self.world.get_map(), sampling_resolution=1)
+        # grp.setup()
         route = grp.trace_route(self.ego_vehicle.get_location(),
                                 carla.Location(goal.location.x,
                                                goal.location.y,
@@ -259,8 +258,8 @@ class CarlaGlobalPlanner:
             rospy.logerr("Error while waiting for world info: {}".format(e))
             raise e
 
-        host = rospy.get_param("host", "127.0.0.1")
-        port = rospy.get_param("port", 2000)
+        host = rospy.get_param("~"+"host", "127.0.0.1")
+        port = rospy.get_param("~"+"port", 2000)
         timeout = rospy.get_param("timeout", 10)
         rospy.loginfo("CARLA world available. Trying to connect to {host}:{port}".format(
             host=host, port=port))

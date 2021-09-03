@@ -24,11 +24,12 @@
 #define _PID_H_
 
 #include <iostream>
-#include <cmath>
 #include <cassert>
 #include <mutex>
 #include "planner_common.h"
 #include "path_tracking_base.h"
+
+using namespace carla1s;
 
 template <typename T>
 class PIDImpl
@@ -49,7 +50,7 @@ class PIDImpl
 
     // Integral term
     integral_ += error * dt_;
-    integral_ = clip(integral_, min_integral_, max_integral_);
+    integral_ = math::Clip(integral_, min_integral_, max_integral_);
     T Iout = Ki_ * integral_;
 
     // Derivative term
@@ -61,7 +62,7 @@ class PIDImpl
     T output = Pout + Iout + Dout;
 
     // Restrict to max/min
-    output = clip(output, min_, max_);
+    output = math::Clip(output, min_, max_);
 
     // Save error to previous error
     pre_error_ = error;

@@ -11,6 +11,9 @@
     <param name="timeout" value="$(arg timeout)" />
   </node>
 
-  <node pkg="carla_global_planner" type="carla_map_visualization.py" name="carla_map_visualization" output="screen" />
+  <node pkg="carla_global_planner" type="carla_map_visualization.py" name="carla_map_visualization" output="screen" >
+        <param name="host" value="$(arg host)" />
+        <param name="port" value="$(arg port)" />
+  </node>
 
 </launch>

@@ -57,8 +57,8 @@ class CarlaMapVisualization:
             rospy.logerr("Map Visualization Node: Error while waiting for world info: {}".format(e))
             raise e
 
-        host = rospy.get_param("host", "127.0.0.1")
-        port = rospy.get_param("port", 2000)
+        host = rospy.get_param("~"+"host", "127.0.0.1")
+        port = rospy.get_param("~"+"port", 2000)
         timeout = rospy.get_param("timeout", 10)
         rospy.loginfo("Map Visualization Node: CARLA world available. Trying to connect to {host}:{port}".format(
             host=host, port=port))
