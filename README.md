@@ -4,17 +4,17 @@
 
 ## 硬件需求
 
-* Intel i7-9700k及更高单核性能CPU 
+* Intel i7-10700kf及更高单核性能CPU 
 * 32G+ RAM
-* Nvidia Geforce RTX2070及更高级别GPU
-* 开发者测试环境： intel i7-10700k / 32G DDR4 RAM / RTX3070
+* Nvidia Geforce RTX2060及更高级别GPU
+* 开发者测试环境： Intel i7-10700kf / 32G DDR4 RAM / RTX3070
 
 ## 环境需求
 
 * Ubuntu 20.04 (其他版本建议使用Docker)
 * Docker 19.03及以上
 * ROS Noetic
-* CARLA 0.9.11 (carla1s:sustech-main)
+* CARLA 0.9.12 (carla1s:sustech-main)
 * [Nvidia-Docker2](https://github.com/NVIDIA/nvidia-docker)
 
 ## 支持模块
@@ -25,25 +25,6 @@
 - [x] Path Planner
 - [ ] Trajectory Planner
 - [x] Path Tracking (Pure-Pursuit / PID)
-
-## 使用Docker快速测试
-
-
-启动`xserver`访问权限
-```bash
-xhost +
-```
-
-启动CARLA服务端
-
-```bash
-docker run -d --name=carla-server --ipc=host --network=host --runtime=nvidia --gpus all -e SDL_VIDEODRIVER=offscreen --restart=always harbor.isus.tech/carlasim/carla:0.9.11 bash CarlaUE4.sh
-```
-
-启动CARLA ROS
-```
- docker run -it --rm --name=carla-ros --network=host -e DISPLAY --runtime=nvidia harbor.isus.tech/carla-ros/carla-ros:0.9.11 bash
-```
 
 ## 本地编译
 
@@ -89,13 +70,14 @@ sudo make install
 ```bash
 # 需添加以下环境变量至bashrc或zshrc中
 # 其中[PATH_TO_CARLA]代表carla服务端（CarlaUE4.sh）所在目录
-# [CARLA_PYTHON_EGG_FILENAME]是egg文件的文件名，如carla-0.9.11-py3.7-linux-x86_64.egg
+# [CARLA_PYTHON_EGG_FILENAME]是egg文件的文件名，
+# 例如 carla-0.9.11-py3.7-linux-x86_64.egg
 export CARLA_ROOT=[PATH_TO_CARLA]
 export PYTHONPATH=$PYTHONPATH:$CARLA_ROOT/PythonAPI/carla/dist/[CARLA_PYTHON_EGG_FILENAME]:$CARLA_ROOT/PythonAPI/carla/
 
 #运行Carla服务端
 cd $CARLA_ROOT
-./CarlaUE4.sh --vulkan
+./CarlaUE4.sh -vulkan -RenderOffscreen
 
 #下载并编译carla1s-ros
 mkdir -p carla_ws/src
@@ -106,8 +88,6 @@ catkin_make -DCMAKE_BUILD_TYPE=Release --use-ninja
 
 source devel/setup.bash
 #source devel/setup.zsh
-
-
 
 roslaunch carla_2d_nav carla_example_ego_vehicle.launch town:=Town02
 #roslaunch carla_2d_nav carla_example_ego_vehicle.launch town:=ParkingLot
