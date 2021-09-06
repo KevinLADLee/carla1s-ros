@@ -24,6 +24,10 @@ void VehicleController::ComputeLonErrors(const Pose2dPtr &waypoint,
 
 }
 
+void VehicleController::ComputeLatErrors(const Pose2dPtr &waypoint, const Pose2dPtr &vehicle_pose) {
+
+}
+
 double VehicleController::PointDistanceSquare(const Pose2d &pose_1, const Pose2d &pose_2){
   const double dx = pose_1.x - pose_2.x;
   const double dy = pose_1.y - pose_2.y;
