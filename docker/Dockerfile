@@ -1,6 +1,6 @@
 ARG ROS_VERSION='noetic'
-ARG CARLA_VERSION='0.9.11'
-ARG EDD_FILE='carla-0.9.11-py3.7-linux-x86_64.egg'
+ARG CARLA_VERSION='0.9.12'
+ARG EDD_FILE='carla-0.9.12-py3.7-linux-x86_64.egg'
 
 FROM harbor.isus.tech/carlasim/carla:$CARLA_VERSION$CARLA_BUILD as carla
 FROM harbor.isus.tech/carla-ros/gtsam-builder:latest as gtsam_builder
