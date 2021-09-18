@@ -12,10 +12,14 @@ void TrackingPath::on_tick() {
   }else{
     goal_.path = path_port.value();
   }
-  if(goal_.path.paths.empty() || goal_.path.paths.at(0).poses.empty()) {
+  if(goal_.path.paths.empty()) {
     on_failed_request(FailureCause::NOT_VALID_PATH);
     ROS_WARN("BT TrackingPath Node: No valid path");
   }else{
+    if(goal_.path.paths.at(0).poses.empty()){
+      on_failed_request(FailureCause::NOT_VALID_PATH);
+      ROS_WARN("BT TrackingPath Node: No valid path");
+    }
     ROS_INFO("BT TrackingPath Node: Received %ld paths", goal_.path.paths.size());
   }
 }

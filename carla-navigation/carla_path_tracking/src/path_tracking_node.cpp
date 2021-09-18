@@ -1,6 +1,3 @@
-//
-// Created by kevinlad on 2021/5/26.
-//
 
 #include <ros/ros.h>
 #include "path_tracking.h"

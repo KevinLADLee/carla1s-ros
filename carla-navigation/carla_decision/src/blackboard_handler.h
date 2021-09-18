@@ -19,6 +19,7 @@ namespace carla_decision{
     void OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg);
 
     void GoalCallback(const geometry_msgs::PoseStampedConstPtr &goal);
+    virtual ~BlackboardHandler();
 
    private:
     BT::Blackboard::Ptr bb_ptr_;

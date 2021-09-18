@@ -19,6 +19,7 @@ class CarlaDecision{
   //! Parameters
   std::string bt_tree_filename;
   std::string role_name;
+  bool use_groot = false;
 
   ros::NodeHandlePtr nh_ptr_;
 

@@ -40,7 +40,9 @@ bool CarlaDecision::LoadBehaviorTree(const std::string &xml_base_path) {
   }
 
   // This logger publish status changes using ZeroMQ. Used by Groot
-  publisher_zmq_ptr_ = std::make_unique<BT::PublisherZMQ>(bt_tree_);
+  if(use_groot) {
+    publisher_zmq_ptr_ = std::make_unique<BT::PublisherZMQ>(bt_tree_);
+  }
 
   ROS_INFO("Loading behavior tree success!");
   return true;

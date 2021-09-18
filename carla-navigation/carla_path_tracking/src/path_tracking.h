@@ -13,15 +13,16 @@
 #include <nav_msgs/Path.h>
 #include <nav_msgs/Odometry.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <std_msgs/Int32.h>
 
 #include <carla_nav_msgs/PathTrackingAction.h>
 #include <carla_msgs/CarlaEgoVehicleInfo.h>
 #include <carla_msgs/CarlaEgoVehicleControl.h>
 
-#include "timer.h"
-#include "planner_common.h"
-#include "impl/pure_pursuit.h"
-#include "impl/pid.h"
+#include "common/timer.h"
+#include "lat_controller/pure_pursuit.h"
+#include "lat_controller/pid_lat_controller.h"
+#include "lon_controller/pid_lon_controller.h"
 
 class PathTracking {
  public:
@@ -31,8 +32,9 @@ class PathTracking {
   using ActionFeedbackT   = typename ActionT::_action_feedback_type::_feedback_type;
   using ActionServerT = actionlib::SimpleActionServer<ActionT>;
   using LockGuardMutex = std::lock_guard<std::mutex>;
-  using LateralControllerT = PurePursuit;
-  using LongitudinalControllerT = PID;
+  using LatControllerT = PurePursuit;
+//  using LatControllerT = PidLatController;
+  using LonControllerT = PidLonController;
 
  public:
   PathTracking();
@@ -44,7 +46,7 @@ class PathTracking {
   const NodeState &GetNodeState();
 
   void SetNodeState(const NodeState & node_state);
-
+  virtual ~PathTracking();
 
  private:
 
@@ -64,18 +66,21 @@ class PathTracking {
 
   bool IsGoalReached(const Pose2d &vehicle_pose);
 
+  DrivingDirection MsgToDirection(const int8_t &dire_msg);
+
  private:
 
   //! Parameters
   bool use_vehicle_info = true;
   std::string role_name = "ego_vehicle";
   int controller_freq = 20;
-  float goal_radius = 0.5;
+  float goal_radius = 0.2;
   float vehicle_wheelbase = 2.0;
   float vehicle_track = 2.0;
   float base_angle = 0.0;
   float max_forward_velocity = 15.0; // km/h
   float max_backwards_velocity = 5.0; // km/h
+  double max_steer_angle = 1.0;
 
   //! PID Parameters
   double pid_Kp;
@@ -88,6 +93,8 @@ class PathTracking {
   ros::NodeHandle nh_;
   ros::Subscriber odom_sub_, vehicle_info_sub_;
   ros::Publisher markers_pub_, control_cmd_pub_;
+  ros::Publisher current_path_pub_;
+
   std::unique_ptr<ActionServerT> as_;
 
   carla_msgs::CarlaEgoVehicleControl vehicle_control_msg_;
@@ -96,18 +103,21 @@ class PathTracking {
   std::mutex odom_mutex_;
   Pose2d vehicle_pose_;
   DrivingDirection current_driving_direction_;
+  nav_msgs::Path current_path_msg_;
   Path2dPtr current_path_ptr_;
   geometry_msgs::PoseStamped current_goal_;
   double vehicle_speed_ = 0;
-  double target_speed_ = max_forward_velocity;
 
   NodeState node_state_ = NodeState::IDLE;
 
   std::mutex path_mutex_, node_state_mutex_;
   std::thread path_tracking_thread_;
   std::unique_ptr<carla1s::Timer> path_tracking_timer_;
-  std::unique_ptr<LateralControllerT> lateral_controller_ptr_;
-  std::unique_ptr<LongitudinalControllerT> longitudinal_controller_ptr;
+  std::unique_ptr<LatControllerT> lat_controller_ptr_;
+  std::unique_ptr<LonControllerT> lon_controller_ptr_;
+
+  ros::Publisher lat_error_pub_, lon_error_pub_;
+  std_msgs::Int32 lat_error_msg_, lon_error_msgs_;
 
 };
 
