@@ -2,10 +2,12 @@
 #include "pure_pursuit.h"
 
 double PurePursuit::RunStep(const Pose2dPtr &vehicle_pose,
-                            const Path2dPtr &waypoints_ptr) {
-  if(waypoints_ptr_ != waypoints_ptr){
-    waypoints_ptr_ = waypoints_ptr;
-    current_waypoint_index_ = 0;
+                            const Path2dPtr &waypoints_ptr,
+                            const double &vehicle_speed,
+                            const double &dt) {
+  if(GetWaypoints() != waypoints_ptr){
+    SetWaypoints(waypoints_ptr);
+    SetCurrentWaypointIndex(0);
   }
 
   double steering = 0.0;
@@ -21,21 +23,22 @@ double PurePursuit::RunStep(const Pose2dPtr &vehicle_pose,
 
 int PurePursuit::FindValidWaypoint(const Pose2dPtr &vehicle_pose_ptr, Pose2dPtr &valid_waypoint_ptr){
   found_valid_waypoint_ = false;
+  auto waypoints_ptr = GetWaypoints();
   // make sure vehicle_pose is in map frame
 
-  auto nearest_waypoint_inx =  FindNearestWaypointIndex(vehicle_pose_ptr, waypoints_ptr_);
+  auto nearest_waypoint_inx =  QueryNearestWaypointIndex(vehicle_pose_ptr, waypoints_ptr);
 
-  for (auto &wp_index = nearest_waypoint_inx; wp_index < waypoints_ptr_->size(); wp_index++) {
-    auto waypoint_in_map = waypoints_ptr_->at(wp_index);
+  for (auto &wp_index = nearest_waypoint_inx; wp_index < waypoints_ptr->size(); wp_index++) {
+    auto waypoint_in_map = waypoints_ptr->at(wp_index);
     if(IsValidWaypoint(waypoint_in_map, *vehicle_pose_ptr)){
-      current_waypoint = waypoint_in_map;
+      SetCurrentWaypointIndex(wp_index);
       valid_waypoint_ptr = std::make_shared<Pose2d>(waypoint_in_map);
       found_valid_waypoint_ = true;
       break;
     }
   }
-  if(current_waypoint_index_ == waypoints_ptr_->size()){
-    current_waypoint_index_--;
+  if(GetCurrentWaypointIndex() == waypoints_ptr->size()){
+    SetCurrentWaypointIndex(waypoints_ptr->size()-1);
     valid_waypoint_ptr = nullptr;
     return -1;
   }
@@ -90,10 +93,6 @@ Pose2d PurePursuit::ToVehicleFrame(const Pose2d &point_in_map, const Pose2d &veh
   Eigen::Vector3d point_vec(point_in_map.x, point_in_map.y, 1);
   auto point_vec_in_vehicle_frame = vehicle_trans_inv * point_vec;
   return {point_vec_in_vehicle_frame[0], point_vec_in_vehicle_frame[1], point_in_map.yaw-vehicle_pose_in_map.yaw};
-}
-
-Pose2d PurePursuit::GetCurrentTrackPoint() {
-  return current_waypoint;
 }
 
 int PurePursuit::Initialize(float wheelbase, float goal_radius, float look_ahead_dist_fwd, float anchor_dist_fwd) {

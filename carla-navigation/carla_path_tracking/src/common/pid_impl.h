@@ -20,42 +20,57 @@
  * THE SOFTWARE.
  */
 
-#ifndef _PID_H_
-#define _PID_H_
 
-#include <iostream>
-#include <cassert>
-#include <mutex>
-#include "planner_common.h"
-#include "path_tracking_base.h"
+#ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_IMPL_PID_IMPL_H_
+#define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_IMPL_PID_IMPL_H_
 
+#include "carla_nav_math/math_utils.h"
 using namespace carla1s;
 
 template <typename T>
 class PIDImpl
 {
  public:
-  PIDImpl(T kp, T kd, T ki, T max, T min, T dt)
-      : dt_(dt), max_(max), min_(min), Kp_(kp), Kd_(kd), Ki_(ki), pre_error_(0), integral_(0) {}
+  explicit PIDImpl(const std::vector<T> &params){
+    ResetParam(params);
+  }
 
+  PIDImpl(T kp, T ki, T kd, T max, T min)
+      : max_(max), min_(min), Kp_(kp), Ki_(ki), Kd_(kd), pre_error_(0), integral_(0) {}
 
-  T RunStep( T target, T current)
+  void ResetParam(const std::vector<T> &params){
+    assert(params.size() == 5);
+    Kp_ = params[0];
+    Ki_ = params[1];
+    Kd_ = params[2];
+    max_ = params[3];
+    min_ = params[4];
+    pre_error_ = 0;
+    integral_ = 0;
+  }
+
+  T RunStep( T target, T current, T dt)
   {
 
     // Calculate error
     T error = target - current;
 
+    return RunStep(error, dt);
+  }
+
+  T RunStep(T error, T dt)
+  {
     // Proportional term
     T Pout = Kp_ * error;
 
     // Integral term
-    integral_ += error * dt_;
+    integral_ += error * dt;
     integral_ = math::Clip(integral_, min_integral_, max_integral_);
     T Iout = Ki_ * integral_;
 
     // Derivative term
-    assert(dt_ > 0);
-    T derivative = (error - pre_error_) / dt_;
+    assert(dt > 0);
+    T derivative = (error - pre_error_) / dt;
     T Dout = Kd_ * derivative;
 
     // Calculate total output
@@ -70,6 +85,10 @@ class PIDImpl
     return output;
   }
 
+  T GetPreError(){
+    return pre_error_;
+  }
+
  public:
   T dt_;
   T max_;
@@ -79,32 +98,9 @@ class PIDImpl
   T Ki_;
   T pre_error_;
   T integral_;
-  T max_integral_;
-  T min_integral_;
-};
-
-class PID : public LongitudinalController{
- public:
-  // Kp -  proportional gain
-  // Ki -  Integral gain
-  // Kd -  derivative gain
-  // dt -  loop interval time
-  // max - maximum value of manipulated variable
-  // min - minimum value of manipulated variable
-  PID(double Kp = 1.0, double Kd = 0.0, double Ki = 0.0, double max = 1.0, double min = 0.0, double dt = 1.0);
-
-  virtual ~PID();
-
-  double RunStep(const double &target_speed,
-                 const double &vehicle_speed) override;
-
-  void ResetParam(double Kp, double Kd, double Ki, double max = 1.0, double min = 0.0, double dt = 1.0);
-
- private:
-  std::unique_ptr<PIDImpl<double>> pimpl;
-  std::mutex pid_mutex_;
+  T max_integral_ = 1000.0;
+  T min_integral_ = -1000.0;
 };
 
 
-
-#endif
+#endif //CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_IMPL_PID_IMPL_H_

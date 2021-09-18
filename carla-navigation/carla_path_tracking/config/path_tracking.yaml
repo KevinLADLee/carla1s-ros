@@ -1,11 +1,11 @@
 controller_frequency: 20 # Hz
-goal_tolerance_xy: 0.5 # goal radius (m)
+goal_tolerance_xy: 0.2 # goal radius (m)
 goal_tolerance_yaw: 0.2 # goal radius (m)
-max_forward_velocity: 12 # max vehicle speed (km/h)
+max_forward_velocity: 5 # max vehicle speed (km/h)
 max_backwards_velocity: 2
-pid_Kp: 0.24
-pid_Ki: 0.02
-pid_Kd: 0.5
-pid_dt: 1.0
-pid_max: 1.0
-pid_min: 0.0
+#pid_Kp: 0.24
+#pid_Ki: 0.02
+#pid_Kd: 0.5
+#pid_dt: 1.0
+#pid_max: 1.0
+#pid_min: 0.0

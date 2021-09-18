@@ -1,6 +1,3 @@
-//
-// Created by kevinlad on 2021/5/26.
-//
 
 #include "path_tracking.h"
 
@@ -13,17 +10,27 @@ PathTracking::PathTracking() : nh_({ros::NodeHandle()}){
   UpdateParam();
 
   path_tracking_timer_ = std::make_unique<carla1s::Timer>(controller_freq);
-  lateral_controller_ptr_ = std::make_unique<LateralControllerT>();
-  lateral_controller_ptr_->Initialize(vehicle_wheelbase, goal_radius);
-  longitudinal_controller_ptr = std::make_unique<LongitudinalControllerT>();
-  longitudinal_controller_ptr->ResetParam(pid_Kp, pid_Ki, pid_Kd);
+  lat_controller_ptr_ = std::make_unique<LatControllerT>();
+  lon_controller_ptr_ = std::make_unique<LonControllerT>();
 
+  auto wait_first_odom = ros::topic::waitForMessage<nav_msgs::Odometry>("/carla/"+role_name+"/odometry");
   odom_sub_ = nh_.subscribe("/carla/"+role_name+"/odometry", 1, &PathTracking::OdomCallback, this);
   markers_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("/carla/"+role_name+"/path_tracking/markers", 1);
   control_cmd_pub_ = nh_.advertise<carla_msgs::CarlaEgoVehicleControl>("/carla/"+role_name+"/vehicle_control_cmd", 10);
+  current_path_pub_ = nh_.advertise<nav_msgs::Path>("/carla/"+role_name+"/path_tracking/current_path", 1);
+
+  lat_error_pub_ = nh_.advertise<std_msgs::Int32>("/path_tracking/"+role_name+"/lat_error", 1);
+  lon_error_pub_ = nh_.advertise<std_msgs::Int32>("/path_tracking/"+role_name+"/lon_error", 1);
+  lat_error_msg_.data = 0;
+  lon_error_msgs_.data = 0;
 
   as_->start();
   SetNodeState(NodeState::IDLE);
+}
+
+PathTracking::~PathTracking() {
+  StopPathTracking();
+  StopVehicle();
 }
 
 bool PathTracking::UpdateParam() {
@@ -33,22 +40,13 @@ bool PathTracking::UpdateParam() {
   ph.param<float>("goal_tolerance_xy", goal_radius,0.5);
   ph.param<float>("goal_tolerance_yaw", 0.2);
   ph.param<bool>("use_vehicle_info", use_vehicle_info,true);
-  ph.param<float>("base_angle", base_angle, 0.0);
-  ph.param<float>("max_forward_velocity", max_forward_velocity, 15.0);
-  ph.param<float>("max_backwards_velocity", max_backwards_velocity, 5.0);
-  // 1.0, 0.5, 0.0, 0.206, 0.0206, 0.515
-  ph.param<double>("pid_Kp", pid_Kp, 0.2);
-  ph.param<double>("pid_Ki", pid_Ki, 0.02);
-  ph.param<double>("pid_Kd", pid_Kd, 0.5);
-  ph.param<double>("pid_dt", pid_dt, 1.0);
-  ph.param<double>("pid_max", pid_max_value, 1.0);
-  ph.param<double>("pid_min", pid_min_value, 0.0);
 
   if(use_vehicle_info) {
     auto vehicle_info_msg = ros::topic::waitForMessage<carla_msgs::CarlaEgoVehicleInfo>("/carla/"+role_name+"/vehicle_info", nh_, ros::Duration(120));
     auto wheels = vehicle_info_msg->wheels;
     vehicle_wheelbase = std::abs(wheels.at(0).position.x - wheels.at(2).position.x);
-    ROS_INFO("PathTracking: VehicleInfo: wheel_base = %f", vehicle_wheelbase);
+    max_steer_angle = std::abs(wheels.at(0).max_steer_angle);
+    ROS_INFO("PathTracking: VehicleInfo: wheel_base = %f max_steer_angle = %f", vehicle_wheelbase, max_steer_angle);
   }
   return true;
 }
@@ -82,6 +80,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
         current_driving_direction_ = DrivingDirection::FORWARD;
       }
       current_goal_ = current_path_it->poses.back();
+      current_path_pub_.publish(*current_path_it);
       current_path_ptr_ = std::make_shared<Path2d>(RosPathToPath2d(*current_path_it));
       path_mutex_.unlock();
     }
@@ -192,6 +191,7 @@ void PathTracking::InitMarkers(const geometry_msgs::PoseStamped &goal_pose) {
   line_marker.color.g = 0.0;
   line_marker.color.b = 0.8;
   line_marker.scale.x = 0.2;
+  line_marker.pose.orientation.w = 1;
   line_marker.points.resize(2);
   visualize_markers_.markers.push_back(line_marker);
 }
@@ -224,8 +224,8 @@ void PathTracking::StopPathTracking() {
 
 void PathTracking::PathTrackingLoop() {
   auto sleep_time = std::chrono::milliseconds(0);
-  longitudinal_controller_ptr->SetDrivingDirection(current_driving_direction_);
-  lateral_controller_ptr_->SetDrivingDirection(current_driving_direction_);
+  lon_controller_ptr_->SetDrivingDirection(current_driving_direction_);
+  lat_controller_ptr_->SetDrivingDirection(current_driving_direction_);
   InitMarkers(current_goal_);
 
   while (GetNodeState() == NodeState::RUNNING){
@@ -238,20 +238,29 @@ void PathTracking::PathTrackingLoop() {
       vehicle_speed = vehicle_speed_;
     }
 
-    // TODO: Refactor control step
-    std::unique_lock<std::mutex> path_lock(path_mutex_);
-    vehicle_control_msg_.steer = static_cast<float>(lateral_controller_ptr_->RunStep(vehicle_pose_ptr, current_path_ptr_));
-    PublishMarkers(*vehicle_pose_ptr, lateral_controller_ptr_->GetCurrentTrackPoint());
-    path_lock.unlock();
+    auto steer = lat_controller_ptr_->RunStep(vehicle_pose_ptr,
+                                              current_path_ptr_,
+                                              vehicle_speed,
+                                              1.0/controller_freq);
+    vehicle_control_msg_.steer = static_cast<float>(steer);
+    PublishMarkers(*vehicle_pose_ptr, *lat_controller_ptr_->GetCurrentTrackPoint());
 
-    if(longitudinal_controller_ptr->GetDrivingDirection() == DrivingDirection::BACKWARDS){
+    vehicle_control_msg_.throttle = static_cast<float>(lon_controller_ptr_->RunStep(vehicle_pose_ptr,
+                                                                                    current_path_ptr_,
+                                                                                    vehicle_speed,
+                                                                                    1.0 / controller_freq));
+
+    if(lon_controller_ptr_->GetDrivingDirection() == DrivingDirection::BACKWARDS){
       vehicle_control_msg_.reverse = 1;
-      target_speed_ = max_backwards_velocity;
     } else{
       vehicle_control_msg_.reverse = 0;
-      target_speed_ = max_forward_velocity;
     }
-    vehicle_control_msg_.throttle = static_cast<float>(longitudinal_controller_ptr->RunStep(target_speed_, vehicle_speed));
+
+    lon_error_msgs_.data = int(1000 * lon_controller_ptr_->GetStationError());
+    lat_error_msg_.data = int(1000 * lat_controller_ptr_->GetLatestError());
+    lon_error_pub_.publish(lon_error_msgs_);
+    lat_error_pub_.publish(lat_error_msg_);
+
     vehicle_control_msg_.brake = 0.0;
     control_cmd_pub_.publish(vehicle_control_msg_);
 
@@ -269,7 +278,7 @@ void PathTracking::PathTrackingLoop() {
 
 bool PathTracking::IsGoalReached(const Pose2d &vehicle_pose) {
   auto dist = std::hypot(current_goal_.pose.position.x - vehicle_pose.x,
-                    current_goal_.pose.position.y - vehicle_pose.y);
+                         current_goal_.pose.position.y - vehicle_pose.y);
   if(dist <= goal_radius){
     return true;
   } else{
@@ -287,6 +296,12 @@ bool PathTracking::StopVehicle() {
   return true;
 }
 
-
+DrivingDirection PathTracking::MsgToDirection(const int8_t &dire_msg) {
+  if(dire_msg == carla_nav_msgs::Path::FORWARD) {
+    return DrivingDirection::FORWARD;
+  } else{
+    return DrivingDirection::BACKWARDS;
+  }
+}
 
 
