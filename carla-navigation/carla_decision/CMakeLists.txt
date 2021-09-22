@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
         behaviortree_cpp_v3
 )
 
+find_package(Eigen3 REQUIRED)
+
 find_package(BehaviorTreeV3)
 
 set(ROS_VERSION $ENV{ROS_VERSION})
@@ -28,6 +30,7 @@ catkin_package(
 include_directories(
         src
         ${catkin_INCLUDE_DIRS}
+        ${EIGEN3_INCLUDE_DIR}
 )
 
 # Build BT Nodes to shared library
@@ -38,7 +41,7 @@ foreach(node_src ${nodes_src})
     get_filename_component(dir_name "${dir_path}" NAME)
     set(target_name bt_${dir_name}_${file_name})
     add_library(${target_name} SHARED ${node_src})
-    target_link_libraries(${target_name} BT::behaviortree_cpp_v3 ${catkin_LIBRARIES})
+    target_link_libraries(${target_name} BT::behaviortree_cpp_v3 ${EIGEN3_LIBRARIES} ${catkin_LIBRARIES})
     target_compile_definitions(${target_name} PRIVATE BT_PLUGIN_EXPORT)
     add_dependencies(${target_name} carla_msgs_generate_messages carla_nav_msgs_generate_messages )
     list(APPEND node_libs ${target_name})
@@ -46,6 +49,7 @@ endforeach()
 
 add_executable(${PROJECT_NAME}_node src/carla_decision.cpp src/carla_decision_node.cpp src/blackboard_handler.cpp)
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES}
+        ${EIGEN3_LIBRARIES}
         BT::behaviortree_cpp_v3
         ${node_libs}
 )

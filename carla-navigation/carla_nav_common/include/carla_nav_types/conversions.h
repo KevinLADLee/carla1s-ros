@@ -27,4 +27,12 @@ static geometry_msgs::Pose Pose2dToRosMsg(const Pose2d &pose2d) {
   return ros_pose;
 }
 
+static Pose2d RosPoseStampedToPose2d(const geometry_msgs::PoseStamped &pose) {
+  Pose2d pose2d;
+  pose2d.x = pose.pose.position.x;
+  pose2d.y = pose.pose.position.y;
+  pose2d.yaw = tf2::getYaw(pose.pose.orientation);
+  return pose2d;
+}
+
 #endif // CARLA1S_ROS_CARLA_NAVIGATION_CARLA_NAV_COMMON_INCLUDE_TYPES_CONVERSIONS_H_

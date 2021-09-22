@@ -60,7 +60,7 @@
 
   <arg name="rviz" default="true" />
   <group if="$(arg rviz)">
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carla_2d_nav)/rviz/view_0.9.10.1.rviz"/>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carla_2d_nav)/rviz/view_nav.rviz"/>
   </group>
 
 

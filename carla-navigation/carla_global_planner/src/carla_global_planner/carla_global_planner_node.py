@@ -60,7 +60,9 @@ class CarlaGlobalPlanner:
         max_steering_angle = vehicle_info_msg.wheels[0].max_steer_angle
         wheelbase = abs(vehicle_info_msg.wheels[0].position.x - vehicle_info_msg.wheels[2].position.x)
         if max_steering_angle > 0:
-            self.min_radius = wheelbase / math.sin(max_steering_angle)
+            self.min_radius = 8.0
+            # self.min_radius = wheelbase / math.sin(max_steering_angle)
+            rospy.loginfo("min_radius: {}".format(self.min_radius))
         return 
 
     def execute_cb(self, goal_msg):
@@ -81,8 +83,9 @@ class CarlaGlobalPlanner:
                 vehicle_pose = trans.carla_transform_to_ros_pose(self.ego_vehicle.get_transform())     
                 self.pose_list.append(vehicle_pose)
                 self.pose_list.append(goal_msg.goal.pose)
+                rospy.loginfo("min_radius: {}".format(self.min_radius))
                 self.rs_curve = ReedsSheppROS(min_radius=self.min_radius)
-                self._result.path = self.rs_curve.shortest_path(self.pose_list)
+                self._result.path = self.rs_curve.shortest_path(self.pose_list, 0.08)
                 self.publish_path_array_markers(self._result.path)
                 self.global_planner_server.set_succeeded(self._result, "success")
             # TODO: Action server send result.
@@ -104,10 +107,14 @@ class CarlaGlobalPlanner:
                 else:
                     self.current_route = self.calculate_route(self.goal)
                     if self.current_route is not None:
+                        last_wp = None
                         for wp in self.current_route:
                             pose = PoseStamped()
                             pose.pose = trans.carla_transform_to_ros_pose(wp[0].transform)
-                            self._result.path.paths[0].poses.append(pose)
+                            if (last_wp is None) or last_wp != pose:
+                                self._result.path.paths[0].poses.append(pose)
+                                last_wp = pose
+
 
                     waypoint_num = len(self._result.path.paths[0].poses)
                     result_info = "GlobalPlanner: Got path {} waypoints.".format(waypoint_num)

@@ -2,7 +2,7 @@ import numpy as np
 from carla_global_planner.reeds_shepp_ros.reeds_shepp import reeds_shepp
 from transforms3d.euler import quat2euler, euler2quat
 from geometry_msgs.msg import Pose
-from carla_nav_msgs.msg import Path as rpath
+from carla_nav_msgs.msg import Path as PathArray
 from nav_msgs.msg import Path as npath
 from geometry_msgs.msg import PoseStamped
 
@@ -13,7 +13,7 @@ class reeds_ros_inter(reeds_shepp):
 
     def shortest_path(self, pose_list, step_size=0.01):
 
-        final_path = rpath()
+        final_path = PathArray()
 
         for i in range(len(pose_list) - 1):
 
@@ -38,31 +38,36 @@ class reeds_ros_inter(reeds_shepp):
 
         return final_path
 
-    def reeds_path_generate(self, start_point, path, step_size):
+    def reeds_path_generate(self, start_point, path_min, step_size):
 
-        path_segment_list = rpath()
+        path_array = PathArray()
         
         end_point = None
 
-        if len(path) == 0:
+        if len(path_min) == 0:
             print('no path')
-            return path_segment_list
+            return path_array
 
-        for i in range(len(path)):
-            
-            path_seg, end_point = self.element_sample(element=path[i], start_point=start_point, step_size=step_size)
+        last_path_direction = 0 if path_min[0].gear == 1 else 1
+        for i in range(len(path_min)):
+            current_path_direction = 0 if path_min[i].gear == 1 else 1
+
+            path, end_point = self.element_sample(element=path_min[i], start_point=start_point, step_size=step_size)
 
             start_point = end_point
 
-            path_segment_list.paths.append(path_seg)
-            path_gear = 0 if path[i].gear == 1 else 1
-            path_segment_list.driving_direction.append(path_gear)
+            if last_path_direction != current_path_direction or i == 0: 
+                path_array.paths.append(path)
+                path_array.driving_direction.append(current_path_direction)
+            else:
+                path_array.paths[-1].poses.extend(path.poses)    
 
-        return path_segment_list
+        return path_array
 
     def element_sample(self, element, start_point, step_size):
         
         Path_seg = npath()
+        Path_seg.header.frame_id = "map"
         Path_seg.poses.append(self.point2pose_stamp(start_point))
 
         length = element.len * self.min_r
@@ -116,6 +121,7 @@ class reeds_ros_inter(reeds_shepp):
     def point2pose_stamp(self, point):
 
         pose_stamp = PoseStamped()
+        pose_stamp.header.frame_id = "map"
         pose_stamp.pose.position.x = point[0, 0]
         pose_stamp.pose.position.y = point[1, 0]
         

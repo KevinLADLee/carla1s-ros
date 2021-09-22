@@ -20,6 +20,11 @@ BlackboardHandler::BlackboardHandler(BT::Blackboard::Ptr bb_ptr,
 
 }
 
+BlackboardHandler::~BlackboardHandler() {
+  nh_ptr_.reset();
+  bb_ptr_.reset();
+}
+
 void BlackboardHandler::OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg) {
   bb_ptr_->set<nav_msgs::Odometry>("odom", *odom_msg);
 }
