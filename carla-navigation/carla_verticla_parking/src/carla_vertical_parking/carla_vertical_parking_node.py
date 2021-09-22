@@ -64,6 +64,11 @@ class CarlaVerticalParkingNode:
         self.action_feedback = ParkingPlannerFeedback()
         self.action_result = ParkingPlannerResult()
 
+
+        # self.parking_planner=ArcLinePlanning(self.vehicle_info)
+        self.parking_planner=HybirdAStarPlanning(self.vehicle_info)
+
+
     def compute_best_preparking_position(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PoseStamped:
 
         return GetBestParkingPosition(self.vehicle_info).get_best_parking_position(vehicle_pose, parking_spot)
@@ -72,15 +77,11 @@ class CarlaVerticalParkingNode:
     def compute_parking_path(self, vehicle_pose: Pose, parking_spot: ParkingSpot) -> PathArray:
 
         path_array = PathArray()
-        try:
-            path_array=ArcLinePlanning(self.vehicle_info).planning(vehicle_pose, parking_spot)
+        path_array = self.parking_planner.planning(vehicle_pose, parking_spot)
 
-            if path_array!=PathArray():
-                self.node_state = NodeState.SUCCESS
-            else:
-                self.node_state = NodeState.FAILURE
-        except:
-            print("planning fail")
+        if path_array != PathArray():
+            self.node_state = NodeState.SUCCESS
+        else:
             self.node_state = NodeState.FAILURE
 
         return path_array
