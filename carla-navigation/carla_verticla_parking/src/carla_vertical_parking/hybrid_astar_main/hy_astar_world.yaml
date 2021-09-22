@@ -1,0 +1,19 @@
+# world
+world_height: 50
+world_width: 50
+step_time: 0.1
+# world_map: 'ir_env/world/map_image/map_100_100_2.png'
+# world_map: 'map_image/map_100_100_4.png'
+xy_resolution: 0.5
+yaw_resolution: 5 # degree
+
+# ackermann robot
+acker_number: 1
+acker_init_state_list: [[19.5, 35, 1.5705, 0]]#[[19, 30.3, 1.5705, 0]]
+acker_goal_list: [[26, 30.85, 3.141, 0]]
+acker_shape_list: [[3.826, 1.673, 2.4, 1.673]]   # length, width, wheelbase, wheelbase_width
+acker_vel_limit: 4
+acker_vel_ang_limit: 5
+
+
+
