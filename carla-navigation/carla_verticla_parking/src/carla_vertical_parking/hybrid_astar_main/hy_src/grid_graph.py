@@ -46,7 +46,6 @@ class grid_graph:
     def check_collision_point(self, point):
 
         index = self.point2index(point)
-
         if index[0] >= self.grid_matrix.shape[0] or index[1] >= self.grid_matrix.shape[1]:
             return True
 

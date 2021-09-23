@@ -48,7 +48,7 @@ class env_base:
             self.width = com_list['world_width']
             self.height = com_list['world_height']
             self.step_time = com_list['step_time']
-            print('xy_resolution   ',com_list['xy_resolution'],com_list.get('xy_resolution', 1))
+            # print('xy_resolution   ',com_list['xy_resolution'],com_list.get('xy_resolution', 1))
             self.xy_reso = com_list.get('xy_resolution', 1)
             self.yaw_reso = com_list.get('yaw_resolution', pi/36)
             self.world_map = world_map

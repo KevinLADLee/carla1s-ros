@@ -131,7 +131,7 @@ class HybirdAStarPlanning():
         env0.initialization_world(map_file=True)
 
         grid = grid_graph(env0.map_matrix, xy_reso=env0.xy_reso, yaw_reso=env0.yaw_reso)
-        print('shape ',grid.grid_matrix.shape)
+        # print('shape ',grid.grid_matrix.shape)
         hy_astar = hybrid_astar(grid, env0.car.shape, step_size=2, reeds_size=1, min_radius=9, test_plot=env0,
                                 lookup_path=reeds_lookup_path)
         path_list = hy_astar.hy_astar_search(env0.car.state, env0.car.goal, show_process=True)
@@ -160,7 +160,7 @@ class HybirdAStarPlanning():
             path_array = self.change_list_into_path_array(route_x,route_y,route_theta_r,dir_info)
             # plt.plot(sim_route_x,sim_route_y)
             # plt.show()
-            if 1:
+            if 0:
                 env0.world.path_plot(path_list, path_color='r', show_point=False)
                 env0.render(0.1)
 
@@ -194,19 +194,21 @@ class HybirdAStarPlanning():
             low_bound-=1
 
         # print('low bound ',low_bound,len(map),len(map[0]))
-        for i in range(low_bound,len(map)):
-            for j in range(0,len(map[0])):
-                # print('up bound ',i/rate,j/rate)
-                map[i][j]=255
-
-        for i in range(0,int(parking_l*rate)):
-            for j in range(0,int((l_limit)*parking_w*rate)):
-                map[i][j]=255
-
-        for i in range(0,int(parking_l*rate)):
-            for j in range(int((l_limit+1)*parking_w*rate),len(map[0])):
-                # print(j/rate,i/rate)
-                map[i][j]=255
+        # for i in range(low_bound,len(map)):
+        #     for j in range(0,len(map[0])):
+        #         # print('up bound ',i/rate,j/rate)
+        #         map[i][j]=255
+        #
+        #
+        # # parking collision
+        # for i in range(0,int(parking_l*rate)):
+        #     for j in range(0,int((l_limit)*parking_w*rate)):
+        #         map[i][j]=255
+        #
+        # for i in range(0,int(parking_l*rate)):
+        #     for j in range(int((l_limit+1)*parking_w*rate),len(map[0])):
+        #         # print(j/rate,i/rate)
+        #         map[i][j]=255
 
 
         return map.T

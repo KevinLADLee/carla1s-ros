@@ -65,9 +65,6 @@ class hybrid_astar:
         iter = 0
 
         while len(open_set.keys()) != 0:
-            # print(iter)
-            if iter == 166:
-                print()
 
             list_index = open_set.popitem()[0]
             current_node = open_list[list_index]

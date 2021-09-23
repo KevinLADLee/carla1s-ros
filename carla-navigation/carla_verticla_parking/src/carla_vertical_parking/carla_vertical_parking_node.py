@@ -17,7 +17,7 @@ from carla_msgs.msg import CarlaEgoVehicleInfo
 from carla_vertical_parking.get_best_parking_position import GetBestParkingPosition
 
 
-
+from carla_vertical_parking.hybird_astar_planing import HybirdAStarPlanning
 from carla_vertical_parking.arc_and_line_planning import  ArcLinePlanning
 from carla_vertical_parking.car_parking.env import Env
 from carla_vertical_parking.car_parking.parking_planning import Planning
