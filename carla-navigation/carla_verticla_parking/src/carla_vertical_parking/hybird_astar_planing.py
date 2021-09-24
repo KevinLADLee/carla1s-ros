@@ -193,22 +193,22 @@ class HybirdAStarPlanning():
         while low_bound/rate>=parking_l+road_w:
             low_bound-=1
 
-        # print('low bound ',low_bound,len(map),len(map[0]))
-        # for i in range(low_bound,len(map)):
-        #     for j in range(0,len(map[0])):
-        #         # print('up bound ',i/rate,j/rate)
-        #         map[i][j]=255
-        #
-        #
+        print('low bound ',low_bound,len(map),len(map[0]))
+        for i in range(low_bound,len(map)):
+            for j in range(0,len(map[0])):
+                # print('up bound ',i/rate,j/rate)
+                map[i][j]=255
+
+
         # # parking collision
-        # for i in range(0,int(parking_l*rate)):
-        #     for j in range(0,int((l_limit)*parking_w*rate)):
-        #         map[i][j]=255
-        #
-        # for i in range(0,int(parking_l*rate)):
-        #     for j in range(int((l_limit+1)*parking_w*rate),len(map[0])):
-        #         # print(j/rate,i/rate)
-        #         map[i][j]=255
+        for i in range(0,int(parking_l*rate)):
+            for j in range(0,int((l_limit)*parking_w*rate)):
+                map[i][j]=255
+
+        for i in range(0,int(parking_l*rate)):
+            for j in range(int((l_limit+1)*parking_w*rate),len(map[0])):
+                # print(j/rate,i/rate)
+                map[i][j]=255
 
 
         return map.T
