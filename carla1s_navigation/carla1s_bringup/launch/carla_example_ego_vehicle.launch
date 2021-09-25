@@ -1,0 +1,72 @@
+<!-- -->
+<launch>
+
+  <!-- CARLA connection -->
+  <arg name='host' default='localhost'/>
+  <arg name='port' default='2000'/>
+  <arg name='timeout' default='10'/>
+
+  <!-- Ego vehicle -->
+  <arg name='role_name' default='ego_vehicle'/>
+  <arg name="vehicle_filter" default='vehicle.lincoln2020.mkz2020'/>
+  <arg name="spawn_point" default="" />
+  <!-- <arg name="sensor_config_file" default="nav_minimum.json" /> -->
+  <arg name="sensor_config_file" default="objects.json" />
+
+<!--   <arg name="town" default='Town02' /> -->
+<!--   <arg name="spawn_point" default="189.681, -254.954,0.5,0,0,-90"/> -->
+
+<!--   <arg name="town" default='Town01'/> -->
+<!--   <arg name="spawn_point" default="295.082, -199.060, 0.2, 0, 0, 0"/> -->
+
+<!--     <arg name="town" default='Town03'/> -->
+<!--     <arg name="spawn_point" default="-87.967, -91.033, 0.6, 0, 0, -90"/> -->
+
+<!-- <arg name="town" default='ParkingLot'/> -->
+<!-- <arg name="spawn_point" default="18.394, 3.674, 0.1, 0, 0, -90" /> -->
+
+  <!-- Enable/disable passive mode -->
+  <arg name='passive' default=''/>
+
+  <!-- Synchronous mode-->
+  <arg name='synchronous_mode' default='False'/>
+  <arg name='synchronous_mode_wait_for_vehicle_control_command' default='False'/>
+  <arg name='fixed_delta_seconds' default='0.05'/>
+
+<node name="map_server" pkg="map_server" type="map_server" args="$(find carla1s_bringup)/maps/$(arg town).yaml" respawn="false" />
+
+  <include file="$(find carla_ros_bridge)/launch/carla_ros_bridge.launch">
+    <arg name='host' value='$(arg host)'/>
+    <arg name='port' value='$(arg port)'/>
+    <arg name='town' value='$(arg town)'/>
+    <arg name='timeout' value='$(arg timeout)'/>
+    <arg name='passive' value='$(arg passive)'/>
+    <arg name='synchronous_mode' default='$(arg synchronous_mode)'/>
+    <arg name='synchronous_mode_wait_for_vehicle_control_command' value='$(arg synchronous_mode_wait_for_vehicle_control_command)'/>
+    <arg name='fixed_delta_seconds' value='$(arg fixed_delta_seconds)'/>
+  </include>
+
+  <!-- the ego vehicle, that will be controlled by an agent (e.g. carla_ad_agent) -->
+  <include file="$(find carla_spawn_objects)/launch/carla_example_ego_vehicle.launch">
+    <arg name="objects_definition_file" value='$(find carla1s_bringup)/config/$(arg sensor_config_file)'/>
+    <arg name='role_name' value='$(arg role_name)'/>
+    <arg name="spawn_point_ego_vehicle" value="$(arg spawn_point)"/>
+    <arg name="spawn_sensors_only" value="false"/>
+  </include>
+
+  <include file="$(find carla_manual_control)/launch/carla_manual_control.launch">
+    <arg name='role_name' value='$(arg role_name)'/>
+  </include>
+
+  <node pkg="carla1s_bringup" type="carla_map_visualization.py" name="carla_map_visualization" output="screen" >
+        <param name="host" value="$(arg host)" />
+        <param name="port" value="$(arg port)" />
+  </node>
+
+  <arg name="rviz" default="true" />
+  <group if="$(arg rviz)">
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carla1s_bringup)/rviz/view_nav.rviz"/>
+  </group>
+
+
+</launch>

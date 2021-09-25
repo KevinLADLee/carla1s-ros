@@ -1,0 +1,9 @@
+<launch>
+    <arg name='role_name' default='ego_vehicle'/>
+
+    <node name="path_tracking_node" pkg="carla1s_path_tracking" type="path_tracking_node" output="screen">
+            <param name="role_name" value="$(arg role_name)" />
+            <rosparam file="$(find carla1s_path_tracking)/config/path_tracking.yaml" command="load" />
+    </node>
+
+</launch>

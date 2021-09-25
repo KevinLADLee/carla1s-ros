@@ -1,9 +1,0 @@
-<library path="lib/librviz_bt_panel">
- <class name="rviz_bt_panel/BehaviorTreePanel"
-        type="rviz_bt_panel::BehaviorTreePanel"
-        base_class_type="rviz::Panel">
-   <description>
-     A panel widget allowing behavior tree visualization and control.
-   </description>
- </class>
-</library> 

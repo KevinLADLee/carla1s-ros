@@ -1,0 +1,4 @@
+
+<launch>
+    <node name="traffic_light_node" pkg="carla1s_fake_perception" type="traffic_light_node" output="screen" />
+</launch>

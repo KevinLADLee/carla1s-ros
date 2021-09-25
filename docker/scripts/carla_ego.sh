@@ -8,7 +8,7 @@ python3 /opt/carla/PythonAPI/examples/spawn_npc.py -n 30 -w 10  &
 
 sleep 3
 
-roslaunch carla_2d_nav carla_example_ego_vehicle.launch
+roslaunch carla1s_bringup carla_example_ego_vehicle.launch
 
 # sleep 3 
 
