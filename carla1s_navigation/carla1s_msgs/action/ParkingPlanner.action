@@ -1,0 +1,7 @@
+# Parking spot describe as center pose, width, and length
+carla1s_msgs/ParkingSpot parking_spot
+---
+bool success
+carla1s_msgs/Path path_array
+---
+carla1s_msgs/Path path_array

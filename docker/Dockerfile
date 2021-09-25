@@ -48,7 +48,7 @@ COPY --from=gtsam_builder --chown=root /opt/gtsam-install /usr/local
 # COPY ros-bridge /opt/carla-ros-bridge/src/ros-bridge
 # RUN cd /opt/carla-ros-bridge/src/ros-bridge
 # RUN git clone https://github.com/carla-simulator/ros-bridge.git --depth=1 /opt/carla-ros-bridge/src/ros-bridge
-#COPY carla-navigation /opt/carla-ros-bridge/src/carla-navigation
+#COPY carla1s_navigation /opt/carla-ros-bridge/src/carla1s_navigation
 
 COPY . /opt/carla-ros-bridge/src/carla-ros-bridge
 RUN cd /opt/carla-ros-bridge/src/carla-ros-bridge && \

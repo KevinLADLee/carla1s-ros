@@ -1,11 +1,11 @@
 # carla1s-ros
 
-本仓库主要结合CARLA ROS-Bridge以及主流的Navigation相关算法，集成打包方便用于各模块算法的验证测试。
+本仓库主要结合CARLA ROS-Bridge以及主流的Navigation相关算法，提供一整套完整的自动驾驶导航算法验证平台。
 
 ## 硬件需求
 
 * Intel i7-10700kf及更高单核性能CPU 
-* 32G+ RAM
+* 16G+ RAM
 * Nvidia Geforce RTX2060及更高级别GPU
 * 开发者测试环境： Intel i7-10700kf / 32G DDR4 RAM / RTX3070
 
@@ -19,12 +19,11 @@
 
 ## 支持模块
 
-- [x] SLAM (SC-Lego-LOAM)
 - [x] Fake Localization 
 - [x] Behevior Tree Based Decision
-- [x] Path Planner
-- [ ] Trajectory Planner
-- [x] Path Tracking (Pure-Pursuit / PID)
+- [x] Route Planner
+- [ ] Path Planner
+- [x] Path Tracking
 
 ## 本地编译
 
@@ -54,48 +53,38 @@ sudo apt install -y \
 pip3 --no-cache-dir install --upgrade networkx distro pygame simple-pid numpy==1.18.4 transforms3d pep8 autopep8 cmake_format==0.6.11 pylint pexpect scipy empy catkin_pkg netifaces defusedxml
 ```
 
-### 下载源码编译并测试
-
-从cdn上下载carla源码：[CARLA_cdn_url](http://cdn.isus.tech/cdn/carla/carla/)
-
-解压源码至文件夹
+### 下载预编译版本Carla
 
 ```bash
-tar -xzvf CARLA_0.9.12.tar.gz -C ~/carla
-```
 
-下载并编译carla1s-ros
+# 下载并解压CARLA 0.9.12 原始版本
+wget -c https://mirrors.sustech.edu.cn/carla/carla/0.9.12/CARLA_0.9.12.tar.gz -O CARLA.tar.gz
+mkdir -p ~/carla1s/carla
+tar -xzvf CARLA.tar.gz -c ~/carla1s/carla
 
-```bash
-#下载并编译carla1s-ros
-mkdir -p carla_ws/src
-cd carla_ws/src
-git clone --recurse-submodules https://gitlab.isus.tech/carla1s/carla1s-ros.git
-cd ..
-catkin_make -DCMAKE_BUILD_TYPE=Release --use-ninja
-```
-
-添加环境变量：
-
-```bash
-gedit ~/.bashrc
-# 需添加以下环境变量至bashrc或zshrc中
+# 配置环境变量(写入 ~/.bashrc 或 ~/.zshrc)
+export CARLA_ROOT=/home/YOUR_USERNAME/carla1s/carla
+export PYTHONPATH=$PYTHONPATH:$CARLA_ROOT/PythonAPI/carla/dist/carla-0.9.12-py3.7-linux-x86_64.egg:$CARLA_ROOT/PythonAPI/carla/
 # 其中[PATH_TO_CARLA]代表carla服务端（CarlaUE4.sh）所在目录
 # 例如~/carla
 # [CARLA_PYTHON_EGG_FILENAME]是egg文件的文件名，于文件夹./PythonAPI/carla/dist/
-# 例如 carla-0.9.12-py3.7-linux-x86_64.egg
-export CARLA_ROOT=[PATH_TO_CARLA]
-export PYTHONPATH=$PYTHONPATH:$CARLA_ROOT/PythonAPI/carla/dist/[CARLA_PYTHON_EGG_FILENAME]:$CARLA_ROOT/PythonAPI/carla/
-source devel/setup.bash
-#source devel/setup.zsh
-# 例如：
-# export CARLA_ROOT=~/carla
-# export PYTHONPATH=$PYTHONPATH:$CARLA_ROOT/PythonAPI/carla/dist/carla-0.9.12-py3.7-linux-x86_64.egg:$CARLA_ROOT/PythonAPI/carla/
-# source /home/tongda/workspace/carla_ws/devel/setup.bash
-source ~/.bashrc
 ```
 
-运行carla服务器
+### 测试carla1s-ros
+
+#### 下载并编译carla1s-ros
+```bash
+
+mkdir -p ~/carla1s/ros1_ws/src
+cd ~/carla1s/ros1_ws/src
+git clone --recurse-submodules git@gitlab.isus.tech:carla1s/ros-agent/carla1s-ros.git
+cd ..
+catkin_make -DCMAKE_BUILD_TYPE=Release --use-ninja
+source devel/setup.bash
+#source devel/setup.zsh
+```
+
+#### 运行carla1s-ros
 
 ```bash
 #运行Carla服务端
@@ -103,8 +92,12 @@ cd $CARLA_ROOT
 ./CarlaUE4.sh -vulkan -RenderOffscreen
 
 #测试代码
-roslaunch carla_2d_nav carla_example_ego_vehicle.launch town:=Town02
-#roslaunch carla_2d_nav carla_example_ego_vehicle.launch town:=ParkingLot
-roslaunch carla_decision carla_decision_test.launch
+# For bash
+source ~/carla1s/ros1_ws/devel/setup.bash
+# For zsh
+# source ~/carla1s/ros1_ws/devel/setup.zsh
+roslaunch carla1s_bringup carla_example_ego_vehicle.launch town:=Town02
+#roslaunch carla1s_bringup carla_example_ego_vehicle.launch town:=ParkingLot
+roslaunch carla1s_decision carla_decision_test.launch
 ```
 

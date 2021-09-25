@@ -1,0 +1,24 @@
+<!-- -->
+<launch>
+
+  <param name="use_sim_time" value="True"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="camera_init_to_map"  args="189.681 -254.954 2.615 -3.1415 3.14 -1.570795 map camera_init 100" />
+
+<!--   <arg name="town" default='Town02'/> -->
+<!--   <arg name="spawn_point" default="189.681, -254.954,0.5,0,0,-90"/> -->
+
+  <include file="$(find carla1s_bringup)/launch/carla_example_ego_vehicle.launch" >
+    <arg name='town' value='$(arg town)'/>
+    <arg name="spawn_point" value="$(arg spawn_point)"/>
+  </include>
+
+  <include file="$(find lego_loam)/launch/run.launch" />
+
+  <arg name="rviz" default="true" />
+  <group if="$(arg rviz)">
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carla_lego_loam)/rviz/test.rviz"/>
+  </group>
+
+</launch>
+ 

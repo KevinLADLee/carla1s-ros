@@ -1,0 +1,22 @@
+<launch>
+
+    <arg name='host' default='localhost'/>
+    <arg name='port' default='2000'/>
+
+    <node name="carla_decision_node" pkg="carla1s_decision" type="carla_decision_node" output="screen" >
+        <rosparam>
+          role_name: "ego_vehicle"
+          bt_tree_filename: "avp_demo.xml"
+        </rosparam>
+    </node>
+
+    <include file="$(find carla1s_route_planner)/launch/carla1s_route_planner.launch" >
+        <arg name='host' value='$(arg host)'/>
+        <arg name='port' value='$(arg port)'/>
+    </include>
+
+    <include file="$(find carla1s_path_tracking)/launch/tracking.launch" />
+
+    <include file="$(find carla1s_fake_perception)/launch/fake_perception.launch" />
+
+</launch>

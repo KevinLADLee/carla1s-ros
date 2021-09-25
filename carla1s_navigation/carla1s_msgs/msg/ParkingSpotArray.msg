@@ -1,0 +1,2 @@
+Header header
+carla1s_msgs/ParkingSpot[] parking_spot_array
