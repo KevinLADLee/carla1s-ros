@@ -91,10 +91,6 @@
                     "id": "tf"
                 },
                 {
-                    "type": "sensor.pseudo.objects",
-                    "id": "objects"
-                },
-                {
                     "type": "sensor.pseudo.odom",
                     "id": "odometry"
                 },
@@ -161,10 +157,6 @@
                 {
                     "type": "sensor.pseudo.tf",
                     "id": "tf"
-                },
-                {
-                    "type": "sensor.pseudo.objects",
-                    "id": "objects"
                 },
                 {
                     "type": "sensor.pseudo.odom",
