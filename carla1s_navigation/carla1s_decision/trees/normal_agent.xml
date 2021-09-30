@@ -4,45 +4,34 @@
     <BehaviorTree ID="BehaviorTree">
         <Fallback>
             <ReactiveFallback>
-                <Condition ID="GoalReached"/>
-                <IfThenElse>
-                    <Condition ID="PathNotExist" path="{path}"/>
-                    <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
-                    <Sequence>
-                        <Condition ID="CheckTrafficLight"/>
-                        <Action ID="CheckCollision" target_speed="15.0"/>
-                        <Action ID="TrackingPath" path="{path}" target_speed="15.0"/>
-                    </Sequence>
-                </IfThenElse>
+                <Condition ID="CheckTrafficLight"/>
+                <ReactiveFallback>
+                    <Condition ID="GoalUpdated"/>
+                    <Control ID="PipelineSequence">
+                        <Action ID="ComputePathToGoal" path_planner_id="waypoint"/>
+                        <Action ID="TrackingPath"/>
+                    </Control>
+                </ReactiveFallback>
             </ReactiveFallback>
-            <ReactiveFallback>
-                <Condition ID="GoalUpdated"/>
-                <Action ID="StopAndWait"/>
-            </ReactiveFallback>
+            <Action ID="StopAndWait"/>
         </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
-        <Action ID="CheckCollision">
-            <output_port default="15.0" name="target_speed"/>
-        </Action>
         <Condition ID="CheckTrafficLight"/>
         <Action ID="ComputePathToGoal">
-            <input_port default="{goal}" name="goal"/>
-            <output_port default="{path}" name="path"/>
             <input_port default="waypoint" name="path_planner_id"/>
         </Action>
-        <Condition ID="GoalReached"/>
         <Condition ID="GoalUpdated"/>
-        <Condition ID="PathNotExist">
-            <input_port default="{path}" name="path"/>
-        </Condition>
         <Control ID="PipelineSequence"/>
         <Action ID="StopAndWait"/>
-        <Action ID="TrackingPath">
-            <input_port default="{path}" name="path"/>
-            <input_port default="15.0" name="target_speed"/>
+        <Action ID="TrackingPath"/>
+        <Action ID="VerticalParking">
+            <input_port default="1.5" name="parking_spot_length"/>
+            <input_port default="15.0;15.0;1.57" name="parking_spot_pose"/>
+            <input_port default="5.7" name="parking_spot_width"/>
         </Action>
+        <Action ID="VerticalParkingTracking"/>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>

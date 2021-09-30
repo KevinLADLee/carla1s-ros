@@ -9,6 +9,7 @@ ObjectDetection::ObjectDetection() {
   }
 
   using namespace message_filters;
+
   odom_sub_ = std::make_shared<message_filters::Subscriber<nav_msgs::Odometry>>(nh_, "/carla/"+role_name+"/odometry", 1);
   objects_sub_ = std::make_shared<message_filters::Subscriber<derived_object_msgs::ObjectArray>>(nh_, "/carla/objects", 1);
 
@@ -23,9 +24,11 @@ ObjectDetection::ObjectDetection() {
 bool ObjectDetection::LoadParam() {
   ros::NodeHandle ph("~");
   ph.param<std::string>("role_name", role_name, "ego_vehicle");
-
   ph.param<double>("max_distance", max_distance, 50.0);
   max_dist_square = max_distance * max_distance;
+
+  auto vehicle_info = ros::topic::waitForMessage<carla_msgs::CarlaEgoVehicleInfo>("/carla/"+role_name+"/vehicle_info");
+  vehicle_id = vehicle_info->id;
 
   return true;
 }
@@ -41,6 +44,10 @@ void ObjectDetection::OdomObjectsCallback(const nav_msgs::OdometryConstPtr &odom
   auto min_dist_square = max_distance * max_distance;
   auto min_index = -1;
   for(int i = 0; i < object_array_ptr->objects.size(); i++) {
+    if(object_array_ptr->objects[i].id == vehicle_id){
+      continue;
+    }
+
     auto dist_square = RosPoseDistanceSquare(odom_ptr->pose.pose,
                                              object_array_ptr->objects[i].pose);
     if(dist_square > max_dist_square){
@@ -51,7 +58,11 @@ void ObjectDetection::OdomObjectsCallback(const nav_msgs::OdometryConstPtr &odom
     tf::poseMsgToTF(object_array_ptr->objects[i].pose, object_pose);
     auto object_pose_in_vehicle = vehicle_trans_inv * object_pose;
     auto object_sin = std::sin(object_pose_in_vehicle.getRotation().getAngle());
-    if(dist_square <= min_dist_square && object_pose_in_vehicle.getOrigin().x() > 0 && object_sin > 0){
+    if(dist_square <= min_dist_square
+    && object_pose_in_vehicle.getOrigin().x() < 25
+    && object_pose_in_vehicle.getOrigin().x() > 0
+    && std::abs(object_pose_in_vehicle.getOrigin().y()) < 1.5
+    && object_sin > 0){
       min_dist_square = min_dist_square;
       min_index = i;
     }
@@ -92,8 +103,8 @@ void ObjectDetection::InitMarker() {
   box_marker.id = 0;
   box_marker.color.r = 1.0;
   box_marker.color.a = 1.0;
+  box_marker.lifetime = ros::Duration(0.5);
   marker_array_.markers.push_back(box_marker);
-
 
   Marker text_marker;
   text_marker.header.frame_id = "map";
@@ -103,6 +114,7 @@ void ObjectDetection::InitMarker() {
   text_marker.id = 1;
   text_marker.color.r = 0.5;
   text_marker.color.a = 0.9;
+  text_marker.lifetime = ros::Duration(0.5);
   marker_array_.markers.push_back(text_marker);
 }
 
@@ -113,8 +125,10 @@ void ObjectDetection::PublishMarker(const derived_object_msgs::Object &object) {
   box_marker->scale.y = object.shape.dimensions[1];
   box_marker->scale.z = object.shape.dimensions[2];
   auto text_marker = box_marker+1;
+  text_marker->pose = object.pose;
+  text_marker->pose.position.z += 2.0;
   text_marker->scale.z = object.shape.dimensions[2];
-  text_marker->text = std::to_string(TwistToVehicleSpeed(object.twist));
+  text_marker->text = std::to_string((int)(TwistToVehicleSpeed(object.twist) * 3.6)) + " km/h";
 
   viz_pub_.publish(marker_array_);
 }

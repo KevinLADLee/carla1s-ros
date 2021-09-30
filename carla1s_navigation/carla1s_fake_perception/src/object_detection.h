@@ -14,6 +14,8 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+#include <carla_msgs/CarlaEgoVehicleInfo.h>
+
 class ObjectDetection {
   using OdomObjectsSyncPolicy = message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, derived_object_msgs::ObjectArray>;
  public:
@@ -37,6 +39,7 @@ class ObjectDetection {
   std::string role_name;
   double max_distance = 0;
   double max_dist_square = 0;
+  int vehicle_id = 0;
 
   ros::NodeHandle nh_;
   std::shared_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub_;
