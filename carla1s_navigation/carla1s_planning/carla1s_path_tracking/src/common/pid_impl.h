@@ -49,6 +49,10 @@ class PIDImpl
     integral_ = 0;
   }
 
+  void SetMax(T max){
+    max_ = max;
+  };
+
   T RunStep( T target, T current, T dt)
   {
 

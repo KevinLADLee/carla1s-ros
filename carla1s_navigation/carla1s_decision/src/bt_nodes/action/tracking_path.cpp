@@ -6,6 +6,8 @@ TrackingPath::TrackingPath(const std::string &name,
 
 void TrackingPath::on_tick() {
   ROS_INFO("BT Node: TrackingPath");
+
+  // Get path from behavior tree's ports
   auto path_port = getInput<carla1s_msgs::Path>("path");
   if(!path_port){
     throw BT::RuntimeError("missing required input [path]: ", path_port.error());
@@ -22,6 +24,15 @@ void TrackingPath::on_tick() {
     }
     ROS_INFO("BT TrackingPath Node: Received %ld paths", goal_.path.paths.size());
   }
+
+  // Get target speed from behavior tree's ports
+  auto target_speed_port = getInput<double>("target_speed");
+  if(!target_speed_port){
+    throw BT::RuntimeError("missing required input [target_speed]: ", target_speed_port.error());
+  }else{
+    goal_.target_speed = static_cast<float>(target_speed_port.value());
+  }
+
 }
 
 BT::NodeStatus TrackingPath::on_result(const ResultType &res) {

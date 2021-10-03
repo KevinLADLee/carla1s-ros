@@ -21,6 +21,8 @@ class PidLonController : public LonController{
 
   int SetDrivingDirection(const DrivingDirection &driving_direction) override;
 
+  void SetTargetSpeed(double target_speed) override;
+
   double GetSpeedError();
 
   double GetStationError();

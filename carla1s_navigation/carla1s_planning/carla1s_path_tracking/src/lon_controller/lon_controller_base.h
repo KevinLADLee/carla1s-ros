@@ -21,6 +21,10 @@ class LonController : public VehicleController{
     return 0;
   }
 
+  virtual void SetTargetSpeed(double target_speed){
+    target_speed_ = target_speed;
+  };
+
   int QueryTargetWaypointIndex(const Pose2dPtr &vehicle_pose_ptr,
                                const Path2dPtr &waypoints_ptr) override {
     double lookahead_dist = 0;
@@ -63,6 +67,7 @@ class LonController : public VehicleController{
   double max_bck_lookahead_dist_ = 1.0;
   double max_fwd_speed_ = 12.0;
   double max_bck_speed_ = 3.0;
+  double target_speed_ = 0.0;
 
   DrivingDirection driving_direction_ = DrivingDirection::FORWARD;
 

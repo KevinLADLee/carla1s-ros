@@ -105,6 +105,7 @@ class PathTracking {
   nav_msgs::Path current_path_msg_;
   Path2dPtr current_path_ptr_;
   geometry_msgs::PoseStamped current_goal_;
+  double current_target_speed_ = 0.0;
   double vehicle_speed_ = 0;
 
   NodeState node_state_ = NodeState::IDLE;

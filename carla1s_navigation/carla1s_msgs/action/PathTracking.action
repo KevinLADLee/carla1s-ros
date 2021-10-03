@@ -1,5 +1,8 @@
 #goal definition
+string lon_id
+string lat_id
 carla1s_msgs/Path path
+float32 target_speed
 ---
 #result definition RUNNING = 0, SUCCESS = 1, FAILURE = 2
 int32  error_code

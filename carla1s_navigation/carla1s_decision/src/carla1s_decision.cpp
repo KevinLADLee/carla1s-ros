@@ -5,6 +5,7 @@ CarlaDecision::CarlaDecision() {
   auto ph = ros::NodeHandle("~");
   ph.param<std::string>("role_name", role_name, "ego_vehicle");
   ph.param<std::string>("bt_tree_filename", bt_tree_filename, "avp_demo.xml");
+  ph.param<bool>("use_groot", use_groot, false);
 }
 
 bool CarlaDecision::LoadBehaviorTree(const std::string &xml_base_path) {

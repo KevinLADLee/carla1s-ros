@@ -10,7 +10,6 @@ Panels:
         - /Image1
         - /MarkerArray1
         - /MarkerArray4
-        - /MarkerArray4/Status1
       Splitter Ratio: 0.5
     Tree Height: 377
   - Class: rviz/Selection
@@ -285,13 +284,13 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: false
+      Enabled: true
       Marker Topic: /carla/markers
       Name: CarlaDebugMarkers
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
-      Value: false
+      Value: true
     - Class: rviz/Image
       Enabled: false
       Image Topic: /carla/ego_vehicle/semantic_segmentation_front/image
@@ -445,7 +444,7 @@ Visualization Manager:
       Marker Topic: /carla/ego_vehicle/objects_marker
       Name: MarkerArray
       Namespaces:
-        ego_vehicle/object_marker: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -492,9 +491,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.10539972782135
+      Pitch: 0.11540002375841141
       Target Frame: ego_vehicle
-      Yaw: 3.158590078353882
+      Yaw: 1.6785914897918701
     Saved: ~
 Window Geometry:
   BehaviorTreePanel:

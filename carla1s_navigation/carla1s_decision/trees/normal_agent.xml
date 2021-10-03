@@ -8,8 +8,8 @@
                 <ReactiveFallback>
                     <Condition ID="GoalUpdated"/>
                     <Control ID="PipelineSequence">
-                        <Action ID="ComputePathToGoal" path_planner_id="waypoint"/>
-                        <Action ID="TrackingPath"/>
+                        <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint" target_speed="{target_speed}"/>
+                        <Action ID="TrackingPath" path="{path}" target_speed="{target_speed}"/>
                     </Control>
                 </ReactiveFallback>
             </ReactiveFallback>
@@ -20,18 +20,18 @@
     <TreeNodesModel>
         <Condition ID="CheckTrafficLight"/>
         <Action ID="ComputePathToGoal">
+            <input_port default="{goal}" name="goal"/>
+            <output_port default="{path}" name="path"/>
             <input_port default="waypoint" name="path_planner_id"/>
+            <output_port default="20.0" name="target_speed"/>
         </Action>
         <Condition ID="GoalUpdated"/>
         <Control ID="PipelineSequence"/>
         <Action ID="StopAndWait"/>
-        <Action ID="TrackingPath"/>
-        <Action ID="VerticalParking">
-            <input_port default="1.5" name="parking_spot_length"/>
-            <input_port default="15.0;15.0;1.57" name="parking_spot_pose"/>
-            <input_port default="5.7" name="parking_spot_width"/>
+        <Action ID="TrackingPath">
+            <input_port name="path"/>
+            <input_port name="target_speed"/>
         </Action>
-        <Action ID="VerticalParkingTracking"/>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>

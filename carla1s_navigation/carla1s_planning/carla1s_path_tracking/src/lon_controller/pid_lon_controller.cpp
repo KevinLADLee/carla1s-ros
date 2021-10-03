@@ -78,4 +78,8 @@ int PidLonController::SetDrivingDirection(const DrivingDirection &driving_direct
   return VehicleController::SetDrivingDirection(driving_direction);
 }
 
+void PidLonController::SetTargetSpeed(double target_speed) {
+  LonController::SetTargetSpeed(target_speed);
+  station_controller_->SetMax(target_speed);
+}
 #endif

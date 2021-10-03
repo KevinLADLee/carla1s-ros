@@ -123,7 +123,7 @@ class CarlaMapVisualization:
             point.x = p.x
             point.y = -p.y
             point.z = p.z
-            point.z = 0
+            # point.z = 0
             arrow_marker.points.append(point)
         self.marker_array.markers.append(arrow_marker)
 

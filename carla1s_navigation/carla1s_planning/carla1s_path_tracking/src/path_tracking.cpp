@@ -58,6 +58,7 @@ bool PathTracking::UpdateParam() {
 
 void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goal_msg) {
   bool preempted = false;
+
   auto current_path_it = action_goal_msg->path.paths.begin();
   auto current_direction_it = action_goal_msg->path.driving_direction.begin();
   auto path_num = action_goal_msg->path.paths.size();
@@ -79,6 +80,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
 
     // TODO: Refactor set plan method
     if (path_mutex_.try_lock()) {
+      current_target_speed_ = action_goal_msg->target_speed;
       if (*current_direction_it == carla1s_msgs::Path::BACKWARDS) {
         current_driving_direction_ = DrivingDirection::BACKWARDS;
       }else{
@@ -250,6 +252,7 @@ void PathTracking::PathTrackingLoop() {
     vehicle_control_msg_.steer = static_cast<float>(steer);
     PublishMarkers(*vehicle_pose_ptr, *lat_controller_ptr_->GetCurrentTrackPoint());
 
+    lon_controller_ptr_->SetTargetSpeed(current_target_speed_);
     vehicle_control_msg_.throttle = static_cast<float>(lon_controller_ptr_->RunStep(vehicle_pose_ptr,
                                                                                     current_path_ptr_,
                                                                                     vehicle_speed,
