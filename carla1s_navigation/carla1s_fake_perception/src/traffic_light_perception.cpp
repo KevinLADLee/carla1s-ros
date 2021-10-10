@@ -9,11 +9,11 @@ TrafficLightPerception::TrafficLightPerception() {
   traffic_lights_info_sub_ = nh_.subscribe<carla_msgs::CarlaTrafficLightInfoList>("/carla/traffic_lights/info", 1, boost::bind(&TrafficLightPerception::TrafficLightInfoCallback, this, _1));
   traffic_lights_status_sub_ = nh_.subscribe<carla_msgs::CarlaTrafficLightStatusList>("/carla/traffic_lights/status", 10, boost::bind(&TrafficLightPerception::TrafficLightStatusCallback, this, _1));
 
-  tl_passable_pub_ = nh_.advertise<std_msgs::Bool>("/carla/" + role_name_ + "/fake_perception/traffic_light_passable", 1);
+  tl_passable_pub_ = nh_.advertise<std_msgs::Bool>("/carla1s/" + role_name_ + "/fake_perception/traffic_light_passable", 1);
 
   if(publish_viz_){
     InitMarkerColors();
-    tl_viz_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("/carla/"+role_name_+"/traffic_light_markers", 10);
+    tl_viz_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("/carla1s/"+role_name_+"/traffic_light_markers", 10);
   }
 
   ROS_INFO("[TrafficLightPerception] Initialization success!");

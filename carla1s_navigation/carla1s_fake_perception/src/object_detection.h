@@ -17,6 +17,10 @@
 #include <carla_msgs/CarlaEgoVehicleInfo.h>
 
 class ObjectDetection {
+  using MsgFilterOdomSub = message_filters::Subscriber<nav_msgs::Odometry>;
+  using MsgFilterOdomSubPtr = std::shared_ptr<MsgFilterOdomSub>;
+  using MsgFilterObjsSub = message_filters::Subscriber<derived_object_msgs::ObjectArray>;
+  using MsgFilterObjsSubPtr = std::shared_ptr<MsgFilterObjsSub>;
   using OdomObjectsSyncPolicy = message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, derived_object_msgs::ObjectArray>;
  public:
   ObjectDetection();
@@ -40,16 +44,18 @@ class ObjectDetection {
   double max_distance = 0;
   double max_dist_square = 0;
   int vehicle_id = 0;
+  std::string carla_topic_prefix = "";
+  std::string carla1s_topic_prefix = "";
 
   ros::NodeHandle nh_;
-  std::shared_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub_;
-  std::shared_ptr<message_filters::Subscriber<derived_object_msgs::ObjectArray>> objects_sub_;
+  MsgFilterOdomSubPtr odom_sub_;
+  MsgFilterObjsSubPtr objects_sub_;
   std::shared_ptr<message_filters::Synchronizer<OdomObjectsSyncPolicy>> msg_sync_;
+  ros::Publisher object_pub_;
   ros::Publisher viz_pub_;
 
   derived_object_msgs::Object current_object_;
   visualization_msgs::MarkerArray marker_array_;
-
 
 };
 

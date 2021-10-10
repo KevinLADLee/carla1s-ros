@@ -10,13 +10,25 @@ BlackboardHandler::BlackboardHandler(BT::Blackboard::Ptr bb_ptr,
 
   bb_ptr_->set<bool>("goal_received", false);
 
-  odom_sub_ = nh_ptr_->subscribe<nav_msgs::Odometry>("/carla/" + role_name_ + "/odometry",
+  ros_sub_vec_.push_back(nh_ptr_->subscribe<nav_msgs::Odometry>("/carla/" + role_name_ + "/odometry",
                                                      10,
-                                                     boost::bind(&BlackboardHandler::OdomCallback, this, _1));
+                                                     &BlackboardHandler::OdomCallback,
+                                                     this));
 
-  traffic_light_sub_ = nh_ptr_->subscribe<std_msgs::Bool>("/carla/"+role_name_+"/fake_perception/traffic_light_passable", 1, &BlackboardHandler::TrafficLightCallback, this);
+  ros_sub_vec_.push_back(nh_ptr_->subscribe<std_msgs::Bool>("/carla1s/"+role_name_+"/fake_perception/traffic_light_passable",
+                                                          1,
+                                                          &BlackboardHandler::TrafficLightCallback,
+                                                          this));
 
-  goal_sub_ = nh_ptr_->subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1, &BlackboardHandler::GoalCallback, this);
+  ros_sub_vec_.push_back(nh_ptr_->subscribe<derived_object_msgs::Object>("/carla1s/"+role_name_+"/fake_perception/detected_object",
+                                                                       1,
+                                                                       &BlackboardHandler::ObjectCallback,
+                                                                       this));
+
+  ros_sub_vec_.push_back(nh_ptr_->subscribe<geometry_msgs::PoseStamped>("/move_base_simple/goal",
+                                                             1,
+                                                             &BlackboardHandler::GoalCallback,
+                                                             this));
 
 }
 
@@ -37,6 +49,10 @@ void BlackboardHandler::GoalCallback(const geometry_msgs::PoseStampedConstPtr &g
   bb_ptr_->set<geometry_msgs::PoseStamped>("goal", *goal);
   bb_ptr_->set<bool>("goal_received", true);
   ROS_INFO( "BT Blackboard: Received new goal: (%f,%f)", goal->pose.position.x, goal->pose.position.y);
+}
+
+void BlackboardHandler::ObjectCallback(const derived_object_msgs::ObjectConstPtr &object_msg) {
+  ROS_INFO("Object id: %d", object_msg->id);
 }
 
 }

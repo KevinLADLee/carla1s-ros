@@ -10,13 +10,14 @@ ObjectDetection::ObjectDetection() {
 
   using namespace message_filters;
 
-  odom_sub_ = std::make_shared<message_filters::Subscriber<nav_msgs::Odometry>>(nh_, "/carla/"+role_name+"/odometry", 1);
+  odom_sub_ = std::make_shared<message_filters::Subscriber<nav_msgs::Odometry>>(nh_, carla_topic_prefix+"/odometry", 1);
   objects_sub_ = std::make_shared<message_filters::Subscriber<derived_object_msgs::ObjectArray>>(nh_, "/carla/objects", 1);
 
   msg_sync_ = std::make_shared<Synchronizer<OdomObjectsSyncPolicy>>(OdomObjectsSyncPolicy(10), *odom_sub_, *objects_sub_);
   msg_sync_->registerCallback(boost::bind(&ObjectDetection::OdomObjectsCallback, this, _1, _2));
 
-  viz_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("/carla/"+role_name+"/objects_marker", 1);
+  object_pub_ = nh_.advertise<derived_object_msgs::Object>(carla1s_topic_prefix+"/detected_object", 1);
+  viz_pub_ = nh_.advertise<visualization_msgs::MarkerArray>(carla1s_topic_prefix+"/detected_object_marker", 1);
   InitMarker();
 
 }
@@ -24,6 +25,9 @@ ObjectDetection::ObjectDetection() {
 bool ObjectDetection::LoadParam() {
   ros::NodeHandle ph("~");
   ph.param<std::string>("role_name", role_name, "ego_vehicle");
+  carla_topic_prefix = "/carla/"+role_name;
+  carla1s_topic_prefix = "/carla1s/"+role_name+"/fake_perception";
+
   ph.param<double>("max_distance", max_distance, 50.0);
   max_dist_square = max_distance * max_distance;
 
@@ -58,11 +62,10 @@ void ObjectDetection::OdomObjectsCallback(const nav_msgs::OdometryConstPtr &odom
     tf::poseMsgToTF(object_array_ptr->objects[i].pose, object_pose);
     auto object_pose_in_vehicle = vehicle_trans_inv * object_pose;
     auto object_sin = std::sin(object_pose_in_vehicle.getRotation().getAngle());
-    if(dist_square <= min_dist_square
-    && object_pose_in_vehicle.getOrigin().x() < 25
-    && object_pose_in_vehicle.getOrigin().x() > 0
-    && std::abs(object_pose_in_vehicle.getOrigin().y()) < 1.5
-    && object_sin > 0){
+    if(object_pose_in_vehicle.getOrigin().x() < 25
+        && object_pose_in_vehicle.getOrigin().x() > 0
+        && std::abs(object_pose_in_vehicle.getOrigin().y()) < 1.5
+        && object_sin > 0){
       min_dist_square = min_dist_square;
       min_index = i;
     }
@@ -72,6 +75,7 @@ void ObjectDetection::OdomObjectsCallback(const nav_msgs::OdometryConstPtr &odom
     return;
   }
   current_object_ = object_array_ptr->objects[min_index];
+  object_pub_.publish(current_object_);
   ROS_INFO("ObjectDetection: Found object! Pose (%f, %f, %f), Speed: (%f) km/h",
            current_object_.pose.position.x,
            current_object_.pose.position.y,
