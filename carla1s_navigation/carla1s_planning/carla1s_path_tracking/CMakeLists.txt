@@ -56,16 +56,18 @@ include_directories(
 #add_library(pure_pursuit src/lat_controller/pure_pursuit.cpp)
 #target_link_libraries(pure_pursuit ${EIGEN3_LIBRARIES})
 
-add_executable(test_pid src/lon_controller/pid_lon_controller_test.cpp src/lon_controller/pid_lon_controller.cpp)
-add_dependencies(test_pid ${catkin_EXPORTED_TARGETS} carla1s_msgs_generate_messages)
-target_link_libraries(test_pid  ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
+#add_executable(test_pid src/lon_controller/pid_lon_controller_test.cpp src/lon_controller/pid_lon_controller.cpp)
+#add_dependencies(test_pid ${catkin_EXPORTED_TARGETS} carla1s_msgs_generate_messages)
+#target_link_libraries(test_pid  ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 
 add_executable(path_tracking_node
         src/path_tracking_node.cpp
         src/path_tracking.cpp
         src/lat_controller/pure_pursuit.cpp
         src/lon_controller/pid_lon_controller.cpp
-        src/lat_controller/pid_lat_controller.cpp)
+        src/lat_controller/pid_lat_controller.cpp
+        src/common/path_handler.cpp
+        )
 add_dependencies(path_tracking_node carla_msgs_generate_messages carla1s_msgs_generate_messages)
 target_link_libraries(path_tracking_node
 #        pid_lon_controller

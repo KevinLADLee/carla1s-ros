@@ -1,84 +1,56 @@
 
 #include "pure_pursuit.h"
 
-double PurePursuit::RunStep(const Pose2dPtr &vehicle_pose,
-                            const Path2dPtr &waypoints_ptr,
-                            const double &vehicle_speed,
-                            const double &dt) {
-  if(GetWaypoints() != waypoints_ptr){
-    SetWaypoints(waypoints_ptr);
-    SetCurrentWaypointIndex(0);
-  }
+void PurePursuit::Reset(const DirectedPath2dPtr &directed_path_ptr) {
+  VehicleController::Reset(directed_path_ptr);
+}
 
-  double steering = 0.0;
-  Pose2dPtr valid_waypoint_ptr;
-  int status = FindValidWaypoint(vehicle_pose, valid_waypoint_ptr);
-  if(status < 0 || valid_waypoint_ptr == nullptr){
-    return steering;
-  } else{
-    steering = ComputeSteering(vehicle_pose, valid_waypoint_ptr);
+NodeState PurePursuit::RunStep(const VehicleState &vehicle_state,
+                               const double &target_speed,
+                               const double &dt,
+                               double &steer) {
+  UpdateVehicleState(vehicle_state);
+  steer = 0.0;
+  int waypoint_idx = 0;
+  auto lookahead_dist = GetLookaheadDist();
+  auto status = GetPathHandlerPtr()->QueryNearestWaypointIndexWithLookaheadDist(lookahead_dist, waypoint_idx);
+  SetCurrentWaypointIdx(waypoint_idx);
+  if(status == NodeState::FAILURE){
+    return FAILURE;
   }
+  steer = ComputeSteering(GetCurrentWaypoint());
+  std::cout << steer << std::endl;
+  return SUCCESS;
+}
+
+double PurePursuit::ComputeSteering(const Pose2d &valid_waypoint){
+  double steering = 0.0;
+  auto forward_point_in_vehicle_frame = ToVehicleFrame(valid_waypoint, GetVehiclePose());
+  if(GetDrivingDirection() == DrivingDirection::FORWARD){
+    double eta = std::atan2(forward_point_in_vehicle_frame.y, forward_point_in_vehicle_frame.x);
+    steering = std::atan2(wheel_base * std::sin(eta), (GetLookaheadDist() / 2.0f + l_anchor_fw * std::cos(eta)));
+  }
+  else{
+    double eta = M_PI + std::atan2(forward_point_in_vehicle_frame.y, forward_point_in_vehicle_frame.x);
+    steering = -std::atan2(wheel_base * std::sin(eta), (GetLookaheadDist() / 2.0f + l_anchor_rv * std::cos(eta)));
+  }
+  steering = -carla1s::math::Clip(steering, -max_steering_angle, max_steering_angle);
   return steering;
 }
 
-int PurePursuit::FindValidWaypoint(const Pose2dPtr &vehicle_pose_ptr, Pose2dPtr &valid_waypoint_ptr){
-  found_valid_waypoint_ = false;
-  auto waypoints_ptr = GetWaypoints();
-  // make sure vehicle_pose is in map frame
-
-  auto nearest_waypoint_inx =  QueryNearestWaypointIndex(vehicle_pose_ptr, waypoints_ptr);
-
-  for (auto &wp_index = nearest_waypoint_inx; wp_index < waypoints_ptr->size(); wp_index++) {
-    auto waypoint_in_map = waypoints_ptr->at(wp_index);
-    if(IsValidWaypoint(waypoint_in_map, *vehicle_pose_ptr)){
-      SetCurrentWaypointIndex(wp_index);
-      valid_waypoint_ptr = std::make_shared<Pose2d>(waypoint_in_map);
-      found_valid_waypoint_ = true;
-      break;
-    }
-  }
-  if(GetCurrentWaypointIndex() == waypoints_ptr->size()){
-    SetCurrentWaypointIndex(waypoints_ptr->size()-1);
-    valid_waypoint_ptr = nullptr;
-    return -1;
-  }
+int PurePursuit::Initialize(float wheelbase, float goal_radius, float look_ahead_dist_fwd, float anchor_dist_fwd) {
+  std::cout << "wheel_base: " << wheelbase << "\n" << std::endl;
+  wheel_base = wheelbase;
+  max_fwd_lookahead_dist = look_ahead_dist_fwd;
+  l_anchor_fw = anchor_dist_fwd;
   return 0;
 }
 
-double PurePursuit::ComputeSteering(const Pose2dPtr &vehicle_pose, const Pose2dPtr &valid_waypoint){
-  double steering = 0.0;
-  auto forward_point_in_vehicle_frame = ToVehicleFrame(*valid_waypoint, *vehicle_pose);
+double PurePursuit::GetLookaheadDist() const {
   if(GetDrivingDirection() == DrivingDirection::FORWARD){
-    float eta = std::atan2(forward_point_in_vehicle_frame.y, forward_point_in_vehicle_frame.x);
-    steering = std::atan2(wheel_base * std::sin(eta), (L_fw / 2.0f + l_anchor_fw * std::cos(eta)));
-  }
-  else if(GetDrivingDirection() == DrivingDirection::BACKWARDS){
-//    // TODO: Need more test case to verify
-    float eta = M_PI + std::atan2(forward_point_in_vehicle_frame.y, forward_point_in_vehicle_frame.x);
-    steering = -std::atan2(wheel_base * std::sin(eta), (L_rv / 2.0f + l_anchor_rv * std::cos(eta)));
-  } else{
-    steering = 0.0;
-  }
-
-  steering = -carla1s::math::Clip(steering, -max_steering_angle_, max_steering_angle_);
-  return steering;
-}
-
-bool PurePursuit::IsValidWaypoint(const Pose2d &waypoint_pose, const Pose2d &vehicle_pose) {
-  auto waypoint_pose_in_vehicle_frame = ToVehicleFrame(waypoint_pose, vehicle_pose);
-  auto dist = std::hypot(waypoint_pose.x - vehicle_pose.x,
-                          waypoint_pose.y - vehicle_pose.y);
-  if(waypoint_pose_in_vehicle_frame.x > 0
-      && GetDrivingDirection() == DrivingDirection::FORWARD
-      && dist > L_fw){
-    return true;
-  } else if(waypoint_pose_in_vehicle_frame.x < 0
-      && GetDrivingDirection() == DrivingDirection::BACKWARDS
-      && dist > L_rv){
-    return true;
-  }
-  else{
-    return false;
+    return max_fwd_lookahead_dist;
+  }else{
+    return max_bck_lookahead_dist;
   }
 }
 
@@ -94,12 +66,3 @@ Pose2d PurePursuit::ToVehicleFrame(const Pose2d &point_in_map, const Pose2d &veh
   auto point_vec_in_vehicle_frame = vehicle_trans_inv * point_vec;
   return {point_vec_in_vehicle_frame[0], point_vec_in_vehicle_frame[1], point_in_map.yaw-vehicle_pose_in_map.yaw};
 }
-
-int PurePursuit::Initialize(float wheelbase, float goal_radius, float look_ahead_dist_fwd, float anchor_dist_fwd) {
-  std::cout << "wheel_base: " << wheelbase << "\n" << std::endl;
-  wheel_base = wheelbase;
-  L_fw = look_ahead_dist_fwd;
-  l_anchor_fw = anchor_dist_fwd;
-  return 0;
-}
-

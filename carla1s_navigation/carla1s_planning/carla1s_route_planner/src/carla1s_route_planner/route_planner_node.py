@@ -31,15 +31,15 @@ class Carla1sRoutePlanner:
         self.on_tick = None
         self.role_name = rospy.get_param("~role_name", 'ego_vehicle')
         self.vehicle_info_subscriber = rospy.Subscriber('/carla/{}/vehicle_info'.format(self.role_name), CarlaEgoVehicleInfo, self.compute_min_radius_from_vehicle_info)
-        self.waypoint_publisher = rospy.Publisher('/carla/{}/waypoints'.format(self.role_name), Path, latch=True, queue_size=1)
-        self.path_markers_publisher = rospy.Publisher('/carla/{}/path_markers'.format(self.role_name), MarkerArray, latch=True, queue_size=1)
+        self.waypoint_publisher = rospy.Publisher('/carla1s/{}/waypoints'.format(self.role_name), Path, latch=True, queue_size=1)
+        self.path_markers_publisher = rospy.Publisher('/carla1s/{}/path_markers'.format(self.role_name), MarkerArray, latch=True, queue_size=1)
         self.markers = MarkerArray()                                          
 
         # set initial goal
         self.goal = None
 
         self.current_route = None
-        self.global_planner_server = actionlib.SimpleActionServer("compute_path_to_goal",
+        self.global_planner_server = actionlib.SimpleActionServer("/carla1s/{}/compute_path_to_goal".format(self.role_name),
                                                                   PathPlannerAction,
                                                                   execute_cb=self.execute_cb,
                                                                   auto_start=False)
@@ -85,21 +85,21 @@ class Carla1sRoutePlanner:
                 self.pose_list.append(goal_msg.goal.pose)
                 rospy.loginfo("min_radius: {}".format(self.min_radius))
                 self.rs_curve = ReedsSheppROS(min_radius=self.min_radius)
-                self._result.path = self.rs_curve.shortest_path(self.pose_list, 0.08)
-                self.publish_path_array_markers(self._result.path)
+                self._result.path_array = self.rs_curve.shortest_path(self.pose_list, 0.08)
+                self.publish_path_array_markers(self._result.path_array)
                 self.global_planner_server.set_succeeded(self._result, "success")
             # TODO: Action server send result.
             else:
                 carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
                 self.goal = carla_goal
-                self._result.path = PathArray()
-                self._result.path.header.frame_id = "map"
-                self._result.path.header.stamp = rospy.Time.now()
-                path = Path()
-                self._result.path.paths.append(path)
-                self._result.path.paths[0].header.frame_id = "map"
-                self._result.path.paths[0].header.stamp = rospy.Time.now()
-                self._result.path.driving_direction.append(0)
+                self._result.path_array = PathArray()
+                self._result.path_array.header.frame_id = "map"
+                self._result.path_array.header.stamp = rospy.Time.now()
+                path_array = Path()
+                self._result.path_array.paths.append(path_array)
+                self._result.path_array.paths[0].header.frame_id = "map"
+                self._result.path_array.paths[0].header.stamp = rospy.Time.now()
+                self._result.path_array.driving_direction.append(0)
                 if self.ego_vehicle is None or self.goal is None:
                     self.global_planner_server.set_aborted(text="Error: ego_vehicle or goal not valid!")
                 elif self.is_goal_reached(self.goal):
@@ -112,17 +112,17 @@ class Carla1sRoutePlanner:
                             pose = PoseStamped()
                             pose.pose = trans.carla_transform_to_ros_pose(wp[0].transform)
                             if (last_wp is None) or last_wp != pose:
-                                self._result.path.paths[0].poses.append(pose)
+                                self._result.path_array.paths[0].poses.append(pose)
                                 last_wp = pose
 
 
-                    waypoint_num = len(self._result.path.paths[0].poses)
+                    waypoint_num = len(self._result.path_array.paths[0].poses)
                     result_info = "GlobalPlanner: Got path {} waypoints.".format(waypoint_num)
                     rospy.loginfo(result_info)
                     if waypoint_num <= 1:
                         self.global_planner_server.set_aborted(self._result, result_info)
                     else:
-                        self.waypoint_publisher.publish(self._result.path.paths[0])
+                        self.waypoint_publisher.publish(self._result.path_array.paths[0])
                         self.global_planner_server.set_succeeded(self._result, result_info)
         
     def publish_path_array_markers(self, path_array):

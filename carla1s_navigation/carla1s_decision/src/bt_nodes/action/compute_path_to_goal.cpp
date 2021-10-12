@@ -34,8 +34,8 @@ void ComputePathToGoal::on_tick() {
 }
 
 BT::NodeStatus ComputePathToGoal::on_result(const carla1s_msgs::PathPlannerResult &res) {
-  goal_result_.path = res.path;
-  setOutput("path", goal_result_.path);
+  goal_result_.path_array = res.path_array;
+  setOutput("path", goal_result_.path_array);
   setOutput("target_speed", 15.0);
   return BT::NodeStatus::SUCCESS;
 }

@@ -4,7 +4,7 @@
     <arg name='port' default='2000'/>
     <arg name='role_name' default='ego_vehicle' />
 
-    <arg name='use_groot' default='false' />
+    <arg name='use_groot' default='true' />
     <arg name='bt_tree_filename' default='normal_agent.xml' />
 <!--     <arg name='bt_tree_filename' default='avp_demo.xml' /> -->
 <!--     <arg name='bt_tree_filename' default='avp_demo_full.xml' /> -->
@@ -21,8 +21,8 @@
         <arg name='port' value='$(arg port)'/>
         <arg name='role_name' value='$(arg role_name)' />
     </include>
-    <include file="$(find carla1s_path_tracking)/launch/path_tracking.launch" >
-        <arg name='role_name' value='$(arg role_name)' />
-    </include>
+<!--     <include file="$(find carla1s_path_tracking)/launch/path_tracking.launch" > -->
+<!--         <arg name='role_name' value='$(arg role_name)' /> -->
+<!--     </include> -->
 
 </launch>
