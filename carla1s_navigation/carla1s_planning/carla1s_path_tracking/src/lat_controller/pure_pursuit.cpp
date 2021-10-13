@@ -19,7 +19,7 @@ NodeState PurePursuit::RunStep(const VehicleState &vehicle_state,
     return FAILURE;
   }
   steer = ComputeSteering(GetCurrentWaypoint());
-  std::cout << steer << std::endl;
+//  std::cout << steer << std::endl;
   return SUCCESS;
 }
 

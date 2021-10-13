@@ -42,6 +42,16 @@ void PathTracking::SetNodeState(const NodeState &node_state) {
   node_state_ = node_state;
 }
 
+const double &PathTracking::GetTargetSpeed() {
+  LockGuardMutex lock_guard(target_speed_mutex_);
+  return target_speed_;
+}
+
+void PathTracking::SetTargetSpeed(const double &target_speed) {
+  LockGuardMutex lock_guard(target_speed_mutex_);
+  target_speed_ = target_speed;
+}
+
 void PathTracking::InitMarkers(const geometry_msgs::PoseStamped &goal_pose) {
   visualize_markers_.markers.clear();
   visualize_markers_.markers.reserve(2);
@@ -87,8 +97,6 @@ void PathTracking::PublishMarkers(const Pose2d &vehicle_pose, const Pose2d &trac
   markers_pub_.publish(visualize_markers_);
 }
 
-
-
 bool PathTracking::UpdateParam() {
   auto ph = ros::NodeHandle("~");
   ph.param<std::string>("role_name", role_name, "ego_vehicle");
@@ -100,7 +108,7 @@ bool PathTracking::UpdateParam() {
   if(use_vehicle_info) {
     ROS_INFO("PathTracking: Waiting for VehicleInfo message...");
     auto vehicle_info_msg = ros::topic::waitForMessage<carla_msgs::CarlaEgoVehicleInfo>("/carla/"+role_name+"/vehicle_info", nh_, ros::Duration(120));
-    if(vehicle_info_msg == NULL){
+    if(vehicle_info_msg == nullptr){
       ROS_FATAL("VehicleInfo Not Found: %s", role_name.c_str());
       return false;
     }
@@ -115,7 +123,7 @@ bool PathTracking::UpdateParam() {
 }
 
 void PathTracking::OdomCallback(const nav_msgs::Odometry_<std::allocator<void>>::ConstPtr &odom_msg) {
-  std::lock_guard<std::mutex> lock_guard(odom_mutex_);
+  LockGuardMutex lock_guard(odom_mutex_);
   vehicle_state_.vehicle_pose.x = (*odom_msg).pose.pose.position.x;
   vehicle_state_.vehicle_pose.y = (*odom_msg).pose.pose.position.y;
   vehicle_state_.vehicle_pose.yaw = tf2::getYaw((*odom_msg).pose.pose.orientation);
@@ -141,6 +149,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
       result.error_info = "Need force update path";
       as_->setAborted(result);
     }else{
+      SetTargetSpeed(action_goal_msg->target_speed);
       result.error_code = node_state;
       as_->setSucceeded(result);
     }
@@ -148,7 +157,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
 }
 
 int PathTracking::UpdatePath(const carla1s_msgs::PathArray &path_array_msg) {
-  std::lock_guard<std::mutex> lock_guard(path_mutex_);
+  LockGuardMutex lock_guard(path_mutex_);
   path_array_msgs_ = path_array_msg;
   current_path_idx_ = 0;
   return 0;
@@ -163,24 +172,16 @@ void PathTracking::StartPathTracking() {
   path_tracking_thread_ = std::thread([this] { PathTrackingLoop(); });
 }
 
-void PathTracking::StopPathTracking() {
-  SetNodeState(NodeState::IDLE);
-  if(path_tracking_thread_.joinable()){
-    path_tracking_thread_.join();
-  }
-  ROS_INFO("PathTracking: stop tracking path thread");
-}
-
 VehicleState PathTracking::GetVehicleState() {
-  std::lock_guard<std::mutex> lock_guard(odom_mutex_);
+  LockGuardMutex lock_guard(odom_mutex_);
   return vehicle_state_;
 }
 
 bool PathTracking::UpdateCurrentPath() {
-  std::lock_guard<std::mutex> lock_guard(path_mutex_);
+  LockGuardMutex lock_guard(path_mutex_);
   if(current_path_idx_ < path_array_msgs_.paths.size()) {
     auto path_ptr = std::make_shared<Path2d>(RosPathToPath2d(path_array_msgs_.paths.at(current_path_idx_)));
-    auto driving_direction = MsgToDirection(path_array_msgs_.driving_direction.at(current_path_idx_));
+    auto driving_direction = DrivingDirectionMsgToDirection(path_array_msgs_.driving_direction.at(current_path_idx_));
     current_path_ptr_ = std::make_shared<DirectedPath2d>(path_ptr, driving_direction);
     lon_controller_ptr_->Reset(current_path_ptr_);
     lat_controller_ptr_->Reset(current_path_ptr_);
@@ -199,7 +200,6 @@ void PathTracking::PathTrackingLoop() {
   while (ros::ok()){
     path_tracking_timer_->TimerStart();
     auto node_state = GetNodeState();
-
     switch (node_state) {
       case NodeState::FAILURE:
         StopVehicle();
@@ -219,6 +219,7 @@ void PathTracking::PathTrackingLoop() {
         }else{
           double throttle = 0.0;
           double steer = 0.0;
+          auto target_speed = 15.0;
           auto lon_status = lon_controller_ptr_->RunStep(vehicle_state,
                                                          target_speed,
                                                          1.0 / controller_freq,
@@ -242,7 +243,7 @@ void PathTracking::PathTrackingLoop() {
   StopVehicle();
 }
 
-bool PathTracking::IsGoalReached(const Pose2d &vehicle_pose) {
+bool PathTracking::IsGoalReached(const Pose2d &vehicle_pose) const {
   auto dist = std::hypot(current_goal_.pose.position.x - vehicle_pose.x,
                          current_goal_.pose.position.y - vehicle_pose.y);
   if(dist <= goal_radius){
@@ -272,12 +273,5 @@ bool PathTracking::StopVehicle() {
   return true;
 }
 
-DrivingDirection PathTracking::MsgToDirection(const int8_t &dire_msg) {
-  if(dire_msg == carla1s_msgs::PathArray::FORWARD) {
-    return DrivingDirection::FORWARD;
-  } else{
-    return DrivingDirection::BACKWARDS;
-  }
-}
 
 

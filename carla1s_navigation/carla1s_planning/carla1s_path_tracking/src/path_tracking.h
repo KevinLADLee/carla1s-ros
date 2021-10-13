@@ -48,7 +48,12 @@ class PathTracking {
 
   void SetNodeState(const NodeState & node_state);
 
+  const double &GetTargetSpeed();
+
+  void SetTargetSpeed(const double &target_speed);
+
  private:
+  bool UpdateParam();
 
   void InitMarkers(const geometry_msgs::PoseStamped &goal_pose);
 
@@ -56,11 +61,7 @@ class PathTracking {
 
   void StartPathTracking();
 
-  void StopPathTracking();
-
   void PathTrackingLoop();
-
-  bool UpdateParam();
 
   int UpdatePath(const carla1s_msgs::PathArray &path_array_msg);
 
@@ -72,9 +73,7 @@ class PathTracking {
 
   void PublishVehicleCmd(const double &throttle, const double &steer);
 
-  bool IsGoalReached(const Pose2d &vehicle_pose);
-
-  DrivingDirection MsgToDirection(const int8_t &dire_msg);
+  bool IsGoalReached(const Pose2d &vehicle_pose) const;
 
  private:
 
@@ -84,7 +83,6 @@ class PathTracking {
   int controller_freq = 20;
   float goal_radius = 0.2;
   float vehicle_wheelbase = 2.0;
-  double target_speed = 15.0; // km/h
   double max_steer_angle = 1.0;
 
   ros::NodeHandle nh_;
@@ -101,9 +99,6 @@ class PathTracking {
 
   std::mutex odom_mutex_;
   VehicleState vehicle_state_;
-  Pose2d vehicle_pose_;
-  double current_target_speed_ = 0.0;
-  double vehicle_speed_ = 0;
 
   NodeState node_state_ = NodeState::IDLE;
   std::mutex path_mutex_, node_state_mutex_;
@@ -113,9 +108,12 @@ class PathTracking {
   std::unique_ptr<LonControllerT> lon_controller_ptr_;
 
   carla1s_msgs::PathArray path_array_msgs_;
-  int current_path_idx_;
+  int current_path_idx_ = 0;
   geometry_msgs::PoseStamped current_goal_;
   std::shared_ptr<DirectedPath2d> current_path_ptr_;
+
+  std::mutex target_speed_mutex_;
+  double target_speed_ = 15.0; // km/h
 };
 
 #endif //CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_PATH_TRACKING_H_

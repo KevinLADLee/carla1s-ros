@@ -2,7 +2,7 @@ import numpy as np
 from carla1s_route_planner.reeds_shepp_ros.reeds_shepp import reeds_shepp
 from transforms3d.euler import quat2euler, euler2quat
 from geometry_msgs.msg import Pose
-from carla1s_msgs.msg import Path as PathArray
+from carla1s_msgs.msg import PathArray
 from nav_msgs.msg import Path as npath
 from geometry_msgs.msg import PoseStamped
 

@@ -8,7 +8,7 @@ from rospy import ROSException
 import actionlib
 
 from carla_msgs.msg import CarlaWorldInfo, CarlaEgoVehicleInfo
-from carla1s_msgs.msg import Path as PathArray
+from carla1s_msgs.msg import PathArray
 from carla1s_msgs.msg import PathPlannerAction, PathPlannerResult, PathPlannerFeedback
 from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import Path

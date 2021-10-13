@@ -9,7 +9,7 @@ from carla1s_parking_planner.car_parking.find_best_parking_place import GetParki
 
 
 from nav_msgs.msg import Path, Odometry
-from carla1s_msgs.msg import Path as PathArray
+from carla1s_msgs.msg import PathArray
 from carla1s_parking_planner.car_parking.env import Env
 from carla1s_parking_planner.car_parking.parking_planning import Planning
 

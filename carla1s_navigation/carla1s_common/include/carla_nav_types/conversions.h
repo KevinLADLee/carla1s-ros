@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
 #include <tf2/utils.h>
+#include <carla1s_msgs/PathArray.h>
 
 #include "common_types.h"
 
@@ -33,6 +34,14 @@ static Pose2d RosPoseStampedToPose2d(const geometry_msgs::PoseStamped &pose) {
   pose2d.y = pose.pose.position.y;
   pose2d.yaw = tf2::getYaw(pose.pose.orientation);
   return pose2d;
+}
+
+static DrivingDirection DrivingDirectionMsgToDirection(const int8_t &dire_msg) {
+  if(dire_msg == carla1s_msgs::PathArray::FORWARD) {
+    return DrivingDirection::FORWARD;
+  } else{
+    return DrivingDirection::BACKWARDS;
+  }
 }
 
 #endif // CARLA1S_ROS_CARLA_NAVIGATION_CARLA_NAV_COMMON_INCLUDE_TYPES_CONVERSIONS_H_
