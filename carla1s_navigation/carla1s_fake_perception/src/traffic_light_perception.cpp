@@ -119,9 +119,11 @@ tf::Transform TrafficLightPerception::PoseMsgToTfTransform(const geometry_msgs::
 void TrafficLightPerception::CreateMarker(const TrafficLight& tl){
   visualization_msgs::Marker marker;
   marker.header.frame_id = "map";
+  marker.ns = role_name_+"tl"+"_box";
   marker.type = visualization_msgs::Marker::CUBE;
   marker.id = tl.id;
   marker.color = color_map_.find(TrafficLight::RED)->second;
+  marker.color.a = 0.2;
 
   poseTFToMsg(tl.box.box_trans, marker.pose);
 
@@ -133,17 +135,30 @@ void TrafficLightPerception::CreateMarker(const TrafficLight& tl){
   visualization_msgs::Marker text_marker;
   text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
   text_marker.header.frame_id = "map";
-  text_marker.id = tl.id * 10;
+  text_marker.ns = role_name_+"tl"+"_text";
+  text_marker.id = tl.id;
   text_marker.color.r = 1;
   text_marker.color.g = 1;
   text_marker.color.b = 1;
-  text_marker.color.a = 1;
+  text_marker.color.a = 0.8;
   poseTFToMsg(tl.transform, text_marker.pose);
+  text_marker.pose.position.z += 2.0;
   std::stringstream ss;
-  ss << "ID " << tl.id;
+  ss << "TL_" << tl.id;
   text_marker.text = ss.str();
-  text_marker.scale.z = tl.box.size.z;
+  text_marker.scale.z = tl.box.size.z * 0.5;
   tl_viz_marker_vec_msgs_.markers.push_back(text_marker);
+
+  auto tl_marker = text_marker;
+  tl_marker.type = visualization_msgs::Marker::CYLINDER;
+  tl_marker.ns = role_name_+"tl";
+  tl_marker.scale.x = 0.5;
+  tl_marker.scale.y = 0.5;
+  tl_marker.scale.z = 1.5;
+  poseTFToMsg(tl.transform, tl_marker.pose);
+  tl_marker.pose.position.z += tl_marker.scale.z * 0.5;
+  tl_viz_marker_vec_msgs_.markers.push_back(tl_marker);
+
 }
 
 tf::Transform TrafficLightPerception::BoxinTrafficToMap(const geometry_msgs::Vector3 &box_pos_in_traffic,
@@ -163,11 +178,15 @@ void TrafficLightPerception::UpdateMarker(unsigned int id, unsigned char status)
     return;
   }
 
-  auto tl_marker_idx = FindElementById<visualization_msgs::Marker>(tl_viz_marker_vec_msgs_.markers, id);
+  auto tl_box_marker_idx = FindElementByIdWithNs<visualization_msgs::Marker>(tl_viz_marker_vec_msgs_.markers, id, role_name_+"tl"+"_box");
+  auto tl_marker_idx = FindElementByIdWithNs<visualization_msgs::Marker>(tl_viz_marker_vec_msgs_.markers, id, role_name_+"tl");
   if(tl_marker_idx > 0){
     tl_viz_marker_vec_msgs_.markers.at(tl_marker_idx).color = color_map_.find(status)->second;
   }
-
+  if(tl_box_marker_idx > 0) {
+    tl_viz_marker_vec_msgs_.markers.at(tl_box_marker_idx).color = color_map_.find(status)->second;
+    tl_viz_marker_vec_msgs_.markers.at(tl_box_marker_idx).color.a = 0.2;
+  }
 }
 
 
