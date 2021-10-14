@@ -45,6 +45,8 @@ class RosActionNode : public BT::ActionNodeBase
       BT::ActionNodeBase(name, conf), action_client_name_(action_client_name)
   {
     nh_ = config().blackboard->template get<ros::NodeHandlePtr>("node_handler");
+    auto role_name = config().blackboard->template get<std::string>("role_name");
+    action_client_name_ = "/carla1s/"+role_name+"/"+action_client_name_;
     action_client_ = std::make_shared<ActionClientType>( *nh_, action_client_name_, true );
 
     ROS_INFO("BT ROS Action Node: Waiting action server %s ...", action_client_name_.c_str());

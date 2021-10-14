@@ -37,7 +37,8 @@ class CarlaDecision{
       "bt_action_vertical_parking",
       "bt_condition_goal_updated",
       "bt_condition_check_traffic_light",
-      "bt_control_pipeline_sequence"
+      "bt_control_pipeline_sequence",
+      "bt_decorator_rate_controller"
   };
 
 };

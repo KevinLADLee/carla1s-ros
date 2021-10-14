@@ -5,10 +5,46 @@ PidLatController::PidLatController() {
   pid_ptr_ = std::make_unique<PIDImpl<double>>(pid_param_fwd_);
 }
 
-double PidLatController::ComputeLatErrors(const Pose2dPtr &vehicle_pose_ptr,
-                                          const Path2dPtr &waypoints_ptr) {
+void PidLatController::Reset(const DirectedPath2dPtr &directed_path_ptr) {
+  VehicleController::Reset(directed_path_ptr);
+  if(GetDrivingDirection() == DrivingDirection::BACKWARDS){
+    pid_ptr_->ResetParam(pid_param_bck_);
+  }else{
+    pid_ptr_->ResetParam(pid_param_fwd_);
+  }
+}
 
-//  if(GetDrivingDirection() == DrivingDirection::FORWARD ) {
+NodeState PidLatController::RunStep(const VehicleState &vehicle_state,
+                                    const double &target_speed,
+                                    const double &dt,
+                                    double &steer) {
+  UpdateVehicleState(vehicle_state);
+
+  steer = 0.0;
+  double lat_error = 0.0;
+  auto status = ComputeLatErrors(lat_error);
+  if(status == FAILURE){
+    return FAILURE;
+  }
+  steer = pid_ptr_->RunStep(lat_error, dt);
+  return SUCCESS;
+}
+
+NodeState PidLatController::ComputeLatErrors(double &error) {
+  error = 0;
+  auto lookahead_dist = 0.05;
+  int waypoint_idx = 0;
+  auto status = GetPathHandlerPtr()->QueryNearestWaypointIndexWithLookaheadDist(lookahead_dist, waypoint_idx);
+  if(status == FAILURE){
+    return FAILURE;
+  }
+
+  // Use Angle Diff
+  SetCurrentWaypointIdx(waypoint_idx);
+  error = math::NormalizeAngle(GetCurrentWaypoint().yaw - GetVehiclePose().yaw);
+  return SUCCESS;
+
+  // Use cos angle
 //    Eigen::Vector2d V, P, next_vec;
 //    V << vehicle_pose_ptr->x, vehicle_pose_ptr->y;
 //
@@ -30,48 +66,8 @@ double PidLatController::ComputeLatErrors(const Pose2dPtr &vehicle_pose_ptr,
 //    if (cross_product > 0.0) {
 //      dot_product *= -1.0;
 //    }
-//    return dot_product;
-//  }
+//    error = dot_product;
+//    return SUCCESS;
 
-    auto vehicle_yaw = vehicle_pose_ptr->yaw;
-    auto wp_index = QueryNearestWaypointIndex(vehicle_pose_ptr, waypoints_ptr);
-    current_waypoint_index_ = wp_index;
-    auto wp_yaw = waypoints_ptr->at(wp_index).yaw;
-    auto error = math::NormalizeAngle(wp_yaw - vehicle_yaw);
-//    auto error = wp_yaw - vehicle_yaw;
-
-    if(GetDrivingDirection() == DrivingDirection::FORWARD){
-      error *= -1.0;
-    }
-
-    return error;
 }
 
-double PidLatController::RunStep(const Pose2dPtr &vehicle_pose_ptr,
-                                 const Path2dPtr &waypoints_ptr,
-                                 const double &vehicle_speed,
-                                 const double &dt) {
-  if(waypoints_ptr_ != waypoints_ptr){
-    waypoints_ptr_ = waypoints_ptr;
-    current_waypoint_index_ = 0;
-  }
-
-  double lat_error = ComputeLatErrors(vehicle_pose_ptr, waypoints_ptr);
-  SetLatestError(lat_error);
-
-  auto steer = pid_ptr_->RunStep(lat_error, dt);
-  std::cout << "steer_error: " << lat_error << std::endl;
-  return steer;
-}
-
-int PidLatController::SetDrivingDirection(const DrivingDirection &driving_direction) {
-  if(driving_direction != driving_direction_){
-    if(driving_direction == DrivingDirection::FORWARD){
-      pid_ptr_ = std::make_unique<PIDImpl<double>>(pid_param_fwd_);
-    }else{
-      pid_ptr_ = std::make_unique<PIDImpl<double>>(pid_param_bck_);
-    }
-  }
-  VehicleController::SetDrivingDirection(driving_direction);
-  return 0;
-}
