@@ -21,9 +21,7 @@ struct Pose2d{
 
   Pose2d(double x, double y, double yaw) : x(x), y(y), yaw(yaw) {};
 
-  Pose2d(double x, double y, double z, double yaw) : x(x), y(y), yaw(yaw) {};
-
-  Eigen::Matrix3d ToTransformMatrix() const{
+  inline Eigen::Matrix3d ToTransformMatrix(){
     Eigen::Matrix3d trans_matrix;
     trans_matrix << cos(yaw), -sin(yaw), x,
                     sin(yaw), cos(yaw), y,
@@ -31,16 +29,23 @@ struct Pose2d{
     return trans_matrix;
   };
 
-  Eigen::Vector3d ToPointVec() const{
+  inline Eigen::Matrix3d ToTransformMatrixInv() {
+    Eigen::Matrix3d trans_matrix;
+    trans_matrix << cos(yaw), -sin(yaw), x,
+        sin(yaw), cos(yaw), y,
+        0,0,1;
+    auto trans_inv = trans_matrix.inverse();
+    return trans_matrix.inverse();
+  };
+
+  inline Eigen::Vector3d ToPointVec() const{
     Eigen::Vector3d vec;
     vec << x, y, 1;
     return vec;
   };
-
   double x = 0.0;
   double y = 0.0;
   double yaw = 0.0;
-
 };
 
 using Pose2dPtr = Pose2d::Ptr;

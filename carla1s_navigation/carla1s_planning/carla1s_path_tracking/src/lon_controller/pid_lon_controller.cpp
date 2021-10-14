@@ -33,13 +33,15 @@ NodeState PidLonController::RunStep(const VehicleState &vehicle_state,
   double station_error = 0.0;
   auto status = ComputeLonErrors(station_error);
   if(status == FAILURE){
+    ROS_ERROR("PathTracking: ComputeLonError Failed!");
     throttle = 0.0;
     return FAILURE;
   }
 
-  if(target_speed > 0) {
+  if(target_speed >= 0) {
     station_controller_->SetMax(target_speed);
   }
+
   auto speed_offset = station_controller_->RunStep(station_error, dt);
   throttle = speed_controller_->RunStep(speed_offset, GetVehicleState().vehicle_speed, dt);
   return SUCCESS;
@@ -52,6 +54,7 @@ NodeState PidLonController::ComputeLonErrors(double &error){
   int idx = 0;
   auto status = GetPathHandlerPtr()->QueryNearestWaypointIndexWithLookaheadDist(lookahead_dist, idx);
   if(status == NodeState::FAILURE){
+    ROS_ERROR("PathTracking: Query Target Waypoint Failed!");
     return status;
   }
   SetCurrentWaypointIdx(idx);

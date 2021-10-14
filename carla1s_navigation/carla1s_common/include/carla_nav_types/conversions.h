@@ -44,4 +44,5 @@ static DrivingDirection DrivingDirectionMsgToDirection(const int8_t &dire_msg) {
   }
 }
 
+
 #endif // CARLA1S_ROS_CARLA_NAVIGATION_CARLA_NAV_COMMON_INCLUDE_TYPES_CONVERSIONS_H_

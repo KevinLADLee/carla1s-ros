@@ -32,8 +32,7 @@ void TrackingPath::on_tick() {
   if(!target_speed_port){
     throw BT::RuntimeError("missing required input [target_speed]: ", target_speed_port.error());
   }else{
-    goal_.target_speed = 15.0;
-        //static_cast<float>(target_speed_port.value());
+    goal_.target_speed = target_speed_port.value();
   }
 
 }

@@ -138,6 +138,7 @@ void PathTracking::ActionExecuteCallback(const ActionGoalT::ConstPtr &action_goa
   //TODO: Determine if path updated
   if(action_goal_msg->path_updated){
     UpdatePath(action_goal_msg->path_array);
+    SetTargetSpeed(action_goal_msg->target_speed);
     SetNodeState(NodeState::IDLE);
     result.error_code = NodeState::IDLE;
     as_->setSucceeded(result, "update path success");
@@ -202,33 +203,44 @@ void PathTracking::PathTrackingLoop() {
     auto node_state = GetNodeState();
     switch (node_state) {
       case NodeState::FAILURE:
+//        ROS_WARN("PathTracking: Tracking Failure! Need new path...");
         StopVehicle();
         break;
       case NodeState::IDLE:
         if(UpdateCurrentPath()){
+          ROS_WARN("PathTracking: Switch to next path...");
           SetNodeState(NodeState::RUNNING);
         }else{
+//          ROS_WARN("PathTracking: Tracking IDLE! Wait path...");
           StopVehicle();
         }
         break;
       case NodeState::RUNNING:
         auto vehicle_state = GetVehicleState();
         if(IsGoalReached(vehicle_state.vehicle_pose)){
+          ROS_INFO("PathTracking: Reached goal! Stop Vehicle...");
           StopVehicle();
           SetNodeState(NodeState::IDLE);
         }else{
           double throttle = 0.0;
           double steer = 0.0;
-          auto target_speed = 15.0;
-          auto lon_status = lon_controller_ptr_->RunStep(vehicle_state,
-                                                         target_speed,
-                                                         1.0 / controller_freq,
-                                                         throttle);
-          auto lat_status = lat_controller_ptr_->RunStep(vehicle_state,
-                                                         target_speed,
-                                                         1.0 / controller_freq,
-                                                         steer);
+          auto target_speed = GetTargetSpeed();
+          ROS_INFO("PathTracking: Tracking RUNNING... Target Speed: %f km/h", target_speed);
+          auto lon_status = NodeState::RUNNING;
+          auto lat_status = NodeState::RUNNING;
+          {
+            LockGuardMutex lock_guard(path_mutex_);
+            lon_status = lon_controller_ptr_->RunStep(vehicle_state,
+                                                           target_speed,
+                                                           1.0 / controller_freq,
+                                                           throttle);
+            lat_status = lat_controller_ptr_->RunStep(vehicle_state,
+                                                           target_speed,
+                                                           1.0 / controller_freq,
+                                                           steer);
+          }
           if(lon_status == NodeState::FAILURE || lat_status == NodeState::FAILURE){
+            ROS_WARN("PathTracking: Tracking FAILURE! No valid waypoint...");
             StopVehicle();
             SetNodeState(NodeState::FAILURE);
           }else{

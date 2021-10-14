@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(carla1s_path_tracking)
 
-#set(CMAKE_BUILD_TYPE RelWithDebug)
+#set(CMAKE_BUILD_TYPE Release)
 add_compile_options(-std=c++14)
 ## Find catkin macros and libraries
 

@@ -115,7 +115,7 @@ class Carla1sRoutePlanner:
                                 self._result.path_array.paths[0].poses.append(pose)
                                 last_wp = pose
 
-
+                
                     waypoint_num = len(self._result.path_array.paths[0].poses)
                     result_info = "GlobalPlanner: Got path {} waypoints.".format(waypoint_num)
                     rospy.loginfo(result_info)

@@ -31,7 +31,7 @@ NodeState PathHandler::QueryNearestWaypointIndexWithLookaheadDist(const double &
   auto lookahead_dist_square = lookahead_dist*lookahead_dist;
 
   auto vehicle_pose = GetVehiclePose();
-  auto vehicle_trans_inv = vehicle_pose.ToTransformMatrix().inverse();
+  auto vehicle_trans_inv = vehicle_pose.ToTransformMatrixInv();
 
   auto nearest_waypoint_inx = QueryNearestWaypointIndex();
   auto waypoints_ptr = directed_path_ptr_->path_ptr;
@@ -40,6 +40,9 @@ NodeState PathHandler::QueryNearestWaypointIndexWithLookaheadDist(const double &
     auto wp_vec = wp.ToPointVec();
     auto wp_in_vehicle_frame = vehicle_trans_inv * wp_vec;
     auto dist = PointDistanceSquare(vehicle_pose, wp);
+
+//    ROS_WARN("Debug: dist: %f wp_x: %f", dist, wp_in_vehicle_frame.x());
+//    ROS_WARN("Debug: wp_vec: %f, %f", wp_vec[0], wp_vec[1]);
     if (GetDrivingDirection() == DrivingDirection::FORWARD
         && wp_in_vehicle_frame.x() > 0
         && dist > (lookahead_dist_square)){
@@ -55,6 +58,8 @@ NodeState PathHandler::QueryNearestWaypointIndexWithLookaheadDist(const double &
       continue;
     }
   }
+//  ROS_WARN("Debug: vehicle_pos: %f, %f", vehicle_pose.x, vehicle_pose.y);
+//  ROS_WARN("Debug: lookahead_dist: %f, %d", lookahead_dist_square, nearest_waypoint_inx);
   return FAILURE;
 }
 

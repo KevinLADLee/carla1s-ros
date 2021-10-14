@@ -2,18 +2,15 @@
 <root main_tree_to_execute="BehaviorTree">
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
-        <Fallback>
-            <ReactiveFallback>
-                <Condition ID="CheckTrafficLight" target_speed="{target_speed}"/>
-                <ReactiveFallback>
-                    <Condition ID="GoalUpdated"/>
-                    <Control ID="PipelineSequence">
-                        <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint" target_speed="{target_speed}"/>
-                        <Action ID="TrackingPath" path="{path}" target_speed="{target_speed}"/>
-                    </Control>
-                </ReactiveFallback>
-            </ReactiveFallback>
-        </Fallback>
+        <ReactiveFallback>
+            <Condition ID="GoalUpdated"/>
+            <Sequence>
+                <Decorator ID="RateController" hz="0.1">
+                    <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
+                </Decorator>
+                <Action ID="TrackingPath" path="{path}" target_speed="15.0"/>
+            </Sequence>
+        </ReactiveFallback>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
@@ -21,13 +18,15 @@
             <output_port name="target_speed" type="double"/>
         </Condition>
         <Action ID="ComputePathToGoal">
-            <input_port name="goal" type="geometry_msgs::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;"/>
-            <output_port name="path" type="carla1s_msgs::PathArray_&lt;std::allocator&lt;void&gt; &gt;"/>
-            <input_port name="path_planner_id" type="std::string"/>
-            <output_port name="target_speed" type="double"/>
+            <input_port name="goal"/>
+            <output_port name="path"/>
+            <input_port name="path_planner_id"/>
         </Action>
         <Condition ID="GoalUpdated"/>
         <Control ID="PipelineSequence"/>
+        <Decorator ID="RateController">
+            <input_port default="1.0" name="hz">Rate</input_port>
+        </Decorator>
         <Action ID="StopAndWait"/>
         <Action ID="TrackingPath">
             <input_port name="path" type="carla1s_msgs::PathArray_&lt;std::allocator&lt;void&gt; &gt;"/>
