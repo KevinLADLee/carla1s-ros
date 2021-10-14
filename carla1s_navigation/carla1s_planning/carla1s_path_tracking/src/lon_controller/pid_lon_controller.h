@@ -1,36 +1,40 @@
 #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_LON_CONTROLLER__PID_H_
 #define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_LON_CONTROLLER__PID_H_
 
-#include "lon_controller_base.h"
+#include "common/vehicle_controller_base.h"
 #include "common/pid_impl.h"
 
 using namespace carla1s;
 
-class PidLonController : public LonController{
+class PidLonController : public VehicleController{
  public:
   PidLonController();
 
-  double RunStep(const Pose2dPtr &vehicle_pose_ptr,
-                 const Path2dPtr &waypoints_ptr,
-                 const double &vehicle_speed,
-                 const double &dt) override;
+  void Reset(const DirectedPath2dPtr &directed_path_ptr) override;
 
-  double RunStep(const double &target_speed,
-                 const double &vehicle_speed,
-                 const double &dt) override;
-
-  int SetDrivingDirection(const DrivingDirection &driving_direction) override;
-
-  void SetTargetSpeed(double target_speed) override;
+  NodeState RunStep(const VehicleState &vehicle_state,
+                    const double &target_speed,
+                    const double &dt,
+                    double &throttle) override;
 
   double GetSpeedError();
 
   double GetStationError();
 
+ private:
+  double GetLookaheadDist() const;
+
+  NodeState ComputeLonErrors(double &error);
 
  private:
   std::unique_ptr<PIDImpl<double>> speed_controller_;
   std::unique_ptr<PIDImpl<double>> station_controller_;
+
+  double max_throttle = 1.0;
+  double target_speed_ = 0.0;
+
+  double max_fwd_lookahead_dist = 2.5;
+  double max_bck_lookahead_dist = 1.0;
 
   // {Kp, Ki, Kd, max_speed, min_speed}
   const std::vector<double> station_pid_param_fwd_ = {8.5, 0.0, 0.001, 15.0, 0.0};

@@ -8,21 +8,23 @@ void TrackingPath::on_tick() {
   ROS_INFO("BT Node: TrackingPath");
 
   // Get path from behavior tree's ports
-  auto path_port = getInput<carla1s_msgs::Path>("path");
+  auto path_port = getInput<carla1s_msgs::PathArray>("path");
   if(!path_port){
     throw BT::RuntimeError("missing required input [path]: ", path_port.error());
   }else{
-    goal_.path = path_port.value();
+    goal_.path_array = path_port.value();
+    // TODO: Read from blackboard
+    goal_.path_updated = true;
   }
-  if(goal_.path.paths.empty()) {
+  if(goal_.path_array.paths.empty()) {
     on_failed_request(FailureCause::NOT_VALID_PATH);
     ROS_WARN("BT TrackingPath Node: No valid path");
   }else{
-    if(goal_.path.paths.at(0).poses.empty()){
+    if(goal_.path_array.paths.at(0).poses.empty()){
       on_failed_request(FailureCause::NOT_VALID_PATH);
       ROS_WARN("BT TrackingPath Node: No valid path");
     }
-    ROS_INFO("BT TrackingPath Node: Received %ld paths", goal_.path.paths.size());
+    ROS_INFO("BT TrackingPath Node: Received %ld paths", goal_.path_array.paths.size());
   }
 
   // Get target speed from behavior tree's ports
@@ -30,7 +32,7 @@ void TrackingPath::on_tick() {
   if(!target_speed_port){
     throw BT::RuntimeError("missing required input [target_speed]: ", target_speed_port.error());
   }else{
-    goal_.target_speed = static_cast<float>(target_speed_port.value());
+    goal_.target_speed = target_speed_port.value();
   }
 
 }
@@ -38,7 +40,6 @@ void TrackingPath::on_tick() {
 BT::NodeStatus TrackingPath::on_result(const ResultType &res) {
   switch (res.error_code) {
     case NodeState::IDLE:
-      return BT::NodeStatus::IDLE;
     case NodeState::SUCCESS:
       config().blackboard->set<bool>("goal_received", false);
       return BT::NodeStatus::SUCCESS;

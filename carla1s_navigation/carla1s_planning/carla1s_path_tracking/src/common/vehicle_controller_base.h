@@ -10,112 +10,61 @@
 #include <carla_nav_math/math_utils.h>
 
 #include <Eigen/Eigen>
+#include "path_handler.h"
 
 class VehicleController{
 public:
-    virtual double RunStep(const Pose2dPtr &vehicle_pose_ptr,
-                           const Path2dPtr &waypoints_ptr,
-                           const double &vehicle_speed,
-                           const double &dt) = 0;
+  VehicleController() {
+    path_handler_ptr_ = std::make_shared<PathHandler>();
+  }
 
-    virtual int QueryTargetWaypointIndex(const Pose2dPtr &vehicle_pose_ptr,
-                                         const Path2dPtr &waypoints_ptr) = 0;
+  virtual void Reset(const DirectedPath2dPtr &directed_path_ptr) {
+    directed_path_ptr_ = directed_path_ptr;
+    path_handler_ptr_->SetDirectedPathPtr(directed_path_ptr);
+  };
 
-    virtual int SetDrivingDirection(const DrivingDirection &driving_direction){
-        driving_direction_ = driving_direction;
-        return 0;
-    };
+  virtual NodeState RunStep(const VehicleState &vehicle_state,
+                    const double &target_speed,
+                    const double &dt,
+                    double &control_output) = 0;
 
-    virtual DrivingDirection GetDrivingDirection(){
-        return driving_direction_;
-    };
+  Pose2d GetCurrentWaypoint() const {
+    return directed_path_ptr_->path_ptr->at(current_waypoint_idx_);
+  }
 
-protected:
-    static double PointDistanceSquare(const Pose2d &pose_1, const Pose2d &pose_2){
-        const double dx = pose_1.x - pose_2.x;
-        const double dy = pose_1.y - pose_2.y;
-        return (dx * dx + dy * dy);
-    };
+ protected:
+  virtual NodeState UpdateVehicleState(const VehicleState &vehicle_state){
+    vehicle_state_ = vehicle_state;
+    path_handler_ptr_->Update(vehicle_state);
+    return SUCCESS;
+  };
 
-    virtual int QueryNearestWaypointIndex(const Pose2dPtr &vehicle_pose,
-                                          const Path2dPtr &path){
-        double min_dist = std::numeric_limits<double>::max();
-        int index = path->size() - 1;
-        for(int i = 0; i < path->size(); i++){
-            auto dist = PointDistanceSquare(*vehicle_pose, path->at(i));
-            if(dist < min_dist){
-                min_dist = dist;
-                index = i;
-            }
-        }
-        return index;
-    };
+  virtual const DrivingDirection &GetDrivingDirection() const{
+    return directed_path_ptr_->driving_direction;
+  };
 
-    virtual int QueryTargetWaypointIndexWithLookaheadDist(const Pose2dPtr &vehicle_pose_ptr,
-                                                          const Path2dPtr &waypoints_ptr,
-                                                          const double &lookahead_dist){
-        using namespace std;
+ protected:
+  const VehicleState &GetVehicleState() const {
+    return vehicle_state_;
+  }
 
-        auto lookahead_dist_square = lookahead_dist*lookahead_dist;
+  const Pose2d &GetVehiclePose() const {
+    return vehicle_state_.vehicle_pose;
+  }
 
-        auto vehicle_trans_inv = vehicle_pose_ptr->ToTransformMatrix().inverse();
+  const std::shared_ptr<PathHandler> &GetPathHandlerPtr() const {
+    return path_handler_ptr_;
+  }
 
-        auto nearest_waypoint_inx = QueryNearestWaypointIndex(vehicle_pose_ptr, waypoints_ptr);
-        for(int i = nearest_waypoint_inx; i < waypoints_ptr->size(); i++) {
-            auto wp = waypoints_ptr->at(i);
-            auto wp_vec = wp.ToPointVec();
-            auto wp_in_vehicle_frame = vehicle_trans_inv * wp_vec;
-            auto dist = PointDistanceSquare(*vehicle_pose_ptr, wp);
-            if (driving_direction_ == DrivingDirection::FORWARD
-                && wp_in_vehicle_frame.x() > 0
-                && dist > (lookahead_dist_square)){
-                return i;
-            }
-            else if (driving_direction_ == DrivingDirection::BACKWARDS
-                     && wp_in_vehicle_frame.x() < 0
-                     && dist > (lookahead_dist_square)) {
-                return i;
-            } else {
-                continue;
-            }
-        }
-        return waypoints_ptr->size()-1;
-    };
+  void SetCurrentWaypointIdx(int current_waypoint_idx) {
+    current_waypoint_idx_ = current_waypoint_idx;
+  }
 
-public:
-    double GetLatestError() const {
-        return latest_error_;
-    }
-
-    void SetLatestError(double latest_error) {
-        latest_error_ = latest_error;
-    }
-
-    Path2dPtr GetWaypoints() const{
-        return waypoints_ptr_;
-    };
-
-    void SetWaypoints(const Path2dPtr &waypoints_ptr){
-        waypoints_ptr_ = waypoints_ptr;
-    };
-
-    Pose2dPtr GetCurrentTrackPoint(){
-        return std::make_shared<Pose2d>(waypoints_ptr_->at(current_waypoint_index_));
-    };
-
-    int GetCurrentWaypointIndex() const {
-        return current_waypoint_index_;
-    }
-
-    void SetCurrentWaypointIndex(int index){
-        current_waypoint_index_ = index;
-    }
-
-protected:
-    Path2dPtr waypoints_ptr_;
-    int current_waypoint_index_;
-    DrivingDirection driving_direction_ = DrivingDirection::FORWARD;
-    double latest_error_ = 0;
+ protected:
+  std::shared_ptr<PathHandler> path_handler_ptr_;
+  VehicleState vehicle_state_;
+  DirectedPath2dPtr directed_path_ptr_;
+  int current_waypoint_idx_ = 0;
 };
 
 

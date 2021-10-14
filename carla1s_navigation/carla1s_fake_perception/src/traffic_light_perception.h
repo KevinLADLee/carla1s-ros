@@ -32,6 +32,20 @@ int FindElementById(std::vector<T> t_vec, unsigned int id){
   }
 }
 
+template<typename T>
+int FindElementByIdWithNs(std::vector<T> t_vec, unsigned int id, const std::string &ns){
+  auto it = std::find_if(t_vec.begin(),
+                         t_vec.end(),
+                         [&](const T & p) {
+                           return (p.ns == ns) && (p.id == id);
+                         });
+  if(it != t_vec.end()){
+    return it - t_vec.begin();
+  } else{
+    return -1;
+  }
+}
+
 struct Box{
   Box(const tf::Transform &box_trans_in_map,
       const geometry_msgs::Vector3 &size) : box_trans(box_trans_in_map),
