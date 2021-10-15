@@ -73,7 +73,7 @@ class PathTracking {
 
   void PublishVehicleCmd(const double &throttle, const double &steer);
 
-  bool IsGoalReached(const Pose2d &vehicle_pose) const;
+  bool IsGoalReached() ;
 
  private:
 
@@ -81,7 +81,7 @@ class PathTracking {
   bool use_vehicle_info = true;
   std::string role_name = "ego_vehicle";
   int controller_freq = 20;
-  float goal_radius = 0.2;
+  float goal_radius = 0.5;
   float vehicle_wheelbase = 2.0;
   double max_steer_angle = 1.0;
 

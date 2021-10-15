@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /View Camera1/Visibility1
         - /TF1/Frames1
-        - /PathTrackingMarker1
       Splitter Ratio: 0.5
     Tree Height: 418
   - Class: rviz/Selection
@@ -44,7 +43,7 @@ Visualization Manager:
     - Class: rviz/Camera
       Enabled: false
       Image Rendering: background and overlay
-      Image Topic: /carla/ego_vehicle/rgb_front/image
+      Image Topic: /carla/ego_vehicle/rgb_view/image
       Name: View Camera
       Overlay Alpha: 0.5
       Queue Size: 2
@@ -125,6 +124,8 @@ Visualization Manager:
         All Enabled: false
         ego_vehicle:
           Value: true
+        ego_vehicle/collision:
+          Value: true
         ego_vehicle/depth_front:
           Value: true
         ego_vehicle/dvs_front:
@@ -133,6 +134,8 @@ Visualization Manager:
           Value: false
         ego_vehicle/imu:
           Value: false
+        ego_vehicle/lane_invasion:
+          Value: true
         ego_vehicle/lidar:
           Value: true
         ego_vehicle/radar_front:
@@ -157,6 +160,8 @@ Visualization Manager:
         map:
           ego_vehicle:
             {}
+          ego_vehicle/collision:
+            {}
           ego_vehicle/depth_front:
             {}
           ego_vehicle/dvs_front:
@@ -164,6 +169,8 @@ Visualization Manager:
           ego_vehicle/gnss:
             {}
           ego_vehicle/imu:
+            {}
+          ego_vehicle/lane_invasion:
             {}
           ego_vehicle/lidar:
             {}
@@ -224,19 +231,21 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /carla/markers
       Name: CarlaDebugMarkers
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /carla1s/ego_vehicle/traffic_light_markers
       Name: Traffic_Light
       Namespaces:
-        "": true
+        ego_vehicletl: true
+        ego_vehicletl_box: true
+        ego_vehicletl_text: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -272,7 +281,7 @@ Visualization Manager:
       Marker Topic: /carla1s/ego_vehicle/fake_perception/detected_object_marker
       Name: DetectedObject
       Namespaces:
-        {}
+        ego_vehicle/object_marker: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -335,7 +344,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 88.38253021240234
+      Distance: 44.398494720458984
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -343,17 +352,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -1.2663559913635254
-        Y: -4.171005725860596
-        Z: 1.669104676693678e-05
+        X: -4.134533882141113
+        Y: -0.6101536750793457
+        Z: 4.89134545205161e-05
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 0.5597972869873047
       Target Frame: ego_vehicle
-      Yaw: 3.138603448867798
+      Yaw: 3.1086111068725586
     Saved: ~
 Window Geometry:
   BehaviorTreePanel:

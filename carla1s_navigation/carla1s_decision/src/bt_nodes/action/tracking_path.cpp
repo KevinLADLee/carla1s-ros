@@ -5,16 +5,17 @@ TrackingPath::TrackingPath(const std::string &name,
                            const BT::NodeConfiguration &conf) : RosActionNode(name, action_client_name, conf) {}
 
 void TrackingPath::on_tick() {
-  ROS_INFO("BT Node: TrackingPath");
+//  ROS_INFO("BT Node: TrackingPath");
 
   // Get path from behavior tree's ports
   auto path_port = getInput<carla1s_msgs::PathArray>("path");
   if(!path_port){
-    throw BT::RuntimeError("missing required input [path]: ", path_port.error());
+//    ROS_WARN("BT TrackingPath Node: No valid path");
+    setStatus(BT::NodeStatus::FAILURE);
+    return;
   }else{
     goal_.path_array = path_port.value();
-    // TODO: Read from blackboard
-    goal_.path_updated = true;
+    goal_.path_updated = config().blackboard->get<bool>("path_updated");
   }
   if(goal_.path_array.paths.empty()) {
     on_failed_request(FailureCause::NOT_VALID_PATH);
@@ -24,7 +25,9 @@ void TrackingPath::on_tick() {
       on_failed_request(FailureCause::NOT_VALID_PATH);
       ROS_WARN("BT TrackingPath Node: No valid path");
     }
-    ROS_INFO("BT TrackingPath Node: Received %ld paths", goal_.path_array.paths.size());
+    if(goal_.path_updated) {
+      ROS_INFO("BT TrackingPath Node: Received %ld paths", goal_.path_array.paths.size());
+    }
   }
 
   // Get target speed from behavior tree's ports
@@ -42,11 +45,18 @@ BT::NodeStatus TrackingPath::on_result(const ResultType &res) {
     case NodeState::IDLE:
     case NodeState::SUCCESS:
       config().blackboard->set<bool>("goal_received", false);
+      config().blackboard->set<bool>("path_updated", false);
       return BT::NodeStatus::SUCCESS;
     case NodeState::FAILURE:
       return BT::NodeStatus::FAILURE;
   }
   return BT::NodeStatus::FAILURE;
+}
+
+BT::NodeStatus TrackingPath::on_failed_request(BT::RosActionNode<carla1s_msgs::PathTrackingAction>::FailureCause failure) {
+  ROS_WARN("Track path failed! Replan now");
+  config().blackboard->set<bool>("need_update_path", true);
+  return RosActionNode::on_failed_request(failure);
 }
 
 #include "behaviortree_cpp_v3/bt_factory.h"

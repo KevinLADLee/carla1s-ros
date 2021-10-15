@@ -1,4 +1,5 @@
 
+
 #include "object_detection.h"
 
 ObjectDetection::ObjectDetection() {
@@ -16,6 +17,7 @@ ObjectDetection::ObjectDetection() {
   msg_sync_ = std::make_shared<Synchronizer<OdomObjectsSyncPolicy>>(OdomObjectsSyncPolicy(10), *odom_sub_, *objects_sub_);
   msg_sync_->registerCallback(boost::bind(&ObjectDetection::OdomObjectsCallback, this, _1, _2));
 
+  speed_pub_ = nh_.advertise<std_msgs::Float64>(carla1s_topic_prefix+"/collision_avoid_speed",1);
   object_pub_ = nh_.advertise<derived_object_msgs::Object>(carla1s_topic_prefix+"/detected_object", 1);
   viz_pub_ = nh_.advertise<visualization_msgs::MarkerArray>(carla1s_topic_prefix+"/detected_object_marker", 1);
   InitMarker();
@@ -72,6 +74,8 @@ void ObjectDetection::OdomObjectsCallback(const nav_msgs::OdometryConstPtr &odom
   }
 
   if(min_index < 0){
+    speed_msg_.data = -1.0;
+    speed_pub_.publish(speed_msg_);
     return;
   }
   current_object_ = object_array_ptr->objects[min_index];
@@ -81,7 +85,29 @@ void ObjectDetection::OdomObjectsCallback(const nav_msgs::OdometryConstPtr &odom
            current_object_.pose.position.y,
            current_object_.pose.position.z,
            TwistToVehicleSpeed(current_object_.twist) * 3.6);
+
+
+  speed_msg_.data = SimpleCollisionAvoid(odom_ptr, current_object_);
+  speed_pub_.publish(speed_msg_);
   PublishMarker(current_object_);
+}
+
+double ObjectDetection::SimpleCollisionAvoid(const nav_msgs::OdometryConstPtr &odom_ptr,
+                                          const derived_object_msgs::Object &object) {
+  auto ego_pose = odom_ptr->pose.pose;
+  auto front_pose = object.pose;
+  auto dist = std::sqrt(RosPoseDistanceSquare(ego_pose, front_pose));
+
+  auto front_speed = TwistToVehicleSpeed(object.twist);
+
+  if(dist < safe_dist){
+    return front_speed;
+  }
+
+//  auto ego_speed = TwistToVehicleSpeed(odom_ptr->twist.twist);
+//  auto safe_speed = front_speed - ((safe_dist - dist) / dt );
+//  safe_speed = std::max(safe_speed / 3.6, 0.0);
+//  return safe_speed;
 }
 
 double ObjectDetection::RosPoseDistanceSquare(const geometry_msgs::Pose &pose1, const geometry_msgs::Pose &pose2) {

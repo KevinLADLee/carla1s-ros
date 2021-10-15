@@ -1,3 +1,4 @@
+#include <std_msgs/Float64.h>
 #include "blackboard_handler.h"
 
 namespace carla1s_decision{
@@ -9,6 +10,8 @@ BlackboardHandler::BlackboardHandler(BT::Blackboard::Ptr bb_ptr,
 
 
   bb_ptr_->set<bool>("goal_received", false);
+  bb_ptr_->set<bool>("need_update_path", false);
+  bb_ptr_->set<double>("collision_avoid_speed", -1.0);
 
   ros_sub_vec_.push_back(nh_ptr_->subscribe<nav_msgs::Odometry>("/carla/" + role_name_ + "/odometry",
                                                      10,
@@ -30,6 +33,11 @@ BlackboardHandler::BlackboardHandler(BT::Blackboard::Ptr bb_ptr,
                                                              &BlackboardHandler::GoalCallback,
                                                              this));
 
+  ros_sub_vec_.push_back(nh_ptr_->subscribe<std_msgs::Float64>("/carla1s/"+role_name_+"/fake_perception/collision_avoid_speed",
+                                                               1,
+                                                               &BlackboardHandler::CollisionAvoidSpeedCallback,
+                                                               this));
+
 }
 
 BlackboardHandler::~BlackboardHandler() {
@@ -39,6 +47,10 @@ BlackboardHandler::~BlackboardHandler() {
 
 void BlackboardHandler::OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg) {
   bb_ptr_->set<nav_msgs::Odometry>("odom", *odom_msg);
+}
+
+void BlackboardHandler::CollisionAvoidSpeedCallback(const std_msgs::Float64ConstPtr &speed_msg) {
+  bb_ptr_->set<double>("collision_avoid_speed", speed_msg->data);
 }
 
 void BlackboardHandler::TrafficLightCallback(const std_msgs::BoolConstPtr& msg) {
@@ -52,7 +64,7 @@ void BlackboardHandler::GoalCallback(const geometry_msgs::PoseStampedConstPtr &g
 }
 
 void BlackboardHandler::ObjectCallback(const derived_object_msgs::ObjectConstPtr &object_msg) {
-  ROS_INFO("Object id: %d", object_msg->id);
+//  ROS_INFO("Object id: %d", object_msg->id);
 }
 
 }

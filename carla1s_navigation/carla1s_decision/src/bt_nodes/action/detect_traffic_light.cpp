@@ -10,8 +10,14 @@ DetectTrafficLight::DetectTrafficLight(const std::string &name,
 
 BT::NodeStatus DetectTrafficLight::tick() {
   config().blackboard->get<bool>("traffic_light_passable", traffic_light_passable_);
+
   if (!traffic_light_passable_) {
+    ROS_INFO("TrafficLight Red! Stop and wait...");
     setOutput("target_speed", 0.0);
+  }else{
+    double target_speed;
+    getInput<double>("target_speed", target_speed);
+    setOutput("target_speed", target_speed);
   }
   return BT::NodeStatus::SUCCESS;
 }

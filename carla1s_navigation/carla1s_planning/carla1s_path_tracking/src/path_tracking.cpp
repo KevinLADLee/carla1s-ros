@@ -107,7 +107,7 @@ bool PathTracking::UpdateParam() {
 
   if(use_vehicle_info) {
     ROS_INFO("PathTracking: Waiting for VehicleInfo message...");
-    auto vehicle_info_msg = ros::topic::waitForMessage<carla_msgs::CarlaEgoVehicleInfo>("/carla/"+role_name+"/vehicle_info", nh_, ros::Duration(120));
+    auto vehicle_info_msg = ros::topic::waitForMessage<carla_msgs::CarlaEgoVehicleInfo>("/carla/"+role_name+"/vehicle_info", nh_);
     if(vehicle_info_msg == nullptr){
       ROS_FATAL("VehicleInfo Not Found: %s", role_name.c_str());
       return false;
@@ -217,7 +217,7 @@ void PathTracking::PathTrackingLoop() {
         break;
       case NodeState::RUNNING:
         auto vehicle_state = GetVehicleState();
-        if(IsGoalReached(vehicle_state.vehicle_pose)){
+        if(IsGoalReached()){
           ROS_INFO("PathTracking: Reached goal! Stop Vehicle...");
           StopVehicle();
           SetNodeState(NodeState::IDLE);
@@ -225,6 +225,10 @@ void PathTracking::PathTrackingLoop() {
           double throttle = 0.0;
           double steer = 0.0;
           auto target_speed = GetTargetSpeed();
+          if(target_speed < 0.005){
+            StopVehicle();
+            break;
+          }
           ROS_INFO("PathTracking: Tracking RUNNING... Target Speed: %f km/h", target_speed);
           auto lon_status = NodeState::RUNNING;
           auto lat_status = NodeState::RUNNING;
@@ -255,10 +259,13 @@ void PathTracking::PathTrackingLoop() {
   StopVehicle();
 }
 
-bool PathTracking::IsGoalReached(const Pose2d &vehicle_pose) const {
-  auto dist = std::hypot(current_goal_.pose.position.x - vehicle_pose.x,
-                         current_goal_.pose.position.y - vehicle_pose.y);
-  if(dist <= goal_radius){
+bool PathTracking::IsGoalReached(){
+  auto vehicle_state = GetVehicleState();
+  auto dist = std::hypot(current_goal_.pose.position.x - vehicle_state.vehicle_pose.x,
+                         current_goal_.pose.position.y - vehicle_state.vehicle_pose.y);
+  double dt = 1.0 / controller_freq;
+  auto next_dist = dist - vehicle_state.vehicle_speed / 3.6 * dt;
+  if(dist <= goal_radius || next_dist <= goal_radius){
     return true;
   } else{
     return false;
