@@ -7,6 +7,7 @@ GoalUpdated::GoalUpdated(const std::string &name, const BT::NodeConfiguration &c
 
 BT::NodeStatus GoalUpdated::tick()
 {
+
   config().blackboard->get<bool>("goal_received", goal_received_);
   if(!goal_received_){
     return BT::NodeStatus::FAILURE;
@@ -14,8 +15,11 @@ BT::NodeStatus GoalUpdated::tick()
 
   if (status() == BT::NodeStatus::IDLE) {
     config().blackboard->get<geometry_msgs::PoseStamped>("goal", goal_);
+    std::cout << "update_path" << std::endl;
+    config().blackboard->set<bool>("need_update_path", true);
     return BT::NodeStatus::FAILURE;
   }
+
 
   geometry_msgs::PoseStamped current_goal;
   config().blackboard->get<geometry_msgs::PoseStamped>("goal", current_goal);
@@ -24,6 +28,7 @@ BT::NodeStatus GoalUpdated::tick()
     goal_ = current_goal;
     return BT::NodeStatus::SUCCESS;
   }
+
   return BT::NodeStatus::FAILURE;
 }
 

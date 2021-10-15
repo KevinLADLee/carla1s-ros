@@ -43,24 +43,45 @@ NodeState PathHandler::QueryNearestWaypointIndexWithLookaheadDist(const double &
 
 //    ROS_WARN("Debug: dist: %f wp_x: %f", dist, wp_in_vehicle_frame.x());
 //    ROS_WARN("Debug: wp_vec: %f, %f", wp_vec[0], wp_vec[1]);
-    if (GetDrivingDirection() == DrivingDirection::FORWARD
-        && wp_in_vehicle_frame.x() > 0
-        && dist > (lookahead_dist_square)){
-      waypoint_idx = i;
-      return NodeState::SUCCESS;
-    }
-    else if (GetDrivingDirection() == DrivingDirection::BACKWARDS
-        && wp_in_vehicle_frame.x() < 0
-        && dist > (lookahead_dist_square)) {
-      waypoint_idx = i;
-      return NodeState::SUCCESS;
-    } else {
-      continue;
+//    if (GetDrivingDirection() == DrivingDirection::FORWARD
+//        && wp_in_vehicle_frame.x() > 0
+//        && dist > (lookahead_dist_square)){
+//      waypoint_idx = i;
+//      return NodeState::SUCCESS;
+//    }
+//    else if (GetDrivingDirection() == DrivingDirection::BACKWARDS
+//        && wp_in_vehicle_frame.x() < 0
+//        && dist > (lookahead_dist_square)) {
+//      waypoint_idx = i;
+//      return NodeState::SUCCESS;
+//    }
+//    else {
+//      continue;
+//    }
+
+    auto dir = GetDrivingDirection();
+    switch (dir) {
+      case DrivingDirection::FORWARD:
+        if(wp_in_vehicle_frame.x() > 0.0){
+          if(dist > lookahead_dist_square || i == waypoints_ptr->size()-1){
+            waypoint_idx = i;
+            return NodeState::SUCCESS;
+          }
+        }
+        break;
+      case DrivingDirection::BACKWARDS:
+        if(wp_in_vehicle_frame.x() < 0.0){
+          if(dist > lookahead_dist_square || i == waypoints_ptr->size()-1){
+            waypoint_idx = i;
+            return NodeState::SUCCESS;
+          }
+        }
+        break;
     }
   }
 //  ROS_WARN("Debug: vehicle_pos: %f, %f", vehicle_pose.x, vehicle_pose.y);
 //  ROS_WARN("Debug: lookahead_dist: %f, %d", lookahead_dist_square, nearest_waypoint_inx);
-  return FAILURE;
+  return NodeState::FAILURE;
 }
 
 double PathHandler::PointDistanceSquare(const Pose2d &pose_1, const Pose2d &pose_2) const {

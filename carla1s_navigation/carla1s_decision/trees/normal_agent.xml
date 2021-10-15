@@ -2,18 +2,26 @@
 <root main_tree_to_execute="BehaviorTree">
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
-        <ReactiveFallback>
-            <Condition ID="GoalUpdated"/>
-            <Sequence>
-                <Decorator ID="RateController" hz="0.1">
-                    <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
-                </Decorator>
-                <Action ID="TrackingPath" path="{path}" target_speed="15.0"/>
-            </Sequence>
-        </ReactiveFallback>
+        <Fallback>
+            <ReactiveFallback>
+                <Condition ID="GoalUpdated"/>
+                <Sequence>
+                    <Decorator ID="BlackboardCheckBool" key="need_update_path">
+                        <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
+                    </Decorator>
+                    <Action ID="DetectSpeedLimit" default_speed="25.0" target_speed="{target_speed}"/>
+                    <Action ID="DetectTrafficLight" target_speed="{target_speed}"/>
+                    <Action ID="DetectVehicle" target_speed="{target_speed}"/>
+                    <Action ID="TrackingPath" path="{path}" target_speed="{target_speed}"/>
+                </Sequence>
+            </ReactiveFallback>
+        </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
+        <Decorator ID="BlackboardCheckBool">
+            <input_port default="need_update_path" name="key"/>
+        </Decorator>
         <Condition ID="CheckTrafficLight">
             <output_port name="target_speed" type="double"/>
         </Condition>
@@ -21,6 +29,16 @@
             <input_port name="goal"/>
             <output_port name="path"/>
             <input_port name="path_planner_id"/>
+        </Action>
+        <Action ID="DetectSpeedLimit">
+            <input_port default="15.0" name="default_speed"/>
+            <output_port default="{target_speed}" name="target_speed"/>
+        </Action>
+        <Action ID="DetectTrafficLight">
+            <inout_port default="{target_speed}" name="target_speed"/>
+        </Action>
+        <Action ID="DetectVehicle">
+            <inout_port default="{target_speed}" name="target_speed"/>
         </Action>
         <Condition ID="GoalUpdated"/>
         <Control ID="PipelineSequence"/>

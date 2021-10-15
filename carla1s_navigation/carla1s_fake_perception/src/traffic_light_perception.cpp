@@ -123,12 +123,12 @@ void TrafficLightPerception::CreateMarker(const TrafficLight& tl){
   marker.type = visualization_msgs::Marker::CUBE;
   marker.id = tl.id;
   marker.color = color_map_.find(TrafficLight::RED)->second;
-  marker.color.a = 0.2;
+  marker.color.a = 0.1;
 
   poseTFToMsg(tl.box.box_trans, marker.pose);
 
   marker.scale.x = tl.box.size.x;
-  marker.scale.y = tl.box.size.y;
+  marker.scale.y = 0.05;
   marker.scale.z = tl.box.size.z;
   tl_viz_marker_vec_msgs_.markers.push_back(marker);
 
@@ -185,7 +185,11 @@ void TrafficLightPerception::UpdateMarker(unsigned int id, unsigned char status)
   }
   if(tl_box_marker_idx > 0) {
     tl_viz_marker_vec_msgs_.markers.at(tl_box_marker_idx).color = color_map_.find(status)->second;
-    tl_viz_marker_vec_msgs_.markers.at(tl_box_marker_idx).color.a = 0.2;
+    if(status == TrafficLight::Status::GREEN){
+      tl_viz_marker_vec_msgs_.markers.at(tl_box_marker_idx).color.a = 0.0;
+    }else {
+      tl_viz_marker_vec_msgs_.markers.at(tl_box_marker_idx).color.a = 0.2;
+    }
   }
 }
 

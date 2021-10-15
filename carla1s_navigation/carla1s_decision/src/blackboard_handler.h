@@ -22,6 +22,8 @@ namespace carla1s_decision{
 
     void ObjectCallback(const derived_object_msgs::ObjectConstPtr &object_msg);
 
+    void CollisionAvoidSpeedCallback(const std_msgs::Float64ConstPtr &speed_msg);
+
     virtual ~BlackboardHandler();
 
    private:

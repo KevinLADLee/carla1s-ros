@@ -30,7 +30,7 @@ class RateController : public BT::DecoratorNode
 {
  public:
   /**
-   * @brief A constructor for nav2_behavior_tree::RateController
+   * @brief A constructor for carla1s_decision::RateController
    * @param name Name for the XML tag for this node
    * @param conf BT node configuration
    */
