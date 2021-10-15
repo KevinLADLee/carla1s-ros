@@ -96,8 +96,14 @@ cd $CARLA_ROOT
 source ~/carla1s/ros1_ws/devel/setup.bash
 # For zsh
 # source ~/carla1s/ros1_ws/devel/setup.zsh
+
 roslaunch carla1s_bringup carla_example_ego_vehicle.launch town:=Town02
 #roslaunch carla1s_bringup carla_example_ego_vehicle.launch town:=ParkingLot
+
+# A->B导航实例
 roslaunch carla1s_decision carla_decision_test.launch
+
+# A->B 感知+导航实例
+roslaunch carla1s_decision carla_decision_test_with_fake_perception.launch
 ```
 
