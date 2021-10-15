@@ -8,7 +8,7 @@ import rospy
 import actionlib
 from geometry_msgs.msg import Pose, PoseStamped, Point
 from nav_msgs.msg import Path, Odometry
-from carla1s_msgs.msg import Path as PathArray
+from carla1s_msgs.msg import PathArray
 from carla1s_msgs.msg import ParkingSpot
 from carla1s_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
     ParkingPlannerFeedback, ParkingPlannerActionResult, ParkingPlannerResult, ParkingPlannerGoal

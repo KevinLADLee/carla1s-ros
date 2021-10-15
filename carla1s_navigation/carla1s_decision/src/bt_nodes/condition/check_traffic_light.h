@@ -10,7 +10,9 @@ class CheckTrafficLight : public BT::ConditionNode{
   CheckTrafficLight(const std::string &condition_name,
                     const BT::NodeConfiguration &conf);
 
-  static BT::PortsList providedPorts(){return{};};
+  static BT::PortsList providedPorts(){return{
+        BT::OutputPort<double>("target_speed")
+  };};
 
   BT::NodeStatus tick() override;
   

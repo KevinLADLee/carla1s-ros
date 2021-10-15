@@ -2,20 +2,22 @@
 
     <arg name='host' default='localhost'/>
     <arg name='port' default='2000'/>
+    <arg name='use_groot' default='false' />
 
-    <node name="carla_decision_node" pkg="carla1s_decision" type="carla_decision_node" output="screen" >
+    <node name="carla1s_decision_node" pkg="carla1s_decision" type="carla1s_decision_node" output="screen" >
         <rosparam>
           role_name: "ego_vehicle"
-          bt_tree_filename: "avp_demo.xml"
+          bt_tree_filename: "normal_agent.xml"
+          use_groot: true
         </rosparam>
     </node>
 
-    <include file="$(find carla1s_route_planner)/launch/carla1s_route_planner.launch" >
+    <include file="$(find carla1s_route_planner)/launch/route_planner.launch" >
         <arg name='host' value='$(arg host)'/>
         <arg name='port' value='$(arg port)'/>
     </include>
 
-    <include file="$(find carla1s_path_tracking)/launch/tracking.launch" />
+    <include file="$(find carla1s_path_tracking)/launch/path_tracking.launch" />
 
     <include file="$(find carla1s_fake_perception)/launch/fake_perception.launch" />
 

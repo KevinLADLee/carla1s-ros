@@ -1,4 +1,4 @@
-<library path="lib/librviz_bt_panel">
+<library path="lib/libcarla1s_rviz_plugins">
  <class name="carla1s_rviz_plugins/BehaviorTreePanel"
         type="carla1s_rviz_plugins::BehaviorTreePanel"
         base_class_type="rviz::Panel">

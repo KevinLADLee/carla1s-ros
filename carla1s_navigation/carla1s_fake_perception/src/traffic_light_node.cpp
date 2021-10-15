@@ -1,6 +1,3 @@
-//
-// Created by kevinlad on 2021/4/27.
-//
 
 #include "traffic_light_perception.h"
 

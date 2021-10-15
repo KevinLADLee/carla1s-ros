@@ -4,44 +4,51 @@
     <BehaviorTree ID="BehaviorTree">
         <Fallback>
             <ReactiveFallback>
-                <Condition ID="GoalReached"/>
-                <IfThenElse>
-                    <Condition ID="PathNotExist" path="{path}"/>
-                    <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
-                    <Sequence>
-                        <Condition ID="CheckTrafficLight"/>
-                        <Action ID="CheckCollision" target_speed="15.0"/>
-                        <Action ID="TrackingPath" path="{path}" target_speed="15.0"/>
-                    </Sequence>
-                </IfThenElse>
-            </ReactiveFallback>
-            <ReactiveFallback>
                 <Condition ID="GoalUpdated"/>
-                <Action ID="StopAndWait"/>
+                <Sequence>
+                    <Decorator ID="BlackboardCheckBool" key="need_update_path">
+                        <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
+                    </Decorator>
+                    <Action ID="DetectSpeedLimit" default_speed="25.0" target_speed="{target_speed}"/>
+                    <Action ID="DetectTrafficLight" target_speed="{target_speed}"/>
+                    <Action ID="DetectVehicle" target_speed="{target_speed}"/>
+                    <Action ID="TrackingPath" path="{path}" target_speed="{target_speed}"/>
+                </Sequence>
             </ReactiveFallback>
         </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
-        <Action ID="CheckCollision">
-            <output_port default="15.0" name="target_speed"/>
-        </Action>
-        <Condition ID="CheckTrafficLight"/>
-        <Action ID="ComputePathToGoal">
-            <input_port default="{goal}" name="goal"/>
-            <output_port default="{path}" name="path"/>
-            <input_port default="waypoint" name="path_planner_id"/>
-        </Action>
-        <Condition ID="GoalReached"/>
-        <Condition ID="GoalUpdated"/>
-        <Condition ID="PathNotExist">
-            <input_port default="{path}" name="path"/>
+        <Decorator ID="BlackboardCheckBool">
+            <input_port default="need_update_path" name="key"/>
+        </Decorator>
+        <Condition ID="CheckTrafficLight">
+            <output_port name="target_speed" type="double"/>
         </Condition>
+        <Action ID="ComputePathToGoal">
+            <input_port name="goal"/>
+            <output_port name="path"/>
+            <input_port name="path_planner_id"/>
+        </Action>
+        <Action ID="DetectSpeedLimit">
+            <input_port default="15.0" name="default_speed"/>
+            <output_port default="{target_speed}" name="target_speed"/>
+        </Action>
+        <Action ID="DetectTrafficLight">
+            <inout_port default="{target_speed}" name="target_speed"/>
+        </Action>
+        <Action ID="DetectVehicle">
+            <inout_port default="{target_speed}" name="target_speed"/>
+        </Action>
+        <Condition ID="GoalUpdated"/>
         <Control ID="PipelineSequence"/>
+        <Decorator ID="RateController">
+            <input_port default="1.0" name="hz">Rate</input_port>
+        </Decorator>
         <Action ID="StopAndWait"/>
         <Action ID="TrackingPath">
-            <input_port default="{path}" name="path"/>
-            <input_port default="15.0" name="target_speed"/>
+            <input_port name="path" type="carla1s_msgs::PathArray_&lt;std::allocator&lt;void&gt; &gt;"/>
+            <input_port name="target_speed" type="double"/>
         </Action>
     </TreeNodesModel>
     <!-- ////////// -->

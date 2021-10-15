@@ -1,4 +1,14 @@
 
 <launch>
-    <node name="traffic_light_node" pkg="carla1s_fake_perception" type="traffic_light_node" output="screen" />
+    <arg name='role_name' default='ego_vehicle'/>
+
+    <node name="traffic_light_node" pkg="carla1s_fake_perception" type="traffic_light_node" output="log" >
+        <param name="role_name" value="$(arg role_name)" />
+<!--         <rosparam file="$(find carla1s_fake_perception)/config/traffic_light_config.yaml" command="load" /> -->
+    </node>
+
+    <node name="object_detection_node" pkg="carla1s_fake_perception" type="object_detection_node" output="log" >
+        <param name="role_name" value="$(arg role_name)" />
+    </node>
+
 </launch>

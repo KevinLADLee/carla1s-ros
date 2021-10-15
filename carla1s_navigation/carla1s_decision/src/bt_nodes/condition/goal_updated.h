@@ -15,7 +15,8 @@ class GoalUpdated : public BT::ConditionNode
 
   static BT::PortsList providedPorts()
   {
-    return {};
+    return {
+    };
   }
 
  private:

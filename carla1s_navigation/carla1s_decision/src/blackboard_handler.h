@@ -19,13 +19,21 @@ namespace carla1s_decision{
     void OdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg);
 
     void GoalCallback(const geometry_msgs::PoseStampedConstPtr &goal);
+
+    void ObjectCallback(const derived_object_msgs::ObjectConstPtr &object_msg);
+
+    void CollisionAvoidSpeedCallback(const std_msgs::Float64ConstPtr &speed_msg);
+
     virtual ~BlackboardHandler();
 
    private:
     BT::Blackboard::Ptr bb_ptr_;
     ros::NodeHandlePtr nh_ptr_;
     std::string role_name_;
-    ros::Subscriber odom_sub_, traffic_light_sub_, goal_sub_;
+    std::vector<ros::Subscriber> ros_sub_vec_;
+//    odom_sub_,
+//    traffic_light_sub_,
+//    goal_sub_;
     nav_msgs::Odometry odom_;
   };
 }

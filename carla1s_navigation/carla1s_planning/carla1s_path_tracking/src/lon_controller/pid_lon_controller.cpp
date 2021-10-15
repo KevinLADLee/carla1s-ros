@@ -1,28 +1,6 @@
-/**
- * Copyright 2019 Bradley J. Snyder <snyder.bradleyj@gmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
 
-#ifndef _PID_SOURCE_
-#define _PID_SOURCE_
-
+#ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_LON_CONTROLLER_PID_LON_CONTROLLER
+#define CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_LON_CONTROLLER_PID_LON_CONTROLLER
 
 #include "pid_lon_controller.h"
 
@@ -34,48 +12,87 @@ PidLonController::PidLonController()
   speed_controller_ = std::make_unique<PIDImpl<double>>(speed_pid_param_fwd_);
 }
 
-double PidLonController::RunStep(const double &target_speed,
-                    const double &vehicle_speed,
-                    const double &dt) {
-//  std::cout << "target_speed: " << target_speed << " vehicle_speed: " << vehicle_speed << std::endl;
-  return speed_controller_->RunStep(target_speed, vehicle_speed, dt);
+void PidLonController::Reset(const DirectedPath2dPtr &directed_path_ptr) {
+  VehicleController::Reset(directed_path_ptr);
+  if(GetDrivingDirection() == DrivingDirection::BACKWARDS){
+    station_controller_->ResetParam(station_pid_param_bck_);
+    speed_controller_->ResetParam(speed_pid_param_bck_);
+  }else{
+    station_controller_->ResetParam(station_pid_param_fwd_);
+    speed_controller_->ResetParam(speed_pid_param_fwd_);
+  }
 }
 
-double PidLonController::RunStep(const Pose2dPtr &vehicle_pose_ptr,
-                                 const Path2dPtr &waypoints_ptr,
-                                 const double &vehicle_speed,
-                                 const double &dt) {
+NodeState PidLonController::RunStep(const VehicleState &vehicle_state,
+                                    const double &target_speed,
+                                    const double &dt,
+                                    double &throttle) {
 
-  SetWaypoints(waypoints_ptr);
+  VehicleController::UpdateVehicleState(vehicle_state);
 
-  double lon_error = std::abs(ComputeLonErrors(vehicle_pose_ptr, waypoints_ptr));
-  SetLatestError(lon_error);
+  double station_error = 0.0;
+  auto status = ComputeLonErrors(station_error);
+  if(status == FAILURE){
+    ROS_ERROR("PathTracking: ComputeLonError Failed!");
+    throttle = 0.0;
+    return FAILURE;
+  }
 
-  auto speed_offset = station_controller_->RunStep(lon_error, dt);
+  if(target_speed >= 0) {
+    station_controller_->SetMax(target_speed);
+  }
 
-  auto throttle = speed_controller_->RunStep(speed_offset, vehicle_speed, dt);
-  return throttle;
+  auto speed_offset = station_controller_->RunStep(station_error, dt);
+  throttle = speed_controller_->RunStep(speed_offset, GetVehicleState().vehicle_speed, dt);
+  return SUCCESS;
+}
+
+
+
+NodeState PidLonController::ComputeLonErrors(double &error){
+  auto lookahead_dist = GetLookaheadDist();
+  int idx = 0;
+  auto status = GetPathHandlerPtr()->QueryNearestWaypointIndexWithLookaheadDist(lookahead_dist, idx);
+  if(status == NodeState::FAILURE){
+    ROS_ERROR("PathTracking: Query Target Waypoint Failed!");
+    return status;
+  }
+  SetCurrentWaypointIdx(idx);
+  auto waypoint = GetCurrentWaypoint();
+
+  Eigen::Matrix3d waypoint_trans;
+  auto theta = waypoint.yaw;
+  waypoint_trans << cos(theta), -sin(theta), waypoint.x,
+      sin(theta), cos(theta), waypoint.y,
+      0,0,1;
+
+  auto waypoint_trans_inv = waypoint_trans.inverse();
+
+  Eigen::Vector3d vehicle_point_vec(GetVehicleState().vehicle_pose.x, GetVehicleState().vehicle_pose.y, 1);
+  auto vehicle_point_in_waypoint_frame = waypoint_trans_inv * vehicle_point_vec;
+
+  error = -vehicle_point_in_waypoint_frame.x();
+  if(error > 0){
+    return NodeState::RUNNING;
+  }else{
+    return NodeState::FAILURE;
+  }
+}
+
+double PidLonController::GetLookaheadDist() const {
+  if(GetDrivingDirection() == DrivingDirection::FORWARD){
+    return max_fwd_lookahead_dist;
+  }else{
+    return max_bck_lookahead_dist;
+  }
 }
 
 double PidLonController::GetSpeedError() {
   return speed_controller_->GetPreError();
 }
+
 double PidLonController::GetStationError() {
   return station_controller_->GetPreError();
 }
 
-
-int PidLonController::SetDrivingDirection(const DrivingDirection &driving_direction) {
-  if(driving_direction != GetDrivingDirection()){
-    if(driving_direction == DrivingDirection::BACKWARDS){
-      station_controller_->ResetParam(station_pid_param_bck_);
-      speed_controller_->ResetParam(speed_pid_param_bck_);
-    }else{
-      station_controller_->ResetParam(station_pid_param_fwd_);
-      speed_controller_->ResetParam(speed_pid_param_fwd_);
-    }
-  }
-  return VehicleController::SetDrivingDirection(driving_direction);
-}
-
-#endif
+#endif // #ifndef CARLA1S_ROS_CARLA_NAVIGATION_CARLA_PATH_TRACKING_SRC_LON_CONTROLLER_PID_LON_CONTROLLER

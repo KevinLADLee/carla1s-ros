@@ -1,5 +1,5 @@
 controller_frequency: 20 # Hz
-goal_tolerance_xy: 0.2 # goal radius (m)
+goal_tolerance_xy: 0.5 # goal radius (m)
 goal_tolerance_yaw: 0.2 # goal radius (m)
 max_forward_velocity: 5 # max vehicle speed (km/h)
 max_backwards_velocity: 2

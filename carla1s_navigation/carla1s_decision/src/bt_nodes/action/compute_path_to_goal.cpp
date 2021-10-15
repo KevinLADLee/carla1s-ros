@@ -26,16 +26,15 @@ void ComputePathToGoal::on_tick() {
       goal_.goal = goal_pose.value();
       goal_.role_name = "ego_vehicle";
     }
-  }else{
-    // Goal has not been updated, return failed;
-    setStatus(BT::NodeStatus::FAILURE);
-    return;
   }
+
 }
 
 BT::NodeStatus ComputePathToGoal::on_result(const carla1s_msgs::PathPlannerResult &res) {
-  goal_result_.path = res.path;
-  setOutput("path", goal_result_.path);
+  goal_result_.path_array = res.path_array;
+  setOutput("path", goal_result_.path_array);
+  config().blackboard->set<bool>("need_update_path", false);
+  config().blackboard->set<bool>("path_updated", true);
   return BT::NodeStatus::SUCCESS;
 }
 
