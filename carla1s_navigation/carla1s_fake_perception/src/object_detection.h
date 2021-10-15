@@ -49,6 +49,7 @@ class ObjectDetection {
   double max_dist_square = 0;
   int vehicle_id = 0;
   double safe_dist = 15.0;
+  double danger_dist = 2.0;
   double dt = 0.05;
   std::string carla_topic_prefix = "";
   std::string carla1s_topic_prefix = "";

@@ -101,7 +101,12 @@ double ObjectDetection::SimpleCollisionAvoid(const nav_msgs::OdometryConstPtr &o
   auto front_speed = TwistToVehicleSpeed(object.twist);
 
   if(dist < safe_dist){
-    return front_speed;
+    if(dist < danger_dist){
+      return front_speed;
+    }
+    return std::max(front_speed, 5.0);
+  }else{
+    return -1.0;
   }
 
 //  auto ego_speed = TwistToVehicleSpeed(odom_ptr->twist.twist);

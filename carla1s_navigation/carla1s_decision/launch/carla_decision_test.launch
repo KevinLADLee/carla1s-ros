@@ -21,8 +21,9 @@
         <arg name='port' value='$(arg port)'/>
         <arg name='role_name' value='$(arg role_name)' />
     </include>
-<!--     <include file="$(find carla1s_path_tracking)/launch/path_tracking.launch" > -->
-<!--         <arg name='role_name' value='$(arg role_name)' /> -->
-<!--     </include> -->
+
+    <include file="$(find carla1s_path_tracking)/launch/path_tracking.launch" >
+        <arg name='role_name' value='$(arg role_name)' />
+    </include>
 
 </launch>
