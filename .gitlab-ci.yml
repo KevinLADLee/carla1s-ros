@@ -1,7 +1,7 @@
 before_script:
   - docker info 
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  - docker pull harbor.isus.tech/carlasim/carla:0.9.11
+  - docker pull harbor.isus.tech/carlasim/carla:0.9.12
   - docker pull harbor.isus.tech/osrf/ros:noetic-desktop
 
 
@@ -9,10 +9,8 @@ before_script:
 build_image:
   only:
     - tags
-    - api
-    - web
   script:
      - cd docker
-     - docker build -t $CI_REGISTRY/carla-ros/carla-ros:$CI_COMMIT_BRANCH -f Dockerfile ./..
-     - docker push $CI_REGISTRY/carla-ros/carla-ros:$CI_COMMIT_BRANCH
+     - docker build -t $CI_REGISTRY/carla-ros/carla-ros:$CI_COMMIT_TAG -f Dockerfile ./..
+     - docker push $CI_REGISTRY/carla-ros/carla-ros:$CI_COMMIT_TAG
   retry: 2     
