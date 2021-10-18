@@ -204,16 +204,17 @@ void PathTracking::PathTrackingLoop() {
     switch (node_state) {
       case NodeState::FAILURE:
 //        ROS_WARN("PathTracking: Tracking Failure! Need new path...");
-        StopVehicle();
+//        StopVehicle();
         break;
       case NodeState::IDLE:
         if(UpdateCurrentPath()){
           ROS_WARN("PathTracking: Switch to next path...");
           SetNodeState(NodeState::RUNNING);
-        }else{
-//          ROS_WARN("PathTracking: Tracking IDLE! Wait path...");
-          StopVehicle();
         }
+//        else{
+//          ROS_WARN("PathTracking: Tracking IDLE! Wait path...");
+//          StopVehicle();
+//        }
         break;
       case NodeState::RUNNING:
         auto vehicle_state = GetVehicleState();
@@ -235,13 +236,13 @@ void PathTracking::PathTrackingLoop() {
           {
             LockGuardMutex lock_guard(path_mutex_);
             lon_status = lon_controller_ptr_->RunStep(vehicle_state,
-                                                           target_speed,
-                                                           1.0 / controller_freq,
-                                                           throttle);
+                                                      target_speed,
+                                                      1.0 / controller_freq,
+                                                      throttle);
             lat_status = lat_controller_ptr_->RunStep(vehicle_state,
-                                                           target_speed,
-                                                           1.0 / controller_freq,
-                                                           steer);
+                                                      target_speed,
+                                                      1.0 / controller_freq,
+                                                      steer);
           }
           if(lon_status == NodeState::FAILURE || lat_status == NodeState::FAILURE){
             ROS_WARN("PathTracking: Tracking FAILURE! No valid waypoint...");
@@ -283,12 +284,19 @@ void PathTracking::PublishVehicleCmd(const double &throttle, const double &steer
 }
 
 bool PathTracking::StopVehicle() {
-  vehicle_cmd_msg_.throttle = 0.0;
-  vehicle_cmd_msg_.steer = 0.0;
-  vehicle_cmd_msg_.brake = 1.0;
-  vehicle_cmd_msg_.hand_brake = false;
-  vehicle_cmd_msg_.manual_gear_shift = false;
-  control_cmd_pub_.publish(vehicle_cmd_msg_);
+//  auto vehicle_state = GetVehicleState();
+//  std::cout << "TS: " << vehicle_state.vehicle_speed << std::endl;
+//  if(vehicle_state.vehicle_speed < DBL_EPSILON){
+//    return true;
+//  }
+  for(int i = 0; i < 5; i++) {
+    vehicle_cmd_msg_.throttle = 0.0;
+    vehicle_cmd_msg_.steer = 0.0;
+    vehicle_cmd_msg_.brake = 1.0;
+    vehicle_cmd_msg_.hand_brake = false;
+    vehicle_cmd_msg_.manual_gear_shift = false;
+    control_cmd_pub_.publish(vehicle_cmd_msg_);
+  }
   return true;
 }
 
