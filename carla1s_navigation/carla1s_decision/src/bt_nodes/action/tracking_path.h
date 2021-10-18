@@ -16,6 +16,7 @@ class TrackingPath : public BT::RosActionNode<carla1s_msgs::PathTrackingAction> 
   static BT::PortsList providedPorts(){
     return {
         BT::InputPort<carla1s_msgs::PathArray>("path"),
+        BT::InputPort<geometry_msgs::PoseStamped>("goal"),
         BT::InputPort<double>("target_speed")
     };
   };

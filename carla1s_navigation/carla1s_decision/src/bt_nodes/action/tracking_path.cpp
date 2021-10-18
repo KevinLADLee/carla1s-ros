@@ -10,8 +10,15 @@ void TrackingPath::on_tick() {
   // Get path from behavior tree's ports
   auto path_port = getInput<carla1s_msgs::PathArray>("path");
   if(!path_port){
-//    ROS_WARN("BT TrackingPath Node: No valid path");
     setStatus(BT::NodeStatus::FAILURE);
+    auto goal_port = getInput<geometry_msgs::PoseStamped>("goal");
+    if(!goal_port){
+      ROS_WARN("BT TrackingPath Node: No goal");
+      return;
+    }else{
+      ROS_WARN("BT TrackingPath Node: No valid path");
+      config().blackboard->set<bool>("need_update_path", true);
+    }
     return;
   }else{
     goal_.path_array = path_port.value();

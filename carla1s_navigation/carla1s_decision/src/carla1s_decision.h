@@ -39,6 +39,7 @@ class CarlaDecision{
       "bt_action_detect_vehicle",
       "bt_action_detect_speed_limit",
       "bt_condition_goal_updated",
+      "bt_condition_goal_reached",
       "bt_condition_check_traffic_light",
       "bt_control_pipeline_sequence",
       "bt_decorator_rate_controller",

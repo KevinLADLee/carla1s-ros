@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Fallback>
+            <IfThenElse>
+                <Condition ID="GoalReached" goal="-16.721504; -11.494468;0" goal_radius="1.5"/>
+                <Action ID="StopAndWait"/>
+                <Sequence>
+                    <Decorator ID="BlackboardCheckBool" key="need_update_path">
+                        <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
+                    </Decorator>
+                    <Action ID="DetectSpeedLimit" default_speed="10.0" target_speed="{target_speed}"/>
+                    <Action ID="DetectTrafficLight" target_speed="{target_speed}"/>
+                    <Action ID="DetectVehicle" target_speed="{target_speed}"/>
+                    <Action ID="TrackingPath" goal="{goal}" path="{path}" target_speed="{target_speed}"/>
+                </Sequence>
+            </IfThenElse>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Decorator ID="BlackboardCheckBool">
+            <input_port name="key" type="bool">BB Value to check</input_port>
+        </Decorator>
+        <Action ID="ComputePathToGoal">
+            <input_port name="goal" type="geometry_msgs::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;"/>
+            <output_port name="path" type="carla1s_msgs::PathArray_&lt;std::allocator&lt;void&gt; &gt;"/>
+            <input_port name="path_planner_id" type="std::string"/>
+        </Action>
+        <Action ID="DetectSpeedLimit">
+            <input_port name="default_speed" type="double"/>
+            <output_port name="target_speed" type="double"/>
+        </Action>
+        <Action ID="DetectTrafficLight">
+            <inout_port name="target_speed" type="double"/>
+        </Action>
+        <Action ID="DetectVehicle">
+            <inout_port name="target_speed" type="double"/>
+        </Action>
+        <Condition ID="GoalReached">
+            <inout_port name="goal"/>
+            <input_port name="goal_radius"/>
+        </Condition>
+        <Condition ID="GoalUpdated"/>
+        <Decorator ID="RateController">
+            <input_port default="1" name="hz"/>
+        </Decorator>
+        <Action ID="StopAndWait"/>
+        <Action ID="TrackingPath">
+            <input_port name="goal"/>
+            <input_port name="path"/>
+            <input_port name="target_speed"/>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+
