@@ -69,6 +69,7 @@ class Carla1sRoutePlanner:
 
         rospy.loginfo("GlobalPlanner: Received goal, trigger rerouting...")
         rospy.loginfo("GlobalPlanner: Planner id: {}".format(goal_msg.planner_id))
+        rospy.loginfo("GlobalPlanner: Route to ({}, {})".format(goal_msg.goal.pose.position.x, goal_msg.goal.pose.position.y))
 
         carla_goal = trans.ros_pose_to_carla_transform(goal_msg.goal.pose)
         self.goal = carla_goal

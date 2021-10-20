@@ -16,6 +16,8 @@ BT::NodeStatus GoalReached::tick() {
   }
 
   setOutput("goal", goal_port.value());
+  config().blackboard->set("goal", goal_port.value());
+  config().blackboard->set("goal_received", true);
   if(first_) {
     config().blackboard->set<bool>("need_update_path", true);
     first_ = false;

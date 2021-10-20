@@ -4,8 +4,8 @@
     <BehaviorTree ID="BehaviorTree">
         <Fallback>
             <IfThenElse>
-                <Condition ID="GoalReached" goal="-16.721504; -11.494468;0" goal_radius="1.5"/>
-                <Action ID="StopAndWait"/>
+                <Condition ID="GoalReached" goal="-56.6;20.8;0.0" goal_radius="1.5"/>
+                <Action ID="VerticalParking" parking_spot_length="5.4" parking_spot_pose="-49.404;27.206;-3.14" parking_spot_width="2.5"/>
                 <Sequence>
                     <Decorator ID="BlackboardCheckBool" key="need_update_path">
                         <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
@@ -51,6 +51,11 @@
             <input_port name="goal"/>
             <input_port name="path"/>
             <input_port name="target_speed"/>
+        </Action>
+        <Action ID="VerticalParking">
+            <input_port default="7.5" name="parking_spot_length"/>
+            <input_port default="-49.404;27.206;-3.14" name="parking_spot_pose"/>
+            <input_port default="2.5" name="parking_spot_width"/>
         </Action>
     </TreeNodesModel>
     <!-- ////////// -->

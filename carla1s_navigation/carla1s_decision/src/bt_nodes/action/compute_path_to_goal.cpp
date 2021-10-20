@@ -17,7 +17,7 @@ void ComputePathToGoal::on_tick() {
 
   config().blackboard->get<bool>("goal_received", goal_received_);
   if(goal_received_) {
-    BT::Optional<geometry_msgs::PoseStamped> goal_pose = getInput<geometry_msgs::PoseStamped>("goal");
+    auto goal_pose = getInput<geometry_msgs::PoseStamped>("goal");
     if (!goal_pose.has_value()) {
       setStatus(BT::NodeStatus::FAILURE);
       ROS_WARN("ComputePath: missing required input [goal]");
@@ -27,6 +27,8 @@ void ComputePathToGoal::on_tick() {
       goal_.role_name = "ego_vehicle";
     }
   }
+
+
 
 }
 
