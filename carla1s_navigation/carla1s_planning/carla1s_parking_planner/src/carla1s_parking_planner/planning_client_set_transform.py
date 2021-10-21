@@ -72,10 +72,10 @@ def carla_set_transform(car,x_arr,y_arr,theta_arr):
         # car.set_location(Location(x=x_arr[i], y=y_arr[i], z=location.z))
 
 def set_transform_tracking(path):
-    x_arr=[]
-    y_arr=[]
-    theta_arr=[]
     for i in range(len(path.paths)):
+        x_arr=[]
+        y_arr=[]
+        theta_arr=[]
         for pose in path.paths[i].poses:
             x=pose.pose.position.x
             y=pose.pose.position.y
@@ -84,12 +84,12 @@ def set_transform_tracking(path):
             x_arr.append(x)
             y_arr.append(y)
             theta_arr.append(theta)
-    # print(x_arr)
-    carla_control=CarlaControl()
-    time.sleep(1)
-    carla_car=carla_control.get_vehicle()
-    carla_set_transform(carla_car,x_arr,y_arr,theta_arr)
-    carla_control.close()
+        # print(x_arr)
+        carla_control=CarlaControl()
+        time.sleep(1)
+        carla_car=carla_control.get_vehicle()
+        carla_set_transform(carla_car,x_arr,y_arr,theta_arr)
+        carla_control.close()
 
 
 
