@@ -4,8 +4,8 @@
     <BehaviorTree ID="BehaviorTree">
         <Fallback>
             <IfThenElse>
-                <Condition ID="GoalReached" goal="-56.6;20.8;0.0" goal_radius="1.5"/>
-                <Action ID="VerticalParking" parking_spot_length="5.4" parking_spot_pose="-49.404;27.206;-3.14" parking_spot_width="2.5"/>
+                <Condition ID="GoalReached" goal="-56.6;20.8;0.0" goal_radius="2.0"/>
+                <Action ID="VerticalParking" parking_spot_length="5.4" parking_spot_pose="-60.404;27.206;0" parking_spot_width="2.5"/>
                 <Sequence>
                     <Decorator ID="BlackboardCheckBool" key="need_update_path">
                         <Action ID="ComputePathToGoal" goal="{goal}" path="{path}" path_planner_id="waypoint"/>
@@ -39,23 +39,18 @@
             <inout_port name="target_speed" type="double"/>
         </Action>
         <Condition ID="GoalReached">
-            <inout_port name="goal"/>
-            <input_port name="goal_radius"/>
+            <inout_port name="goal" type="geometry_msgs::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;"/>
+            <input_port name="goal_radius" type="double"/>
         </Condition>
-        <Condition ID="GoalUpdated"/>
-        <Decorator ID="RateController">
-            <input_port default="1" name="hz"/>
-        </Decorator>
-        <Action ID="StopAndWait"/>
         <Action ID="TrackingPath">
-            <input_port name="goal"/>
-            <input_port name="path"/>
-            <input_port name="target_speed"/>
+            <input_port name="goal" type="geometry_msgs::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;"/>
+            <input_port name="path" type="carla1s_msgs::PathArray_&lt;std::allocator&lt;void&gt; &gt;"/>
+            <input_port name="target_speed" type="double"/>
         </Action>
         <Action ID="VerticalParking">
-            <input_port default="7.5" name="parking_spot_length"/>
-            <input_port default="-49.404;27.206;-3.14" name="parking_spot_pose"/>
-            <input_port default="2.5" name="parking_spot_width"/>
+            <input_port name="parking_spot_length" type="double"/>
+            <input_port name="parking_spot_pose" type="Pose2d"/>
+            <input_port name="parking_spot_width" type="double"/>
         </Action>
     </TreeNodesModel>
     <!-- ////////// -->

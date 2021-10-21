@@ -44,6 +44,7 @@ class GetBestParkingPosition():
                                    center_pose.y + math.sin(parking_theta) * parking_spot.length / 2 - math.cos(
                                        parking_theta) * parking_spot.width / 2]
 
+        print(real_parking_left_head,real_parking_right_head)
         # 初始化寻找最优停车位方法
         get_park = GetParkingEndPosition(car_l, car_w, min_turning_radiu, wheel_dis, hou_xuan, road_w,
                                          real_parking_left_head, real_parking_right_head)

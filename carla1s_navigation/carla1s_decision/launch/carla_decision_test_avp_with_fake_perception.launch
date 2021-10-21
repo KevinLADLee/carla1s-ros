@@ -21,4 +21,6 @@
 
     <include file="$(find carla1s_fake_perception)/launch/fake_perception.launch" />
 
+    <include file="$(find carla1s_parking_planner)/launch/parking_planner.launch" />
+
 </launch>

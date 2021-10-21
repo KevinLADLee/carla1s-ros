@@ -44,5 +44,18 @@ class Env():
         self.parking_right_front_point_x = parking_right_front_point[0]
         self.parking_right_front_point_y = parking_right_front_point[1]
 
+    def show(self):
+        print('==============================')
+        print('self.car_l =',self.car_l )
+        print('self.car_w = ',self.car_w )
+        print('self.min_turning_radiu  = ',self.min_turning_radiu )
+        print('self.wheel_dis  = ',self.wheel_dis )
+        print('self.hou_xuan = ',self.hou_xuan)
+        print('self.step  = ',self.step )
 
+        print('self.parking_l  = ',self.parking_l )
+        print('self.parking_w  = ',self.parking_w )
+        print('self.road_w  = ',self.road_w )
+        print('self.road_l  = ',self.road_l )
+        print('==============================')
 

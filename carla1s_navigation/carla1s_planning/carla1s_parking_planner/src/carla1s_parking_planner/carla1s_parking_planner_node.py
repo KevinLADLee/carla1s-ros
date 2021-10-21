@@ -50,7 +50,7 @@ class CarlaVerticalParkingNode:
         self.goal = None
         self.vehicle_pose = None
         self.current_route = None
-        self.vertical_parking_server = actionlib.SimpleActionServer("vertical_parking", ParkingPlannerAction,
+        self.vertical_parking_server = actionlib.SimpleActionServer("/carla1s/"+self.role_name+"/vertical_parking", ParkingPlannerAction,
                                                                     execute_cb=self.execute_cb,
                                                                     auto_start=False)
         self.vertical_parking_server.start()
@@ -89,14 +89,57 @@ class CarlaVerticalParkingNode:
     def odom_cb(self, odom_msg):
         self.vehicle_pose = odom_msg.pose.pose
 
+    def add_uncheck_route(self,start_x,start_y,start_theta,end_x,end_y,end_theta):
+        rx=[]
+        ry=[]
+        rtheta=[]
+
+
+        return rx,ry,rtheta
+
     def execute_cb(self, goal_msg):
         rospy.loginfo("VerticalParking: Received goal, start parking...")
-        # print(type(goal_msg))
-
         vehicle_pose = self.vehicle_pose
-        self.compute_best_preparking_position(vehicle_pose, goal_msg.parking_spot)
+        # print(type(goal_msg))
+        best_position=self.compute_best_preparking_position(vehicle_pose, goal_msg.parking_spot)
+
+        #path from now position to parking path start point
+        start_x=vehicle_pose.pose.position.x
+        start_y=vehicle_pose.pose.position.y
+        (_, _, start_theta) = tf.transformations.euler_from_quaternion(
+            [vehicle_pose.pose.orientation.x, vehicle_pose.pose.orientation.y,
+             vehicle_pose.pose.orientation.z, vehicle_pose.pose.orientation.w])
+
+        end_x=best_position.pose.position.x
+        end_y=best_position.pose.position.y
+        (_, _, end_theta) = tf.transformations.euler_from_quaternion(
+            [best_position.pose.orientation.x, best_position.pose.orientation.y,
+             best_position.pose.orientation.z, best_position.pose.orientation.w])
+
+        rx,ry,rtheta=self.add_uncheck_route(start_x,start_y,start_theta,end_x,end_y,end_theta)
+
+        #tracking uncheck route
+        from planning_client_set_transform import CarlaControl,carla_set_transform
+        import time
+        carla_control = CarlaControl()
+        time.sleep(1)
+        carla_car = carla_control.get_vehicle()
+        carla_set_transform(carla_car, rx,ry,rtheta)
+        carla_control.close()
+
+
+
         #计算泊车路径
-        self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
+        self.path_array = self.compute_parking_path(best_position.pose, goal_msg.parking_spot)
+        # self.path_array = self.compute_parking_path(vehicle_pose, goal_msg.parking_spot)
+        # print(self.path_array)
+
+
+        #start parking tracking
+        from planning_client_set_transform import set_transform_tracking
+        set_transform_tracking(self.path_array)
+
+
         self.action_result.path_array = self.path_array
 
         if self.node_state == NodeState.FAILURE:

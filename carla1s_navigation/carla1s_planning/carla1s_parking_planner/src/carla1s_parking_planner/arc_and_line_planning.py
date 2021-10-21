@@ -77,7 +77,8 @@ class ArcLinePlanning():
         route = []
 
         path_array = PathArray()
-
+        # print('arc position',car_position_x ,car_position_y,car_position_theta)
+        # print('arc parking',real_parking_left_head,real_parking_right_head)
         try:
             route_x, route_y, route_theta_r, dir_info = plan.planning(car_position_x, car_position_y,
                                                                       car_position_theta)
@@ -124,6 +125,6 @@ class ArcLinePlanning():
 
 
         except:
-            print("planning fail")
+            print("arc planning fail")
 
         return path_array

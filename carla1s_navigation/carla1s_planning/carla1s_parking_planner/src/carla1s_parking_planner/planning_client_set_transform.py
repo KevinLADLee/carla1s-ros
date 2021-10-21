@@ -1,13 +1,15 @@
 #! /usr/bin/env python
 import tf
 import roslib
-roslib.load_manifest('carla_nav_msgs')
+# roslib.load_manifest('carla_nav_msgs')
 import rospy
 import actionlib
 from nav_msgs.msg import Odometry
 import time
 # from carla_control import CarlaControl
-from carla_nav_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
+# from carla_nav_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
+#     ParkingPlannerFeedback, ParkingPlannerActionResult, ParkingPlannerResult,ParkingPlannerGoal
+from carla1s_msgs.msg import ParkingPlannerAction, ParkingPlannerActionGoal, \
     ParkingPlannerFeedback, ParkingPlannerActionResult, ParkingPlannerResult,ParkingPlannerGoal
 import math
 import carla

@@ -498,9 +498,9 @@ class VerticalParking():
         new_position_x, new_position_y, new_theta_r = self.__move_dir_back(car_position_x, car_position_y,
                                                                            car_position_theta)
         # print(new_position_x, new_position_y, new_theta_r)
-
+        #print(new_position_y)
         if new_position_y == None:
-            return None, None, None,None, None, None
+            return None, None, None,route_x, route_y, route_theta
 
         if not ((new_position_x == car_position_x) and (new_position_y == car_position_y)):
             # 添加路径
@@ -540,7 +540,7 @@ class VerticalParking():
             print('right back', new_position_x, new_position_y, new_theta_r)
 
         if new_position_y == None:
-            return None, None, None, None, None, None
+            return None, None, None, route_x, route_y, route_theta
 
         # 添加路径
         rx, ry, rtheta = self.__add_arc_route(o_down_x, o_down_y, self.env.min_turning_radiu,
@@ -574,7 +574,7 @@ class VerticalParking():
             print('up', new_position_x, new_position_y, new_theta_r)
 
         if new_position_y == None:
-            return None, None, None,None, None, None
+            return None, None, None,route_x, route_y, route_theta
 
         # 寻找在上方的圆心的坐标
         o_up_x = car_position_x - self.env.min_turning_radiu * math.cos(math.pi / 2 - car_position_theta)
@@ -630,29 +630,35 @@ class VerticalParking():
         now_position_x = car_position_x
         now_position_y = car_position_y
         now_position_theta = car_position_theta
-
+        # self.env.show()
+        # print('sim car position ',car_position_x, car_position_y, car_position_theta*180/math.pi)
+        # print('sim parking ',self.parking_left_front_point_x,self.parking_left_front_point_y,self.parking_right_front_point_x,self.parking_right_front_point_y)
 
         while 1 :
+            # print("switch_times1 ",switch_times,' max ',self.max_switch_times,' pose ',now_position_x, now_position_y, now_position_theta)
             if self.max_switch_times < switch_times:
                 if self.log:
                     print("迭代次数过多，强制退出!")
-                return None, None, None
-
+                return None, None, None, None
             if now_position_x==None:
-                return None, None, None
+                return None, None, None, None
+
             ox,oy,ot=now_position_x, now_position_y, now_position_theta
+
             now_position_x, now_position_y, now_position_theta, route_x, route_y,route_theta=self.__add_dir_back_route(now_position_x, now_position_y, now_position_theta, route_x, route_y,route_theta)
 
             # print('直线倒车至',now_position_x, now_position_y, now_position_theta)
+
 
             for i in range(len(route_x)-len(dir_info)):
                 dir_info.append(1)
 
 
 
+            # print("switch_times2 ",switch_times,' max ',self.max_switch_times,' pose ',now_position_x, now_position_y, now_position_theta)
 
             if now_position_x==None:
-                return None, None, None
+                return None, None, None, None
             ox, oy, ot = now_position_x, now_position_y, now_position_theta
             now_position_x, now_position_y, now_position_theta, route_x, route_y, route_theta = self.__add_right_back_route( now_position_x, now_position_y, now_position_theta, route_x, route_y, route_theta)
 
@@ -666,7 +672,10 @@ class VerticalParking():
             if (now_position_theta == math.pi / 2):
                 break
             if now_position_x==None:
-                return None, None, None
+                return None, None, None, None
+
+
+            # print("switch_times3 ",switch_times,' max ',self.max_switch_times,' pose ',now_position_x, now_position_y, now_position_theta)
 
 
             ox, oy, ot = now_position_x, now_position_y, now_position_theta
@@ -680,6 +689,7 @@ class VerticalParking():
 
 
 
+            # print("switch_times4 ",switch_times,' max ',self.max_switch_times,' pose ',now_position_x, now_position_y, now_position_theta)
             if (now_position_theta == math.pi / 2):
                 break
             switch_times += 1
@@ -741,6 +751,9 @@ class VerticalParking():
     # ==================================================================
     def planning(self, car_position_x, car_position_y, car_position_theta):
 
+        print('arc car position ',car_position_x, car_position_y, car_position_theta)
+        print('arc parking ',   self.parking_left_front_point_x , self.env.parking_left_front_point_y,self.env.parking_right_front_point_x,self.env.parking_right_front_point_y)
+
         # 判断车辆是否能够直接入库
         if car_position_x >= self.parking_left_front_point_x + self.env.car_w / 2 and \
                 car_position_x <= self.parking_right_front_point_x - self.env.car_w / 2 \
@@ -756,6 +769,7 @@ class VerticalParking():
             # 如果车辆无法一次性入库，那么就进入来回腾挪入库模式
 
             # 车先向右后方移动的路线
+            print('right')
             route_right_back_x, route_right_back_y, route_right_back_theta,route_right_back_dir_info = self.__planning_move_right_back_first(
                 car_position_x, car_position_y, car_position_theta)
 
@@ -766,6 +780,7 @@ class VerticalParking():
 
 
             # 车先向左前方方移动的路线
+            print('left')
             route_left_front_x, route_left_front_y, route_left_front_theta,route_left_front_dir_info = self.__planning_move_left_front_first(car_position_x, car_position_y, car_position_theta)
 
             # print(route_left_front_x)
@@ -805,33 +820,38 @@ class VerticalParking():
 if __name__ == "__main__":
     start_time=time.time()
     env0=Env()
-    parking_l = 5.3
-    road_w = 2.86 * 1.6  # 2.86*3 #尽量在4.09以上，小于的话腾挪次数要爆炸
-    car_l = 4.7
-    car_w = 1.7
-    min_turning_radiu = 5.3
-    wheel_dis = 2.6
-    road_l = 3 * parking_l
+    parking_l = 5.4
+    road_w = 5  # 2.86*3 #尽量在4.09以上，小于的话腾挪次数要爆炸
+    car_l = 4
+    car_w = 1.4298046875000026
+    min_turning_radiu = 9.6
+    wheel_dis = 2.5064953996428505
+    road_l = 10
     step = 0.1
-    hou_xuan = (car_l - wheel_dis) / 2
+    hou_xuan = 1
 
     # parking_w = 2.12
     # parking_left_point = [parking_w, 0]
     # parking_right_point = [2 * parking_w, 0]
 
     #车辆实际坐标
-    car_x=-37.131065
-    car_y=-14.28638
-    car_theta_r=-1.356844
+    # car_x=-37.131065
+    # car_y=-14.28638
+    # car_theta_r=-1.356844
 
+
+
+
+    #7.373004391908768 2.6422429420110305 36.45990889764952
+    #2.5 0 5.0 0
 
     # # 车位实际坐标
     # real_parking_left_head = [-42.3, -3.1]
     # real_parking_right_head = [-42.3, -6.1]
 
     # 车位实际坐标
-    real_parking_left_head = [3, 0]
-    real_parking_right_head = [6,0]
+    real_parking_left_head = [2.5, 0]
+    real_parking_right_head = [5,0]
 
     # 计算车位长度
     parking_w = math.sqrt(math.pow(real_parking_left_head[0] - real_parking_right_head[0], 2) + math.pow(
@@ -851,11 +871,16 @@ if __name__ == "__main__":
     # car_position_theta =0.12217304763960307
 
 
-    car_position_x =8
-    car_position_y =2.5
-    car_position_theta =0.12217304763960307
+    # car_position_x =8
+    # car_position_y =2.5
+    # car_position_theta =0.12217304763960307
 
-    rx,ry,rtheta=vp.planning(car_position_x,car_position_y,car_position_theta)
+    car_position_x =7.373004391908768
+    car_position_y =2.6422429420110305
+    car_position_theta=36.45990889764952*math.pi/180
+
+
+    rx,ry,rtheta,dir_info=vp.planning(car_position_x,car_position_y,car_position_theta)
 
     # print(rx,ry)
     plt.plot(rx,ry)
