@@ -18,7 +18,7 @@ class EnvInfoMessage(float):
     road_w = 5 # 2.86*3 #尽量在4.09以上，小于的话腾挪次数要爆炸
     car_l = 4
     hou_xuan = 1
-    step=0.1
+    step=0.01
     road_l=10
 
 class ArcLinePlanning():

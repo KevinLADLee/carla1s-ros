@@ -93,7 +93,14 @@ class CarlaVerticalParkingNode:
         rx=[]
         ry=[]
         rtheta=[]
-
+        num=100
+        derta_x=end_x-start_x
+        derta_y=end_y-start_y
+        derta_theta=end_theta-start_theta
+        for i in range(num):
+            rx.append(start_x+derta_x*i/num)
+            ry.append(start_y+derta_y*i/num)
+            rtheta.append(start_theta+derta_theta*i/num)
 
         return rx,ry,rtheta
 
@@ -102,13 +109,13 @@ class CarlaVerticalParkingNode:
         vehicle_pose = self.vehicle_pose
         # print(type(goal_msg))
         best_position=self.compute_best_preparking_position(vehicle_pose, goal_msg.parking_spot)
-
+        # print(vehicle_pose)
         #path from now position to parking path start point
-        start_x=vehicle_pose.pose.position.x
-        start_y=vehicle_pose.pose.position.y
+        start_x=vehicle_pose.position.x
+        start_y=vehicle_pose.position.y
         (_, _, start_theta) = tf.transformations.euler_from_quaternion(
-            [vehicle_pose.pose.orientation.x, vehicle_pose.pose.orientation.y,
-             vehicle_pose.pose.orientation.z, vehicle_pose.pose.orientation.w])
+            [vehicle_pose.orientation.x, vehicle_pose.orientation.y,
+             vehicle_pose.orientation.z, vehicle_pose.orientation.w])
 
         end_x=best_position.pose.position.x
         end_y=best_position.pose.position.y
