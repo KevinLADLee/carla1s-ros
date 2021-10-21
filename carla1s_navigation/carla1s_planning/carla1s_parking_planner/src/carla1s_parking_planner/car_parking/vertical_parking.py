@@ -227,7 +227,7 @@ class VerticalParking():
             #车停在车位内部底线或车头平行车道
 
             end_y0 = -self.env.car_l + self.env.hou_xuan
-            end_y1 = -self.env.parking_l + self.env.hou_xuan
+            end_y1 = -self.env.parking_l + self.env.hou_xuan+1
             # end_y=max(end_y1,end_y0)
             end_y=end_y1
             if y>end_y:
