@@ -67,6 +67,8 @@ add_executable(path_tracking_node
         src/lon_controller/pid_lon_controller.cpp
         src/lat_controller/pid_lat_controller.cpp
         src/common/path_handler.cpp
+#        src/common/cubic_spline.cpp
+        src/lat_controller/stanley.cpp
         )
 add_dependencies(path_tracking_node carla_msgs_generate_messages carla1s_msgs_generate_messages)
 target_link_libraries(path_tracking_node

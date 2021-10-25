@@ -11,12 +11,16 @@ void PathHandler::Update(const VehicleState &vehicle_state,
 
 int PathHandler::QueryNearestWaypointIndex() const {
   auto vehicle_pose = GetVehiclePose();
+  return QueryNearestWaypointIndex(vehicle_pose);
+}
+
+int PathHandler::QueryNearestWaypointIndex(const Pose2d &pose) const {
   double min_dist = std::numeric_limits<double>::max();
   auto path_ptr = directed_path_ptr_->path_ptr;
   auto path_size = static_cast<int>(directed_path_ptr_->path_ptr->size());
   int index = path_size - 1;
   for(int i = 0; i < path_size; i++){
-    auto dist = PointDistanceSquare(vehicle_pose, directed_path_ptr_->path_ptr->at(i));
+    auto dist = PointDistanceSquare(pose, directed_path_ptr_->path_ptr->at(i));
     if(dist < min_dist){
       min_dist = dist;
       index = i;

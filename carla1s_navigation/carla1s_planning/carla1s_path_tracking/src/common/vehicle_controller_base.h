@@ -32,6 +32,10 @@ public:
     return directed_path_ptr_->path_ptr->at(current_waypoint_idx_);
   }
 
+  int GetCurrentWaypointIdx(){
+    return current_waypoint_idx_;
+  };
+
  protected:
   virtual NodeState UpdateVehicleState(const VehicleState &vehicle_state){
     vehicle_state_ = vehicle_state;

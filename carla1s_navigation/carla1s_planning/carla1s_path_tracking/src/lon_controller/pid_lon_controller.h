@@ -37,7 +37,7 @@ class PidLonController : public VehicleController{
   double max_bck_lookahead_dist = 1.0;
 
   // {Kp, Ki, Kd, max_speed, min_speed}
-  const std::vector<double> station_pid_param_fwd_ = {8.5, 0.0, 0.001, 15.0, 0.0};
+  const std::vector<double> station_pid_param_fwd_ = {5.5, 0.0, 0.0, 15.0, 0.0};
   const std::vector<double> station_pid_param_bck_ = {2.5, 0.0, 0.0, 3.0, 0.0};
 
   // {Kp, Ki, Kd, max_acc, min_acc}

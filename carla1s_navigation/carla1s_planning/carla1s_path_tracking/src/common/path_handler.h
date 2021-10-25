@@ -12,6 +12,8 @@ class PathHandler {
 
   int QueryNearestWaypointIndex() const;
 
+  int QueryNearestWaypointIndex(const Pose2d &pose) const;
+
   NodeState QueryNearestWaypointIndexWithLookaheadDist(const double &lookahead_dist, int &waypoint_idx) const;
 
   double PointDistanceSquare(const Pose2d &pose_1, const Pose2d &pose_2) const;

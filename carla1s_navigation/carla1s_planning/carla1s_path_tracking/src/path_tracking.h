@@ -22,6 +22,7 @@
 
 #include "common/timer.h"
 #include "lat_controller/pure_pursuit.h"
+#include "lat_controller/stanley.h"
 #include "lat_controller/pid_lat_controller.h"
 #include "lon_controller/pid_lon_controller.h"
 
@@ -34,6 +35,7 @@ class PathTracking {
   using ActionServerT = actionlib::SimpleActionServer<ActionT>;
   using LockGuardMutex = std::lock_guard<std::mutex>;
   using LatControllerT = PurePursuit;
+//  using LatControllerT = Stanley;
 //  using LatControllerT = PidLatController;
   using LonControllerT = PidLonController;
 
