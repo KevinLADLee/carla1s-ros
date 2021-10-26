@@ -40,9 +40,10 @@ double Stanley::ComputeSteer() {
   auto theta_d = std::atan2(k_ * error_front_axle, v_speed / 3.6);
   auto delta = theta_e + theta_d;
 
-  auto steer = math::Clip(delta, -max_steer_angle_, max_steer_angle_);
+  auto steer = math::Clip(delta, -max_steer_angle_, max_steer_angle_) / max_steer_angle_;
+  // auto steer = math::Clip(delta, -max_steer_angle_, max_steer_angle_);
 //  std::cout << "delta: " << delta << " steer: " << -steer * 2.0 / M_PI << std::endl;
-  return -steer * 2.0 / M_PI;
+  return -steer;
 }
 
 Pose2d Stanley::ComputeFrontAxlePose(const Pose2d &vehicle_pose) {

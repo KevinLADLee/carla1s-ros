@@ -29,20 +29,23 @@ NodeState PidLonController::RunStep(const VehicleState &vehicle_state,
                                     double &throttle) {
 
   VehicleController::UpdateVehicleState(vehicle_state);
-
+  double speed_offset = 0.0;
   double station_error = 0.0;
   auto status = ComputeLonErrors(station_error);
-  if(status == FAILURE){
+  if (status == FAILURE) {
     ROS_ERROR("PathTracking: ComputeLonError Failed!");
     throttle = 0.0;
     return FAILURE;
   }
-
-  if(target_speed >= 0) {
-    station_controller_->SetMax(target_speed);
+  if(use_station_pid_) {
+    if (target_speed >= 0) {
+      station_controller_->SetMax(target_speed);
+    }
+    speed_offset = station_controller_->RunStep(station_error, dt);
+  }else{
+    speed_offset = target_speed;
   }
 
-  auto speed_offset = station_controller_->RunStep(station_error, dt);
   throttle = speed_controller_->RunStep(speed_offset, GetVehicleState().vehicle_speed, dt);
   return SUCCESS;
 }

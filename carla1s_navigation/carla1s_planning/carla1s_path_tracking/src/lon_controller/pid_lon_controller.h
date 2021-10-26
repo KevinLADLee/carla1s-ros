@@ -32,6 +32,7 @@ class PidLonController : public VehicleController{
 
   double max_throttle = 1.0;
   double target_speed_ = 0.0;
+  bool use_station_pid_ = false;
 
   double max_fwd_lookahead_dist = 2.5;
   double max_bck_lookahead_dist = 1.0;

@@ -23,7 +23,7 @@ class Stanley : public VehicleController{
  private:
   double k_ = 0.5; // gain factor
   double wheel_base_ = 3.0;
-  double max_steer_angle_ = 30.0 / 180.0 * M_PI;
+  double max_steer_angle_ = 70.0 / 180.0 * M_PI;
   double max_steer_ = 1.0;
 };
 

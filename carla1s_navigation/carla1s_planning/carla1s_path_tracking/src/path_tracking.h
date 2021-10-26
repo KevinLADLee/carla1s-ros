@@ -34,8 +34,8 @@ class PathTracking {
   using ActionFeedbackT   = typename ActionT::_action_feedback_type::_feedback_type;
   using ActionServerT = actionlib::SimpleActionServer<ActionT>;
   using LockGuardMutex = std::lock_guard<std::mutex>;
-  using LatControllerT = PurePursuit;
-//  using LatControllerT = Stanley;
+  // using LatControllerT = PurePursuit;
+ using LatControllerT = Stanley;
 //  using LatControllerT = PidLatController;
   using LonControllerT = PidLonController;
 

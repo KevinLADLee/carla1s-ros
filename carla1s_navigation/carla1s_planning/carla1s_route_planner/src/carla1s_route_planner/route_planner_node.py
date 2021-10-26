@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import math
+from os import wait
 
 from networkx.generators.classic import wheel_graph
 import rospy
@@ -32,6 +33,7 @@ class Carla1sRoutePlanner:
         self.role_name = rospy.get_param("~role_name", 'ego_vehicle')
         self.vehicle_info_subscriber = rospy.Subscriber('/carla/{}/vehicle_info'.format(self.role_name), CarlaEgoVehicleInfo, self.compute_min_radius_from_vehicle_info)
         self.waypoint_publisher = rospy.Publisher('/carla1s/{}/waypoints'.format(self.role_name), Path, latch=True, queue_size=1)
+        self.waypoint_spline_publisher = rospy.Publisher('/carla1s/{}/waypoints_spline'.format(self.role_name), Path, latch=True, queue_size=1)
         self.path_markers_publisher = rospy.Publisher('/carla1s/{}/path_markers'.format(self.role_name), MarkerArray, latch=True, queue_size=1)
         self.markers = MarkerArray()                                          
 
@@ -123,6 +125,8 @@ class Carla1sRoutePlanner:
                         self.global_planner_server.set_aborted(self._result, result_info)
                     else:
                         self.waypoint_publisher.publish(self._result.path_array.paths[0])
+                        # spline_path = self.cubic_spline_test(self._result.path_array.paths[0])
+                        # self._result.path_array.paths[0] = spline_path
                         self.global_planner_server.set_succeeded(self._result, result_info)
         
     def publish_path_array_markers(self, path_array):
@@ -281,6 +285,36 @@ class Carla1sRoutePlanner:
             raise e
 
         rospy.loginfo("Connected to Carla.")
+
+    def cubic_spline_test(self, path: Path):
+        from carla1s_route_planner.cubic_spline import Spline2D
+        import numpy as np
+        import copy
+        from tf.transformations import quaternion_from_euler
+        from geometry_msgs.msg import Quaternion
+        x = []
+        y = []
+        ds = 0.3
+        for pose in path.poses:
+            x.append(pose.pose.position.x)
+            y.append(pose.pose.position.y)
+        sp = Spline2D(x, y)
+        s = np.arange(0, sp.s[-1], ds)
+        rx, ry, ryaw, rk = [], [], [], []
+        new_path = copy.deepcopy(path)
+        new_path.poses.clear()
+        for i_s in s:
+            pose = PoseStamped()
+            ix, iy = sp.calc_position(i_s)
+            iyaw = sp.calc_yaw(i_s)
+            pose.header.frame_id = "map"
+            pose.pose.position.x = ix
+            pose.pose.position.y = iy
+            quat_tf = quaternion_from_euler(0,0,iyaw)
+            pose.pose.orientation = Quaternion(quat_tf[0], quat_tf[1], quat_tf[2], quat_tf[3])
+            new_path.poses.append(pose)
+        self.waypoint_spline_publisher.publish(new_path)
+        return new_path   
 
 
 def main(args=None):
