@@ -10,9 +10,12 @@ handle a opendrive sensor
 """
 import xml.etree.ElementTree as ET
 import numpy as np
-
+import math
 
 import carla
+
+import carla_common.transforms as trans
+# from carla1s_msgs import ParkingSpotArray, ParkingSpot
 
 
 import rospy
@@ -30,6 +33,27 @@ COLOR_SKY_BLUE_0 = ColorRGBA(114.0 / 255.0, 159.0 / 255.0, 207.0 / 255.0, 1)
 COLOR_CHAMELEON_0 = ColorRGBA(138.0 / 255.0, 226.0 / 255.0, 52.0 / 255.0, 1)
 COLOR_SCARLET_RED_0 = ColorRGBA(239.0 / 255.0, 41.0 / 255.0, 41.0 / 255.0, 1)
 COLOR_ORANGE_0 = ColorRGBA(252.0 / 255.0, 175.0 / 255.0, 62.0 / 255.0, 1)
+
+class CarlaParkingSpot:
+    def __init__(self, x, y, yaw, width, length) -> None:
+        self.trans = carla.Transform(carla.Location(x, y, 0.0), carla.Rotation(yaw=yaw))
+        self.width = width
+        self.length = length
+        self.cornor_points = []
+        self.update_cornor_points()
+        pass
+
+    def update_cornor_points(self):
+        w = 0.5 * self.width
+        l = 0.5 * self.length
+        x = self.trans.location.x
+        y = self.trans.location.y
+        self.cornor_points.append(self.trans.transform(carla.Location( l, w)))
+        self.cornor_points.append(self.trans.transform(carla.Location( l, -w)))
+        self.cornor_points.append(self.trans.transform(carla.Location(-l, -w)))
+        self.cornor_points.append(self.trans.transform(carla.Location(-l, w)))
+        # Add twice for viz
+        self.cornor_points.append(self.trans.transform(carla.Location( l, w)))        
 
 
 class CarlaMapVisualization:
@@ -79,8 +103,8 @@ class CarlaMapVisualization:
         Function (override) to update this object.
         """
         self.draw_map()
-        if self.map_name == "ParkingLot":
-            self.draw_parking_spot()
+
+        self.draw_parking_spot()
 
         rospy.loginfo(
             "Map Visualization Node: Got {} markers for carla map visualization".format(len(self.marker_array.markers)))
@@ -197,37 +221,34 @@ class CarlaMapVisualization:
         # Parking spot No.372
         # TODO: Parse from oxdr file
         self.opendrive_xml_root = ET.fromstring(self.map.to_opendrive().encode())
-        # print(etree.tostring(self.opendrive_xml_root))
-        lane_id = 0
-        t = -3.97
+
+        parking_spot_carla_trans = []
+        l_x, l_y, l_yaw = None, None, None
         for road_element in self.opendrive_xml_root.findall('road'):
             for objects_element in road_element.findall('objects'):
                 for plan_view_element in road_element.findall('planView'):
                     for geometry_element in plan_view_element:
-                        if(len(geometry_element.findall('line'))>0):
-                            x = geometry_element.attrib['x']
-                            y = geometry_element.attrib['y']
-                            yaw = geometry_element.attrib['hdg']      
+                        if len(geometry_element.findall('line')) == 1:
+                            l_x = float(geometry_element.attrib['x'])
+                            l_y = float(geometry_element.attrib['y'])
+                            l_yaw = float(geometry_element.attrib['hdg'])
                 for object_element in objects_element:
                     if object_element.attrib['type'] == 'parking':
-                        road_id = int(road_element.attrib['id'])
-                        lane_id = -1
                         s = float(object_element.attrib['s'])
-                        print("road_id: {}, lane_id: {}, s: {}".format(road_id, lane_id, s))
-                        waypoints.append(self.map.get_waypoint_xodr(road_id, lane_id, s))
-
-        parking_points = [carla.Location(19.71 + t, -29.583344, 0), carla.Location(19.71 + t, -27.25, 0)]
-        self.add_line_strip_marker(color=COLOR_SCARLET_RED_0, points=parking_points)
-
-        center = carla.Location(14.527, -11.228, -0.008)
-        x_offset = 2.7
-        y_offset = 1.16
-        point_1 = carla.Location(center.x + 2.7, center.y + 1.16, center.z)
-        point_2 = carla.Location(center.x - 2.7, center.y + 1.16, center.z)
-        point_3 = carla.Location(center.x - 2.7, center.y - 1.16, center.z)
-        point_4 = carla.Location(center.x + 2.7, center.y - 1.16, center.z)
-        points = [point_1, point_2, point_3, point_4]
-        self.add_line_strip_marker(color=COLOR_SCARLET_RED_0, points=points)
+                        t = float(object_element.attrib['t'])
+                        yaw2 = float(object_element.attrib['hdg'])
+                        width = float(object_element.attrib['width'])
+                        length = float(object_element.attrib['length'])
+                        # print("x: {}, y: {}, yaw: {}, s: {}, t: {}, yaw2: {}, ".format(x, y, yaw, s, t, yaw2))
+                        spot_x = l_x + s * math.cos(l_yaw) - t * math.sin(l_yaw)
+                        spot_y = -(l_y + s * math.sin(l_yaw) + t * math.cos(l_yaw))
+                        spot_yaw = -(l_yaw - yaw2) * 180 / math.pi
+                        spot = CarlaParkingSpot(spot_x, spot_y, spot_yaw, width, length)
+                        parking_spot_carla_trans.append(spot)
+                        
+        print(len(parking_spot_carla_trans))                
+        for spot in parking_spot_carla_trans:
+            self.add_line_strip_marker(color=COLOR_SCARLET_RED_0, points=spot.cornor_points)
 
 
 def main(args=None):
