@@ -4,11 +4,14 @@ import glob
 import os
 import sys
 
+import xml.etree.ElementTree as ET
+
 import carla
 import argparse
 import logging
 
 import numpy as np
+import math
 
 import cv2 as cv
 
@@ -21,6 +24,28 @@ PIXELS_PER_METER = 20
 
 
 ROAD_COLOR = 255
+
+class CarlaParkingSpot:
+    def __init__(self, x, y, yaw, width, length) -> None:
+        self.trans = carla.Transform(carla.Location(x, y, 0.0), carla.Rotation(yaw=yaw))
+        self.width = width
+        self.length = length
+        self.cornor_points = []
+        self.update_cornor_points()
+        pass
+
+    def update_cornor_points(self):
+        w = 0.5 * self.width
+        l = 0.5 * self.length
+        x = self.trans.location.x
+        y = self.trans.location.y
+        self.cornor_points.append(self.trans.transform(carla.Location( l, w)))
+        self.cornor_points.append(self.trans.transform(carla.Location( l, -w)))
+        self.cornor_points.append(self.trans.transform(carla.Location(-l, -w)))
+        self.cornor_points.append(self.trans.transform(carla.Location(-l, w)))
+        # Add twice for viz
+        self.cornor_points.append(self.trans.transform(carla.Location( l, w)))        
+
 
 class CarlaGrid(object):
     def __init__(self, name, args, timeout):
@@ -67,8 +92,7 @@ class CarlaGrid(object):
             return (world, town_map)
 
         except RuntimeError as ex:
-            logging.error(ex)
-
+            logging.error(ex)           
 
     def start(self):
         self.world, self.town_map = self._get_data_from_carla()
@@ -156,12 +180,45 @@ class CarlaGrid(object):
                 poly_array = np.array(polygon, np.int32)
                 poly_array.reshape((-1,1,2))
                 cv.fillPoly(img, [poly_array], (255), lineType=cv.LINE_AA)
-                # cv.polylines(img,[poly_array],True,(0,0,255))
-
+                # cv.polylines(img,[poly_array],True,(0,0,255))    
         # init = self.world_to_pixel(0,0)
         # cv.circle(img, (init[0],init[1]), 5, (100), -1) 
 
+        # img = self.draw_parking_spot(img)
+
         cv.imwrite("{}.png".format(self.args.map), img) 
+
+    def draw_parking_spot(self, img):
+        self.opendrive_xml_root = ET.fromstring(self.town_map.to_opendrive().encode())
+        parking_spots = []
+        l_x, l_y, l_yaw = None, None, None
+        for road_element in self.opendrive_xml_root.findall('road'):
+            for objects_element in road_element.findall('objects'):
+                for plan_view_element in road_element.findall('planView'):
+                    for geometry_element in plan_view_element:
+                        if len(geometry_element.findall('line')) == 1:
+                            l_x = float(geometry_element.attrib['x'])
+                            l_y = float(geometry_element.attrib['y'])
+                            l_yaw = float(geometry_element.attrib['hdg'])
+                for object_element in objects_element:
+                    if object_element.attrib['type'] == 'parking':
+                        s = float(object_element.attrib['s'])
+                        t = float(object_element.attrib['t'])
+                        yaw2 = float(object_element.attrib['hdg'])
+                        width = float(object_element.attrib['width'])
+                        length = float(object_element.attrib['length'])
+                        # print("x: {}, y: {}, yaw: {}, s: {}, t: {}, yaw2: {}, ".format(x, y, yaw, s, t, yaw2))
+                        spot_x = l_x + s * math.cos(l_yaw) - t * math.sin(l_yaw)
+                        spot_y = -(l_y + s * math.sin(l_yaw) + t * math.cos(l_yaw))
+                        spot_yaw = -(l_yaw - yaw2) * 180.0 / math.pi
+                        spot = CarlaParkingSpot(spot_x, spot_y, spot_yaw, width, length)
+                        parking_spots.append(spot)        
+        for parking_spot in parking_spots:
+            polygon = [self.world_to_pixel(x.x, x.y) for x in parking_spot.cornor_points]
+            poly_array = np.array(polygon, np.int32)
+            poly_array.reshape((-1,1,2))
+            cv.fillPoly(img, [poly_array], (255), lineType=cv.LINE_AA)
+        return(img)
 
     def generate_yaml(self):
 

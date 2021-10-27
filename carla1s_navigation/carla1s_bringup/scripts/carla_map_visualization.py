@@ -218,8 +218,6 @@ class CarlaMapVisualization:
     def draw_parking_spot(self):
         rospy.loginfo("Map Visualization Node: Drawing parking spot")
 
-        # Parking spot No.372
-        # TODO: Parse from oxdr file
         self.opendrive_xml_root = ET.fromstring(self.map.to_opendrive().encode())
 
         parking_spot_carla_trans = []
@@ -242,7 +240,7 @@ class CarlaMapVisualization:
                         # print("x: {}, y: {}, yaw: {}, s: {}, t: {}, yaw2: {}, ".format(x, y, yaw, s, t, yaw2))
                         spot_x = l_x + s * math.cos(l_yaw) - t * math.sin(l_yaw)
                         spot_y = -(l_y + s * math.sin(l_yaw) + t * math.cos(l_yaw))
-                        spot_yaw = -(l_yaw - yaw2) * 180 / math.pi
+                        spot_yaw = -(l_yaw - yaw2) * 180.0 / math.pi
                         spot = CarlaParkingSpot(spot_x, spot_y, spot_yaw, width, length)
                         parking_spot_carla_trans.append(spot)
                         
