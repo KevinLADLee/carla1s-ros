@@ -18,29 +18,32 @@ import carla
 
 
 class CarlaControl():
-    def __init__(self):
-        self.client = carla.Client('localhost', 2000)
+    def __init__(self,host='localhost',port=2000):
+        self.client = carla.Client(host, port)
         self.client.set_timeout(5.0)
         self.world = self.client.get_world()
         self.actor_list =  []
 
         # print(dir(self.world ))
 
-    def get_vehicle(self):
+    def get_vehicle(self,id=None):
         import rospy
         from carla_msgs.msg import CarlaActorList
+        if id==None:
+            data = rospy.wait_for_message('/carla/actor_list', CarlaActorList, 10)
+            car_list = []
+            for i in data.actors:
+                # print(i.id,i.type,type(i.type))
+                if 'vehicle' in i.type:
+                    car_list.append(i.id)
 
-        data = rospy.wait_for_message('/carla/actor_list', CarlaActorList, 10)
-        car_list = []
-        for i in data.actors:
-            # print(i.id,i.type,type(i.type))
-            if 'vehicle' in i.type:
-                car_list.append(i.id)
+            if len(car_list) == 0:
+                print("未寻找到车辆")
+                exit()
+            return self.world.get_actor(car_list[0])
+        else:
+            return self.world.get_actor(id)
 
-        if len(car_list) == 0:
-            print("未寻找到车辆")
-            exit()
-        return self.world.get_actor(car_list[0])
 
     def close(self):
         for name,actor in self.actor_list:
@@ -71,7 +74,7 @@ def carla_set_transform(car,x_arr,y_arr,theta_arr):
         car.set_transform(spawn_point)
         # car.set_location(Location(x=x_arr[i], y=y_arr[i], z=location.z))
 
-def set_transform_tracking(path):
+def set_transform_tracking(path,host='localhost',port=2000,id=None):
     for i in range(len(path.paths)):
         x_arr=[]
         y_arr=[]
@@ -85,9 +88,10 @@ def set_transform_tracking(path):
             y_arr.append(y)
             theta_arr.append(theta)
         # print(x_arr)
-        carla_control=CarlaControl()
+        carla_control=CarlaControl(host,port)
         time.sleep(1)
-        carla_car=carla_control.get_vehicle()
+
+        carla_car=carla_control.get_vehicle(id)
         carla_set_transform(carla_car,x_arr,y_arr,theta_arr)
         carla_control.close()
 

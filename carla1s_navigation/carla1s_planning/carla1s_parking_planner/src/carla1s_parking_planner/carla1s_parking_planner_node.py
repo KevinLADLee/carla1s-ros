@@ -124,13 +124,16 @@ class CarlaVerticalParkingNode:
              best_position.pose.orientation.z, best_position.pose.orientation.w])
 
         rx,ry,rtheta=self.add_uncheck_route(start_x,start_y,start_theta,end_x,end_y,end_theta)
-
         #tracking uncheck route
         from planning_client_set_transform import CarlaControl,carla_set_transform
         import time
-        carla_control = CarlaControl()
+
+        control_host = rospy.get_param('host', 'localhost')
+        control_port= rospy.get_param('port', 2000)
+
+        carla_control = CarlaControl(host=control_host,port=control_port)
         time.sleep(1)
-        carla_car = carla_control.get_vehicle()
+        carla_car = carla_control.get_vehicle(id=self.vehicle_info.id)
         carla_set_transform(carla_car, rx,ry,rtheta)
         carla_control.close()
 
@@ -144,7 +147,7 @@ class CarlaVerticalParkingNode:
 
         #start parking tracking
         from planning_client_set_transform import set_transform_tracking
-        set_transform_tracking(self.path_array)
+        set_transform_tracking(self.path_array,host=control_host,port=control_port,id=self.vehicle_info.id)
 
 
         self.action_result.path_array = self.path_array
