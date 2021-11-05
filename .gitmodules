@@ -1,4 +1,4 @@
 [submodule "ros-bridge"]
 	path = ros-bridge
 	url = https://github.com/KevinLADLee/ros-bridge
-	branch = master
+	branch = sustech-main

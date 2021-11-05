@@ -16,6 +16,10 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 import carla
 import carla_common.transforms as trans
+
+import sys,os
+BASE_DIR=os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR)
 from agents.navigation.global_route_planner import GlobalRoutePlanner
 
 from carla1s_route_planner.reeds_shepp_ros.reeds_ros import reeds_ros_inter as ReedsSheppROS
